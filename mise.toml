@@ -9,8 +9,14 @@ config_roots = ["src/*"]
 # Lets plain `docker compose ...` work from the repo root.
 COMPOSE_FILE = "{{config_root}}/.config/docker-compose.yml"
 COMPOSE_PROJECT_NAME = "{{config_root | basename}}"
+# Every image is linux/amd64, locally too: Cloud Run runs only x86-64 and local containers match it.
+DOCKER_DEFAULT_PLATFORM = "linux/amd64"
 # Where `mise run add-setup` takes components from (branch TEMPLATE_REF, default "templates").
 TEMPLATE_REPO = "{{ get_env(name='TEMPLATE_REPO', default='https://github.com/mateusz-cybulski/base-web.git') }}"
+# Claude Code keeps this project's plugins and marketplaces in .claude/plugins instead of
+# ~/.claude/plugins. Must be absolute and must come from the process environment: the `env`
+# key in .claude/settings.json does not move it, and VS Code allows it only in user settings.
+CLAUDE_CODE_PLUGIN_CACHE_DIR = "{{config_root}}/.claude/plugins"
 
 [tools]
 # Repo-wide tools only.
@@ -27,6 +33,15 @@ run = "docker compose up --build"
 description = "Pick Claude skills/agents from the agents branch; the stack is detected or given, e.g. `mise run agents nextjs tailwind` (--yes: no picker, --list: show stacks)"
 run = ".config/scripts/sync-agents.sh"
 # The checklist needs the terminal.
+raw = true
+
+[tasks.skill-import]
+description = "Copy a skill from an installed plugin into your skills (agents branch, editable in .agents/), e.g. `mise run skill-import fastapi-expert fastapi`"
+run = ".config/scripts/skill-import.sh"
+
+[tasks.skill-publish]
+description = "Commit and push your edits in .agents/ to the agents branch (asks first; --yes to skip)"
+run = ".config/scripts/skill-publish.sh"
 raw = true
 
 [tasks.add-setup]

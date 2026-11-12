@@ -3,3 +3,9 @@ mise.local.toml
 *.tfstate
 *.tfstate.*
 tfplan
+
+# Claude Code plugins downloaded for this project (see CLAUDE_CODE_PLUGIN_CACHE_DIR in mise.toml)
+.claude/plugins/
+
+# Your agents branch checked out for editing (mise run skill-import / skill-publish)
+.agents/

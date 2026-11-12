@@ -5,8 +5,9 @@
 # Usage (through mise):
 #   mise run agents                    detect the stack from src/ and .config/, then pick
 #   mise run agents nextjs tailwind    preselect this stack (plus "always"), then pick
+#   mise run agents fastapi-expert     an argument can also name one skill/agent on the branch
 #   mise run agents --yes [stack...]   no picker: install exactly what the stack gives
-#   mise run agents --list             show the available technologies and exit
+#   mise run agents --list             show the available technologies and entries, then exit
 #
 # What it does:
 #   1. Fetches the agents branch of the template repository (a copy of a .claude folder).
@@ -42,7 +43,7 @@ for arg in "$@"; do
   case "$arg" in
     --list) list_only=true ;;
     --yes | -y) assume_yes=true ;;
-    -*) echo "Usage: mise run agents [--list] [--yes] [technology...]" >&2; exit 1 ;;
+    -*) echo "Usage: mise run agents [--list] [--yes] [technology|skill...]" >&2; exit 1 ;;
     *) requested+=" $arg" ;;
   esac
 done
@@ -99,8 +100,28 @@ done <<<"$detect_rules"
 
 if $list_only; then
   echo "Technologies: $known"
+  echo "Entries:"
+  for entry in $available; do echo "  $entry"; done
   exit 0
 fi
+
+# An argument is a technology, or the name of an entry (skills/<name>, agents/<name>.md).
+requested_techs=""
+requested_entries=""
+for arg in $requested; do
+  if has "$known" "$arg"; then
+    requested_techs+=" $arg"
+    continue
+  fi
+  found=""
+  for entry in $available; do
+    name="${entry#*/}"
+    [[ "$arg" == "$entry" || "$arg" == "$name" || "$arg.md" == "$name" ]] && found="$entry"
+  done
+  [[ -n "$found" ]] ||
+    { echo "Error: '$arg' is neither a technology nor an entry on $ref. See: mise run agents --list" >&2; exit 1; }
+  requested_entries+=" $found"
+done
 
 # --- Choose the stack --------------------------------------------------------
 
@@ -114,10 +135,10 @@ matches() {
   return 1
 }
 
+# Technologies given as arguments replace detection; entries given by name come on top.
 techs="always"
-if [[ -n "$requested" ]]; then
-  for tech in $requested; do
-    has "$known" "$tech" || { echo "Error: unknown technology '$tech'. Known: $known" >&2; exit 1; }
+if [[ -n "$requested_techs" ]]; then
+  for tech in $requested_techs; do
     has "$techs" "$tech" || techs+=" $tech"
   done
 else
@@ -149,6 +170,10 @@ while read -r pattern rule_techs; do
   done
   $found || echo "Warning: '$pattern' in $CONFIG_PATH matches nothing on $ref" >&2
 done <<<"$install_rules"
+
+for entry in $requested_entries; do
+  has "$wanted" "$entry" || wanted+=" $entry"
+done
 
 managed=""
 [[ -f "$MANAGED_LIST" ]] && managed="$(tr '\n' ' ' <"$MANAGED_LIST")"
@@ -184,8 +209,17 @@ else
       preselected+="${preselected:+,}$label"
     fi
   done
-  chosen="$(gum choose --no-limit --height=20 \
-    --header="Space: toggle, Enter: install (stack: $techs)" \
+  # Fit the list to the terminal: gum cuts off whatever does not fit, with no hint that
+  # more entries exist. Leave room for the header, the page dots and the help line.
+  rows="$(stty size </dev/tty 2>/dev/null | cut -d' ' -f1)"
+  height="${#items[@]}"
+  if [[ "$rows" =~ ^[0-9]+$ ]] && ((rows - 5 < height)); then
+    height=$((rows - 5 > 3 ? rows - 5 : 3))
+  fi
+  page_hint=""
+  ((height < ${#items[@]})) && page_hint=", ←/→: more pages"
+  chosen="$(gum choose --no-limit --height="$height" \
+    --header="${#items[@]} entries. Space: toggle, Enter: install$page_hint (stack: $techs)" \
     --selected="$preselected" "${items[@]}")" || { echo "Cancelled, nothing changed."; exit 1; }
   wanted=""
   while IFS= read -r label; do
