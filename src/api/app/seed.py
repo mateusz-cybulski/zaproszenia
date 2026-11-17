@@ -1,10 +1,3 @@
-"""Sample guests for local development: `python -m app.seed [owner_uid]`.
-
-compose runs it after the migrations. It adds the guests only when the owner has none yet,
-so restarts and a list you have edited stay untouched. The default owner is the local
-DEV_AUTH_USER account, the one the API signs every local request in as.
-"""
-
 import asyncio
 import os
 import sys
@@ -58,7 +51,6 @@ SAMPLE_GUESTS: tuple[dict[str, str | None], ...] = (
         "salutation": "Szanowny Panie",
     },
     {
-        # The whole institution is invited, not a person.
         "full_name": None,
         "position": None,
         "institution": "Redakcja Radia Kraków",
@@ -78,7 +70,6 @@ def default_owner_uid() -> str:
 
 
 async def seed_guests(session: AsyncSession, owner_uid: str) -> int:
-    """Adds the sample guests to an owner without guests; returns how many were added."""
     async with session.begin():
         if await session.scalar(select(exists().where(Guest.owner_uid == owner_uid))):
             return 0

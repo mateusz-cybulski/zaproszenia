@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 
-/** Full-page card for the sign-in and sign-up screens. */
 function AuthCard({
   title,
   description,

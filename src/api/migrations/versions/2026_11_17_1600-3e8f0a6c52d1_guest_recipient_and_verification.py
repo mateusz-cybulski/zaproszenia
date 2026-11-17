@@ -21,7 +21,6 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # The old name becomes the full name; the email is no longer kept.
     op.alter_column(
         "guests",
         "name",

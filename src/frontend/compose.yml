@@ -1,4 +1,4 @@
-# Local dev service, included by .config/docker-compose.yml. Paths are relative to this file.
+# Included by .config/docker-compose.yml: paths are relative to this file.
 services:
   frontend:
     build:
@@ -8,14 +8,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Server-side calls go through the compose network; on Cloud Run Terraform sets API_URL.
       API_URL: http://api:8000
     depends_on:
       - api
-    # `docker compose up --watch` (mise run dev): source changes are copied into the
-    # container, where `next dev` picks them up (HMR). node_modules come from the image, so a
-    # dependency change rebuilds it instead of leaving stale packages in a volume.
-    # Files in .dockerignore (node_modules, .next) are never synced.
     develop:
       watch:
         - action: sync

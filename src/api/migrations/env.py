@@ -14,7 +14,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# The URL comes from DATABASE_URL, not alembic.ini; "%" is escaped for configparser.
+# "%" is special to configparser.
 config.set_main_option("sqlalchemy.url", str(get_settings().database_url).replace("%", "%%"))
 target_metadata = Base.metadata
 

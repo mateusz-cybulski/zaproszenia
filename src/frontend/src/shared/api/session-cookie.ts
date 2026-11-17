@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 
 import { SESSION_COOKIE } from "@/shared/config";
 
-/** The Identity Platform session cookie, kept httpOnly so browser JavaScript never sees it. */
 export async function readSessionCookie(): Promise<string | undefined> {
   return (await cookies()).get(SESSION_COOKIE)?.value;
 }

@@ -13,7 +13,7 @@ from app.models.base import AddressMixin, Base, TimestampMixin, str_enum
 class VerificationStatus(enum.StrEnum):
     PENDING = "pending"
     VERIFIED_AI = "verified_ai"  # AI raised no issues, or the user accepted its result
-    VERIFIED_MANUAL = "verified_manual"  # the user approved the data themselves, without AI
+    VERIFIED_MANUAL = "verified_manual"
     NEEDS_REVIEW = "needs_review"
     FAILED = "failed"
 
@@ -24,20 +24,17 @@ VERIFIED_STATUSES = frozenset({VerificationStatus.VERIFIED_AI, VerificationStatu
 class Guest(TimestampMixin, AddressMixin, Base):
     __tablename__ = "guests"
     __table_args__ = (
-        # The recipient is a person or a whole institution (e.g. an editorial office), never nobody.
         CheckConstraint(
             "full_name IS NOT NULL OR institution IS NOT NULL", name="recipient_present"
         ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # Identity Platform uid of the account that owns this guest.
     owner_uid: Mapped[str] = mapped_column(String(128), index=True)
     full_name: Mapped[str | None] = mapped_column(String(300))
     position: Mapped[str | None] = mapped_column(String(300))
     institution: Mapped[str | None] = mapped_column(String(300))
     salutation: Mapped[str | None] = mapped_column(String(300))
-    # Declension by grammatical case (schemas.Declension), filled in during verification.
     declension: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     verification_status: Mapped[VerificationStatus] = mapped_column(
         str_enum(VerificationStatus), default=VerificationStatus.PENDING
@@ -47,7 +44,6 @@ class Guest(TimestampMixin, AddressMixin, Base):
 
     @hybrid_property
     def recipient_name(self) -> str:
-        """Who is invited: the person, or the whole institution without one (also for SQL sorting)."""
         return self.full_name or self.institution or ""
 
     @recipient_name.inplace.expression

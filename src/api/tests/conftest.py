@@ -20,7 +20,6 @@ API_ROOT = Path(__file__).parent.parent
 
 @pytest.fixture(scope="session", autouse=True)
 def database() -> Iterator[None]:
-    """A throwaway PostgreSQL for the whole run, migrated with Alembic."""
     with PostgresContainer("postgres:18-alpine", driver="psycopg") as postgres:
         os.environ["DATABASE_URL"] = postgres.get_connection_url()
         get_settings.cache_clear()
@@ -29,17 +28,15 @@ def database() -> Iterator[None]:
     get_settings.cache_clear()
 
 
-VALID_ID_TOKEN = "valid-id-token"  # noqa: S105 - fake token, never sent to Google
+VALID_ID_TOKEN = "valid-id-token"  # noqa: S105
 SESSION_COOKIE = "session-cookie"
-UNVERIFIED_ID_TOKEN = "unverified-id-token"  # noqa: S105 - fake token, never sent to Google
+UNVERIFIED_ID_TOKEN = "unverified-id-token"  # noqa: S105
 OTHER_SESSION_COOKIE = "other-session-cookie"
 USER = AuthUser(uid="user-1", email="jan@example.com")
 OTHER_USER = AuthUser(uid="user-2", email="anna@example.com")
 
 
 class FakeIdentity:
-    """Identity Platform stand-in: one known ID token and one session cookie."""
-
     def __init__(self) -> None:
         self.revoked: list[str] = []
         self.session_lifetimes: list[timedelta] = []
@@ -83,6 +80,5 @@ async def anonymous_client(identity: FakeIdentity) -> AsyncIterator[AsyncClient]
 
 @pytest.fixture
 def client(anonymous_client: AsyncClient) -> AsyncClient:
-    """Signed in as USER."""
     anonymous_client.headers["Authorization"] = f"Bearer {SESSION_COOKIE}"
     return anonymous_client

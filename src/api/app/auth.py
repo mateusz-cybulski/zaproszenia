@@ -27,20 +27,18 @@ MAX_SIGN_IN_AGE_SECONDS = 5 * 60
 
 
 class InvalidCredentialsError(Exception):
-    """Bad, expired or revoked token or cookie, or a disabled or deleted account."""
+    pass
 
 
 class EmailNotVerifiedError(Exception):
-    """The account exists, but its email address has not been confirmed yet."""
+    pass
 
 
 class IdentityUnavailableError(Exception):
-    """Identity Platform could not be reached."""
+    pass
 
 
 class Identity(Protocol):
-    """Identity Platform operations the API needs; replaced by a fake in tests."""
-
     async def create_session(self, id_token: str, expires_in: timedelta) -> str: ...
 
     async def verify_session(self, session_cookie: str) -> AuthUser: ...
@@ -49,9 +47,6 @@ class Identity(Protocol):
 
 
 class FirebaseIdentity:
-    """Identity Platform through firebase-admin, with Application Default Credentials (on
-    Cloud Run the service's own account, project from GOOGLE_CLOUD_PROJECT)."""
-
     @cached_property
     def _app(self) -> firebase_admin.App:
         # Created on first use, so the API starts without Google credentials.
@@ -95,12 +90,12 @@ async def _call[T](function: Callable[[], T]) -> T:
         return await asyncio.to_thread(function)
     except (
         ValueError,
-        firebase_exceptions.InvalidArgumentError,  # bad/expired/revoked token, disabled user
+        firebase_exceptions.InvalidArgumentError,
         firebase_exceptions.UnauthenticatedError,
         firebase_auth.UserNotFoundError,
     ) as error:
         raise InvalidCredentialsError(str(error)) from error
-    except firebase_exceptions.FirebaseError as error:  # incl. CertificateFetchError
+    except firebase_exceptions.FirebaseError as error:
         raise IdentityUnavailableError(str(error)) from error
 
 

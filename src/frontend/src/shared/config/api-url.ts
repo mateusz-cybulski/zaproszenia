@@ -1,9 +1,7 @@
 import "server-only";
 
-/**
- * Base URL of the API service. Cloud Run injects API_URL at runtime, so call this per
- * request (never at module level, which would run during `next build`).
- */
+// Cloud Run sets API_URL only at runtime: call this per request, never at module level
+// (that runs during `next build`).
 export function apiUrl(): string {
   const url =
     process.env.API_URL ??

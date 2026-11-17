@@ -8,18 +8,11 @@ import { routes } from "@/shared/routes";
 import { readSessionCookie } from "./session-cookie";
 
 type ApiFetchInit = RequestInit & {
-  /**
-   * What a 401 from the API does. "sign-in" (default) sends the user to the home page, which
-   * shows the sign-in form; "return" hands the response back to the caller.
-   */
   onUnauthorized?: "sign-in" | "return";
 };
 
-/**
- * Calls the API as the signed-in user: the session cookie goes along as a bearer token.
- * Network errors propagate. A redirect is thrown as Next.js does it, so callers that catch
- * errors must let it through with `unstable_rethrow`.
- */
+// The 401 redirect is thrown, so callers that catch errors must pass it on with
+// `unstable_rethrow`.
 export async function apiFetch(
   path: string,
   { onUnauthorized = "sign-in", ...init }: ApiFetchInit = {},

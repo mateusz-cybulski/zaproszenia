@@ -1,4 +1,4 @@
-# Local dev service, included by .config/docker-compose.yml. Paths are relative to this file.
+# Included by .config/docker-compose.yml: paths are relative to this file.
 x-api: &api
   build:
     context: .
@@ -6,7 +6,6 @@ x-api: &api
   platform: linux/amd64
   environment:
     DATABASE_URL: postgresql+psycopg://api:api@api-db:5432/api
-    # No Identity Platform locally: every request is signed in as this user.
     DEV_AUTH_USER: dev@localhost
 
 services:
@@ -17,9 +16,6 @@ services:
     depends_on:
       api-migrate:
         condition: service_completed_successfully
-    # `docker compose up --watch` (mise run dev): source changes are copied into the
-    # container, where uvicorn --reload picks them up. The virtualenv comes from the image, so
-    # a dependency change rebuilds it. Files in .dockerignore (tests, caches) are never synced.
     develop:
       watch:
         - action: sync
@@ -30,16 +26,13 @@ services:
         - action: rebuild
           path: uv.lock
 
-  # Applies migrations once before the API starts, like the Cloud Run job planned for
-  # production. Never inside the API process: instances would race each other.
-  # Then adds sample guests for the local user (app/seed.py; skipped once there are guests).
+  # Never migrate inside the API process: instances would race each other.
   api-migrate:
     <<: *api
     command: ["sh", "-c", "alembic upgrade head && python -m app.seed"]
     depends_on:
       api-db:
         condition: service_healthy
-    # A new or changed migration runs again right away: the rebuilt image carries it.
     develop:
       watch:
         - action: rebuild

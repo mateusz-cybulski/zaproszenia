@@ -4,7 +4,7 @@ from sqlalchemy import select
 from app.auth import CurrentUser
 from app.db import Session
 from app.models import Guest, VerificationStatus
-from app.schemas.guests import DATA_FIELDS, DECLINED_FIELDS, GuestRead, GuestWrite
+from app.schemas.guests import DECLINED_FIELDS, VERIFIED_FIELDS, GuestRead, GuestWrite
 
 router = APIRouter(prefix="/guests", tags=["guests"])
 
@@ -49,11 +49,9 @@ async def replace_guest(
         changed = {field for field, value in changes.items() if getattr(guest, field) != value}
         for field, value in changes.items():
             setattr(guest, field, value)
-        # The old name's declension does not fit a new one.
         if changed & set(DECLINED_FIELDS):
             guest.declension = None
-        # Only an actual change invalidates the verification (saving unchanged data does not).
-        if changed & set(DATA_FIELDS):
+        if changed & set(VERIFIED_FIELDS):
             guest.verification_status = VerificationStatus.PENDING
             guest.verification_result = None
             guest.verified_at = None
