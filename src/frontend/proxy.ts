@@ -29,6 +29,6 @@ function publicUrl(request: NextRequest, path: string): URL {
 }
 
 export const config = {
-  // Every page except the home page itself, Next.js assets and public files.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt).+)"],
+  // Every page except the home page (sign-in), sign-up, Next.js assets and public files.
+  matcher: ["/((?!register$|_next/static|_next/image|favicon.ico|robots.txt).+)"],
 };

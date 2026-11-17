@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from testcontainers.community.postgres import PostgresContainer
 
-from app.auth import AuthUser, InvalidCredentialsError, get_identity
+from app.auth import AuthUser, EmailNotVerifiedError, InvalidCredentialsError, get_identity
 from app.main import app
 from app.settings import get_settings
 
@@ -30,7 +30,10 @@ def database() -> Iterator[None]:
 
 VALID_ID_TOKEN = "valid-id-token"  # noqa: S105 - fake token, never sent to Google
 SESSION_COOKIE = "session-cookie"
+UNVERIFIED_ID_TOKEN = "unverified-id-token"  # noqa: S105 - fake token, never sent to Google
+OTHER_SESSION_COOKIE = "other-session-cookie"
 USER = AuthUser(uid="user-1", email="jan@example.com")
+OTHER_USER = AuthUser(uid="user-2", email="anna@example.com")
 
 
 class FakeIdentity:
@@ -41,15 +44,19 @@ class FakeIdentity:
         self.session_lifetimes: list[timedelta] = []
 
     async def create_session(self, id_token: str, expires_in: timedelta) -> str:
+        if id_token == UNVERIFIED_ID_TOKEN:
+            raise EmailNotVerifiedError("email address is not verified")
         if id_token != VALID_ID_TOKEN:
             raise InvalidCredentialsError("bad ID token")
         self.session_lifetimes.append(expires_in)
         return SESSION_COOKIE
 
     async def verify_session(self, session_cookie: str) -> AuthUser:
-        if session_cookie != SESSION_COOKIE or USER.uid in self.revoked:
+        users = {SESSION_COOKIE: USER, OTHER_SESSION_COOKIE: OTHER_USER}
+        user = users.get(session_cookie)
+        if user is None or user.uid in self.revoked:
             raise InvalidCredentialsError("bad session cookie")
-        return USER
+        return user
 
     async def revoke_sessions(self, uid: str) -> None:
         self.revoked.append(uid)

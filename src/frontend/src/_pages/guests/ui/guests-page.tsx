@@ -9,13 +9,18 @@ import { getViewer } from "../api/viewer-api";
 import { LoginScreen } from "./login-screen";
 import { LogoutButton } from "./logout-button";
 
-export async function GuestsPage() {
+export async function GuestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   // API_URL exists only at runtime on Cloud Run, so render on every request.
   await connection();
   // The home page doubles as the sign-in page: other pages send visitors without a session here.
   const viewer = await getViewer();
   if (!viewer) {
-    return <LoginScreen />;
+    const { verified } = await searchParams;
+    return <LoginScreen verified={verified === "1"} />;
   }
   const guests = await getGuests();
 

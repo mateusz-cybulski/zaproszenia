@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from app.auth import (
     AuthUser,
     CurrentUser,
+    EmailNotVerifiedError,
     IdentityDep,
     IdentityUnavailableError,
     InvalidCredentialsError,
@@ -35,6 +36,8 @@ async def create_session(
     expires_in = timedelta(days=settings.session_days)
     try:
         cookie = await identity.create_session(payload.id_token, expires_in)
+    except EmailNotVerifiedError:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Email address is not verified") from None
     except InvalidCredentialsError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired sign-in") from None
     except IdentityUnavailableError:

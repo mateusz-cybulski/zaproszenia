@@ -1,9 +1,8 @@
 # Sign-in with Identity Platform (email and password).
 #
 # The browser signs in with the Firebase JS SDK and the frontend exchanges the ID token for a
-# session cookie through the API (firebase-admin). Accounts are created by an admin (Cloud
-# console: Identity Platform > Users); self sign-up is disabled, because the browser API key
-# below is public and would otherwise let anyone create an account.
+# session cookie through the API (firebase-admin). Anyone can sign up; the API starts a
+# session only for a confirmed email address, and every account sees only its own data.
 
 # Identity Platform and API Keys bill the calling project by default, which for the CI
 # account is its own project, not the app project: bill the app project instead.
@@ -46,7 +45,7 @@ resource "google_identity_platform_config" "auth" {
 
   client {
     permissions {
-      disabled_user_signup   = true
+      disabled_user_signup   = false
       disabled_user_deletion = true
     }
   }
