@@ -3,7 +3,7 @@ name: feature-sliced-design
 description: "Use when creating, moving or reviewing code in a frontend component that uses Tailwind CSS (e.g. src/frontend with tailwindcss in package.json): where a file goes, how to name layers, slices and segments, which imports are allowed, public APIs (index.ts), and how Tailwind styles, tokens and the cn() helper fit in. Feature-Sliced Design v2.1 on Next.js App Router. Also use when the user mentions FSD, layers, slices, widgets, features or entities."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   fsd: "2.1"
 ---
 
@@ -92,6 +92,16 @@ From top (most specific) to bottom (most reusable):
 | `config` | constants, feature flags |
 
 - Do not create `components`, `hooks`, `types`, `utils` or `helpers` segments. A hook goes where its purpose is (`model` for state, `api` for data). A type goes next to what it describes.
+- A `ui` file holds components and their markup, not the data around them. Move the rest to its segment in the same slice, also when it is used only by that one component:
+
+| Found in a component file | Goes to |
+|---|---|
+| static lists and settings that drive the markup (form field definitions, menu items, column definitions, labels by key) and their types | `config/<topic>.ts` |
+| initial or derived form state, validation schemas, mapping a domain object to form values | `model/<topic>.ts` |
+| a repeated block of JSX with its own props (one form field with label, hint and error) | its own component in `ui/<name>.tsx` |
+| requests, server actions, DTOs | `api/` |
+
+  Keep a component file around 100 lines; past that, split it along the table above before adding more. Types stay next to what they describe: a config entry's type in the config file, a component's props type in its component file.
 - `shared/lib` is not a dump: one folder per topic (`shared/lib/css`, `shared/lib/dates`), each with its own `index.ts`.
 - `shared/db` (custom segment) for database queries if the frontend talks to a database directly. Route handler and server-only code: `index.server.ts` as a separate public API, so client components cannot import it by accident. Add `import "server-only"` in it.
 

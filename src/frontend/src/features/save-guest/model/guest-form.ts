@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { Guest } from "@/entities/guest";
+
 function optionalText(max: number) {
   return z
     .string()
@@ -25,7 +27,6 @@ export type GuestField = (typeof guestFields)[number];
 
 export const guestFormSchema = z
   .object({
-    // No full name means the whole institution is invited, not a particular person.
     fullName: optionalText(300),
     position: optionalText(300),
     institution: optionalText(300),
@@ -45,6 +46,19 @@ export const guestFormSchema = z
   });
 
 export type GuestFormValues = Record<GuestField, string>;
+
+export function initialGuestFormValues(guest?: Guest): GuestFormValues {
+  return {
+    fullName: guest?.fullName ?? "",
+    position: guest?.position ?? "",
+    institution: guest?.institution ?? "",
+    salutation: guest?.salutation ?? "",
+    street: guest?.street ?? "",
+    postalCode: guest?.postalCode ?? "",
+    city: guest?.city ?? "",
+    country: guest?.country ?? "PL",
+  };
+}
 
 export type GuestFormState =
   | { status: "idle" }

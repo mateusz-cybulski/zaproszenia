@@ -71,7 +71,7 @@ export async function createGuestAction(
   if (!result.ok) {
     return failure(result, formData);
   }
-  revalidatePath(routes.home());
+  revalidatePath(routes.guests());
   return { status: "success" };
 }
 
@@ -88,6 +88,6 @@ export async function updateGuestAction(
   if (!result.ok) {
     return failure(result, formData);
   }
-  revalidatePath(routes.home());
-  redirect(routes.home());
+  revalidatePath(routes.guests());
+  redirect(routes.guests());
 }

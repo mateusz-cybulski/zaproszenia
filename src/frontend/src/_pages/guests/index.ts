@@ -1,1 +1,1 @@
-export { GuestsPage } from "./ui/guests-page";
+export { GuestsPage, metadata } from "./ui/guests-page";

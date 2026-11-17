@@ -10,8 +10,7 @@ from app.schemas.common import AddressRead, AddressWrite, Text300
 ObliqueCase = Literal["gen", "dat", "acc", "inst", "loc", "voc"]
 Forms = dict[ObliqueCase, Annotated[str, Field(min_length=1, max_length=300)]]
 
-# Fields whose change invalidates the previous verification.
-DATA_FIELDS = (
+VERIFIED_FIELDS = (
     "full_name",
     "position",
     "institution",
@@ -21,15 +20,12 @@ DATA_FIELDS = (
     "city",
     "country",
 )
-# Fields that are declined by case.
 DECLINED_FIELDS = ("full_name", "position", "institution")
 
 RECIPIENT_REQUIRED = "Podaj imię i nazwisko albo instytucję (np. redakcję zapraszaną jako całość)."
 
 
 class Declension(BaseModel):
-    """A guest's data declined by case (without the nominative)."""
-
     full_name: Forms = Field(default_factory=dict)
     position: Forms = Field(default_factory=dict)
     institution: Forms = Field(default_factory=dict)
@@ -54,9 +50,6 @@ class VerificationResult(BaseModel):
 
 
 class GuestWrite(AddressWrite):
-    """Body for creating a guest and for replacing one (PUT)."""
-
-    # No full name means the whole institution is invited, not a particular person.
     full_name: Text300 = None
     position: Text300 = None
     institution: Text300 = None

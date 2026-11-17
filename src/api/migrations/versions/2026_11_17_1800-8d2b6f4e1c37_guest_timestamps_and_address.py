@@ -29,7 +29,6 @@ def upgrade() -> None:
             nullable=False,
         ),
     )
-    # Existing guests were last changed no later than when they were created, as far as we know.
     op.execute("UPDATE guests SET updated_at = created_at")
 
     op.add_column("guests", sa.Column("street", sa.String(length=300), nullable=True))

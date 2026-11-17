@@ -4,7 +4,8 @@ import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
-import { formatAddress, type Guest, recipientName, verificationStatusLabels } from "../model/guest";
+import { verificationStatusLabels } from "../config/verification-status";
+import { formatAddress, type Guest, recipientName } from "../model/guest";
 
 export function GuestTable({ guests }: { guests: Guest[] }) {
   if (guests.length === 0) {

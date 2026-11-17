@@ -6,7 +6,6 @@ import { AuthCard } from "@/shared/ui/auth-card";
 
 import { LoginForm } from "./login-form";
 
-/** Full-page sign-in, shown instead of the app to visitors without a session. */
 export function LoginScreen({ verified }: { verified: boolean }) {
   const config = firebaseClientConfig();
 

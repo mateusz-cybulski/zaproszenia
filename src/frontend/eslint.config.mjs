@@ -7,8 +7,7 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    // Correctness only (unknown, conflicting, concatenated, duplicate, deprecated classes).
-    // Class order and wrapping are Prettier's job (prettier-plugin-tailwindcss).
+    // Class order and wrapping are left to prettier-plugin-tailwindcss.
     files: ["**/*.{ts,tsx}"],
     ...betterTailwindcss.configs["correctness-error"],
     settings: {

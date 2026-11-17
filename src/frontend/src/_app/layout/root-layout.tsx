@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { cn } from "@/shared/lib/css";
+import { themeScript } from "@/shared/lib/theme";
 
 import "../styles/globals.css";
 
@@ -15,7 +16,15 @@ export const metadata: Metadata = {
 
 export function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pl" className={cn("font-sans antialiased", geist.variable)}>
+    // The theme script sets the "dark" class before React hydrates.
+    <html
+      lang="pl"
+      className={cn("font-sans antialiased", geist.variable)}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

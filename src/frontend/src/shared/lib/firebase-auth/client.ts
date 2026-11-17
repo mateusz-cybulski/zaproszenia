@@ -3,17 +3,12 @@ import { type Auth, getAuth, inMemoryPersistence, initializeAuth } from "firebas
 
 import type { FirebaseClientConfig } from "@/shared/config";
 
-/**
- * Identity Platform in the browser (client components only). The SDK keeps no session of its
- * own (in-memory only): right after sign-in the ID token goes to the server, which keeps the
- * session in an httpOnly cookie.
- */
+// In-memory only: the server keeps the session in an httpOnly cookie.
 export function clientAuth(config: FirebaseClientConfig): Auth {
   if (getApps().length) {
     return getAuth(getApp());
   }
   const auth = initializeAuth(initializeApp(config), { persistence: inMemoryPersistence });
-  // Emails (address confirmation) and the page that handles their links in Polish.
   auth.languageCode = "pl";
   return auth;
 }
@@ -39,7 +34,6 @@ export function authErrorMessage(error: unknown): string {
   return "Coś poszło nie tak. Spróbuj ponownie.";
 }
 
-/** Where the link in a confirmation email leads after the address is confirmed. */
 export function continueUrl(path: string): { url: string } {
   return { url: new URL(path, window.location.origin).toString() };
 }

@@ -17,7 +17,6 @@ pre-commit:
         git diff --cached --name-only --relative -- src | grep -q . || exit 0
         npx --no-install steiger ./src
 
-    # Whole-project type check catches cross-file breakage (removed export, deleted file).
     # No `glob`: lefthook drops deleted files from its lists, so filter with git diff instead.
     - name: frontend-typecheck
       root: src/frontend/

@@ -19,10 +19,7 @@ class Base(DeclarativeBase):
 
 
 def str_enum[E: enum.StrEnum](enum_cls: type[E]) -> Enum:
-    """Enum stored as plain text with the members' values (not names).
-
-    Adding a value then needs no Postgres type migration.
-    """
+    # Plain text instead of a Postgres enum type: adding a value needs no type migration.
     return Enum(
         enum_cls,
         native_enum=False,
@@ -41,9 +38,7 @@ class TimestampMixin:
 
 
 class AddressMixin:
-    """Postal address; every part is optional until something is actually sent by post."""
-
     street: Mapped[str | None] = mapped_column(String(300))
     postal_code: Mapped[str | None] = mapped_column(String(20))
     city: Mapped[str | None] = mapped_column(String(200))
-    country: Mapped[str] = mapped_column(String(2), default="PL")  # ISO 3166-1 alpha-2
+    country: Mapped[str] = mapped_column(String(2), default="PL")

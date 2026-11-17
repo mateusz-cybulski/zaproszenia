@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/sha
 
 type ErrorPageProps = {
   error: unknown;
-  /** Re-fetches the failed segment from the server and renders it again. */
   retry: () => void;
 };
 

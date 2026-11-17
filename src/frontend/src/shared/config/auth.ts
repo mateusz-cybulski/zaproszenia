@@ -1,18 +1,10 @@
-/**
- * Sign-in with Google Identity Platform (email and password).
- *
- * Read per request: Cloud Run injects FIREBASE_API_KEY at runtime, not during `next build`.
- * Not server-only, because proxy.ts reads it too; none of it is secret (the browser key is
- * public by design and restricted to this site).
- */
+// Read per request: Cloud Run sets FIREBASE_API_KEY only at runtime. Not server-only because
+// proxy.ts reads it too; the browser key is public by design and restricted to this site.
 export const SESSION_COOKIE = "session";
 
 export type FirebaseClientConfig = { apiKey: string; authDomain: string };
 
-/**
- * Config for the Firebase JS SDK, or null when sign-in is disabled: only in local
- * development, where the API signs every request in as DEV_AUTH_USER.
- */
+// null only in local development, where the API signs every request in as DEV_AUTH_USER.
 export function firebaseClientConfig(): FirebaseClientConfig | null {
   const apiKey = process.env.FIREBASE_API_KEY;
   if (apiKey) {

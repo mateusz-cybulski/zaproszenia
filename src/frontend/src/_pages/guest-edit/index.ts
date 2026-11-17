@@ -1,1 +1,1 @@
-export { GuestEditPage } from "./ui/guest-edit-page";
+export { GuestEditPage, metadata } from "./ui/guest-edit-page";

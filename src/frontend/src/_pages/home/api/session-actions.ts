@@ -10,11 +10,8 @@ export type StartSessionResult = { error: string };
 
 type SessionDto = { session_cookie: string; expires_in: number };
 
-/**
- * Exchanges a fresh Identity Platform ID token for a session cookie (httpOnly), then reloads
- * the home page signed in. Server Actions check that the request comes from this site, so
- * another site cannot sign a visitor into an attacker's account.
- */
+// Server Actions check the request origin, so another site cannot sign a visitor into an
+// attacker's account.
 export async function startSessionAction(idToken: string): Promise<StartSessionResult> {
   if (!firebaseClientConfig()) {
     return { error: "Logowanie jest wyłączone." };
@@ -46,5 +43,5 @@ export async function startSessionAction(idToken: string): Promise<StartSessionR
 
   const session = (await response.json()) as SessionDto;
   await writeSessionCookie(session.session_cookie, session.expires_in);
-  redirect(routes.home());
+  redirect(routes.guests());
 }

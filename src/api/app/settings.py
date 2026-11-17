@@ -10,16 +10,15 @@ from sqlalchemy.exc import ArgumentError
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # postgresql+psycopg://user:password@host:5432/database, or on Cloud Run through the
-    # Cloud SQL socket: postgresql+psycopg://user:password@/database?host=/cloudsql/<instance>
-    # (no host part, which pydantic's PostgresDsn rejects, so it is validated here instead).
+    # Not PostgresDsn: it rejects the Cloud SQL socket form without a host part
+    # (postgresql+psycopg://user:password@/database?host=/cloudsql/<instance>).
     database_url: str
     database_pool_size: int = 5
     database_max_overflow: int = 5
 
-    # How long a sign-in lasts; Identity Platform allows session cookies of up to 14 days.
+    # Identity Platform allows session cookies of up to 14 days.
     session_days: int = Field(default=7, ge=1, le=14)
-    # Local development only: every request is signed in as this email, without Google.
+    # Every request is signed in as this email, without Google (local development only).
     dev_auth_user: str | None = None
 
     @field_validator("dev_auth_user")

@@ -2,8 +2,6 @@ from pydantic import BaseModel
 
 
 class AuthUser(BaseModel):
-    """The signed-in user, from an Identity Platform session."""
-
     uid: str
     email: str | None
 
