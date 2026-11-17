@@ -3,7 +3,7 @@ name: platform
 description: "Use whenever you add, rename, remove or configure a component under src/, write a Dockerfile, compose.yml, service.json or lefthook.yml for one, read another service's URL, set environment variables or GCP permissions for a service, or wonder how code gets deployed. Describes this repo's platform: each src/<name> with a Dockerfile is a Cloud Run service on its own subdomain, deployed by Terraform from GitHub Actions; local dev runs through docker compose and mise."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Platform: how components become services
@@ -78,8 +78,29 @@ Optional per-service overrides, merged over these defaults:
 
 ## 7. Local development
 
-- `mise run dev` = `docker compose up --build` over `.config/docker-compose.yml`, which only `include:`s each `src/<name>/compose.yml`.
-- A component's `compose.yml` uses `Dockerfile.dev`, `platform: linux/amd64` (section 3), mounts the source for hot reload and keeps dependency folders in anonymous volumes. Paths in it are relative to the component folder.
+- `mise run dev` = `docker compose up --build --watch` over `.config/docker-compose.yml`, which only `include:`s each `src/<name>/compose.yml`.
+- A component's `compose.yml` uses `Dockerfile.dev` and `platform: linux/amd64` (section 3). Paths in it are relative to the component folder.
+- **Compose Watch, not bind mounts, for source code.** Each service declares `develop.watch`:
+  - `sync` of the component folder to the container's workdir: the dev server's own reload (Next HMR, uvicorn `--reload`) picks the copied files up;
+  - `rebuild` on the dependency manifests and lockfiles (`package.json`, `package-lock.json`, `pyproject.toml`, `uv.lock`): dependencies are installed in the image and nowhere else;
+  - `rebuild` of a one-shot service whose input changes (e.g. a migrations service on `migrations/`), so new migrations apply without restarting the stack.
+
+  Do not mount the source (`.:/app`) or keep dependency folders in anonymous volumes (`/app/node_modules`, `/venv`): compose reuses anonymous volumes across rebuilds, so after a dependency change the container keeps the old packages until `docker compose up -V`.
+- Watch skips everything in the component's `.dockerignore` (dependency folders, build caches, and `Dockerfile*`, so a `Dockerfile.dev` change needs a manual `docker compose up --build`).
+
+```yaml
+# src/<name>/compose.yml (Next.js; for uvicorn watch pyproject.toml and uv.lock instead)
+services:
+  web:
+    build: { context: ., dockerfile: Dockerfile.dev }
+    platform: linux/amd64
+    ports: ["3000:3000"]
+    develop:
+      watch:
+        - { action: sync, path: ., target: /app }
+        - { action: rebuild, path: package.json }
+        - { action: rebuild, path: package-lock.json }
+```
 - Local ports differ from production (e.g. Next on 3000, uvicorn on 8000). Set the `<NAME>_URL` variables a service needs locally in its `compose.yml` `environment`, pointing at `http://<service>:<port>` inside the compose network or `http://localhost:<port>` for the browser.
 - Google credentials locally: mount `${HOME}/.config/gcloud:/gcloud:ro` and set `GOOGLE_APPLICATION_CREDENTIALS=/gcloud/application_default_credentials.json` and `GOOGLE_CLOUD_PROJECT` in `compose.yml`.
 - Tools: each component's `mise.toml` pins its runtime (node, python, uv); `mise install --monorepo` installs all of them. Repo-wide tools (terraform, lefthook, gum) are in the root `mise.toml`.

@@ -17,18 +17,13 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from firebase_admin import auth as firebase_auth
 from firebase_admin import exceptions as firebase_exceptions
-from pydantic import BaseModel
 
+from app.schemas.auth import AuthUser
 from app.settings import Settings, get_settings
 
 # An ID token starts a session only right after sign-in, so an older stolen token cannot
 # (Google's recommendation for session cookies).
 MAX_SIGN_IN_AGE_SECONDS = 5 * 60
-
-
-class AuthUser(BaseModel):
-    uid: str
-    email: str | None
 
 
 class InvalidCredentialsError(Exception):

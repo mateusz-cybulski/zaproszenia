@@ -3,8 +3,8 @@ from sqlalchemy import select
 
 from app.auth import CurrentUser
 from app.db import Session
-from app.models import Guest
-from app.schemas import GuestRead, GuestWrite
+from app.models import Guest, VerificationStatus
+from app.schemas.guests import DATA_FIELDS, DECLINED_FIELDS, GuestRead, GuestWrite
 
 router = APIRouter(prefix="/guests", tags=["guests"])
 
@@ -19,7 +19,7 @@ async def _own_guest(session: Session, guest_id: int, owner_uid: str) -> Guest:
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_guest(payload: GuestWrite, session: Session, user: CurrentUser) -> GuestRead:
-    guest = Guest(owner_uid=user.uid, name=payload.name, email=payload.email)
+    guest = Guest(owner_uid=user.uid, **payload.model_dump())
     async with session.begin():
         session.add(guest)
     await session.refresh(guest)
@@ -45,6 +45,17 @@ async def replace_guest(
 ) -> GuestRead:
     async with session.begin():
         guest = await _own_guest(session, guest_id, user.uid)
-        guest.name = payload.name
-        guest.email = payload.email
+        changes = payload.model_dump()
+        changed = {field for field, value in changes.items() if getattr(guest, field) != value}
+        for field, value in changes.items():
+            setattr(guest, field, value)
+        # The old name's declension does not fit a new one.
+        if changed & set(DECLINED_FIELDS):
+            guest.declension = None
+        # Only an actual change invalidates the verification (saving unchanged data does not).
+        if changed & set(DATA_FIELDS):
+            guest.verification_status = VerificationStatus.PENDING
+            guest.verification_result = None
+            guest.verified_at = None
+    await session.refresh(guest)  # updated_at is set by the database
     return GuestRead.model_validate(guest)

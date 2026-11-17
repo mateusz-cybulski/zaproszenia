@@ -3,7 +3,7 @@ name: python-tooling
 description: "Use when creating, configuring or changing a Python component in this repo (src/<name> with pyproject.toml): Python 3.14, uv (dependencies, lockfile, uv run), ruff (lint and format), mypy strict with the Pydantic plugin, pytest, the component's mise.toml, lefthook hooks, Dockerfile and Dockerfile.dev for Cloud Run. Also use when adding or upgrading a Python dependency, fixing ruff/mypy/pytest failures, or writing Python code that must pass them."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   python: "3.14"
 ---
 
@@ -205,7 +205,7 @@ CMD exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT}" --proxy-headers --
 - `--proxy-headers --forwarded-allow-ips="*"`: Cloud Run terminates TLS; without them `request.url` and redirects use `http://`.
 - `.dockerignore`: `.venv`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.git`, `Dockerfile*`, `.env*`, `tests/`. Use `.dockerignore`, not `Dockerfile.dockerignore` (Terraform ignores the latter).
 
-`Dockerfile.dev` for compose (source mounted, reload):
+`Dockerfile.dev` for compose (source synced by Compose Watch, reload; see `platform`):
 
 ```dockerfile
 FROM python:3.14-slim
@@ -219,7 +219,7 @@ RUN uv sync --locked
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 ```
 
-`UV_PROJECT_ENVIRONMENT=/venv` keeps the virtualenv outside `/app`, so mounting the source over `/app` does not hide it.
+`UV_PROJECT_ENVIRONMENT=/venv` keeps the virtualenv outside `/app`, so syncing the source into `/app` never touches it. In `compose.yml`, `develop.watch` syncs `.` to `/app` and rebuilds on `pyproject.toml` and `uv.lock`; do not mount the source or keep `/venv` in an anonymous volume (it would survive rebuilds with old packages).
 
 ## 9. Before finishing
 

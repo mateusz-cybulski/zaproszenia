@@ -10,8 +10,9 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from testcontainers.community.postgres import PostgresContainer
 
-from app.auth import AuthUser, EmailNotVerifiedError, InvalidCredentialsError, get_identity
+from app.auth import EmailNotVerifiedError, InvalidCredentialsError, get_identity
 from app.main import app
+from app.schemas.auth import AuthUser
 from app.settings import get_settings
 
 API_ROOT = Path(__file__).parent.parent

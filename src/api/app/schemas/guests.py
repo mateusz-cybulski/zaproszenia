@@ -1,0 +1,83 @@
+from datetime import datetime
+from typing import Annotated, Literal, Self
+
+from pydantic import BaseModel, Field, model_validator
+
+from app.models import VerificationStatus
+from app.schemas.common import AddressRead, AddressWrite, Text300
+
+# Grammatical cases (Morfeusz tag names). The nominative is simply the value as entered.
+ObliqueCase = Literal["gen", "dat", "acc", "inst", "loc", "voc"]
+Forms = dict[ObliqueCase, Annotated[str, Field(min_length=1, max_length=300)]]
+
+# Fields whose change invalidates the previous verification.
+DATA_FIELDS = (
+    "full_name",
+    "position",
+    "institution",
+    "salutation",
+    "street",
+    "postal_code",
+    "city",
+    "country",
+)
+# Fields that are declined by case.
+DECLINED_FIELDS = ("full_name", "position", "institution")
+
+RECIPIENT_REQUIRED = "Podaj imię i nazwisko albo instytucję (np. redakcję zapraszaną jako całość)."
+
+
+class Declension(BaseModel):
+    """A guest's data declined by case (without the nominative)."""
+
+    full_name: Forms = Field(default_factory=dict)
+    position: Forms = Field(default_factory=dict)
+    institution: Forms = Field(default_factory=dict)
+
+
+class FieldCheck(BaseModel):
+    status: Literal["ok", "warning", "error"]
+    suggestion: str | None = None
+    explanation: str
+
+
+class VerificationResult(BaseModel):
+    checked_at: datetime
+    model: str | None = None
+    fields: dict[str, FieldCheck] = Field(default_factory=dict)
+    salutation: str | None = None
+    salutation_explanation: str | None = None
+    declension: Declension | None = None
+    rule_issues: list[str] = Field(default_factory=list)
+    summary: str | None = None
+    error: str | None = None
+
+
+class GuestWrite(AddressWrite):
+    """Body for creating a guest and for replacing one (PUT)."""
+
+    # No full name means the whole institution is invited, not a particular person.
+    full_name: Text300 = None
+    position: Text300 = None
+    institution: Text300 = None
+    salutation: Text300 = None
+
+    @model_validator(mode="after")
+    def _require_recipient(self) -> Self:
+        if self.full_name is None and self.institution is None:
+            raise ValueError(RECIPIENT_REQUIRED)
+        return self
+
+
+class GuestRead(AddressRead):
+    id: int
+    full_name: str | None
+    position: str | None
+    institution: str | None
+    salutation: str | None
+    declension: Declension | None
+    verification_status: VerificationStatus
+    verification_result: VerificationResult | None
+    verified_at: datetime | None
+    created_at: datetime
+    updated_at: datetime

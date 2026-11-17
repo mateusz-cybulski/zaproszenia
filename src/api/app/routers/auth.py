@@ -1,10 +1,8 @@
 from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
 
 from app.auth import (
-    AuthUser,
     CurrentUser,
     EmailNotVerifiedError,
     IdentityDep,
@@ -12,18 +10,10 @@ from app.auth import (
     InvalidCredentialsError,
     SettingsDep,
 )
+from app.schemas.auth import AuthUser, SessionCreate, SessionRead
 
 # Called only by the frontend server, which keeps the session cookie away from the browser's JS.
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-
-class SessionCreate(BaseModel):
-    id_token: str
-
-
-class SessionRead(BaseModel):
-    session_cookie: str
-    expires_in: int  # seconds
 
 
 @router.post("/session")
