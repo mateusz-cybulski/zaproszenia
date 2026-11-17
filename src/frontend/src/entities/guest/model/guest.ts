@@ -1,3 +1,5 @@
+import { countryName } from "@/shared/config";
+
 export type VerificationStatus =
   "pending" | "verified_ai" | "verified_manual" | "needs_review" | "failed";
 
@@ -33,6 +35,6 @@ export function recipientName(guest: Pick<Guest, "fullName" | "institution">): s
 
 export function formatAddress(address: Address): string {
   const place = [address.postalCode, address.city].filter(Boolean).join(" ");
-  const country = address.country === "PL" ? null : address.country;
+  const country = address.country === "PL" ? null : countryName(address.country);
   return [address.street, place, country].filter(Boolean).join(", ");
 }

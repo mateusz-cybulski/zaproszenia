@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { Guest } from "@/entities/guest";
+import { countryCodes } from "@/shared/config";
 
 function optionalText(max: number) {
   return z
@@ -34,11 +35,7 @@ export const guestFormSchema = z
     street: optionalText(300),
     postalCode: optionalText(20),
     city: optionalText(200),
-    country: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .regex(/^[A-Z]{2}$/, "Dwuliterowy kod kraju, np. PL."),
+    country: z.string().refine((code) => countryCodes.includes(code), "Wybierz kraj z listy."),
   })
   .refine((guest) => guest.fullName !== null || guest.institution !== null, {
     message: RECIPIENT_REQUIRED,
