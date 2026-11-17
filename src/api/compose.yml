@@ -6,6 +6,8 @@ x-api: &api
   platform: linux/amd64
   environment:
     DATABASE_URL: postgresql+psycopg://api:api@api-db:5432/api
+    # No Identity Platform locally: every request is signed in as this user.
+    DEV_AUTH_USER: dev@localhost
   volumes:
     - .:/app
     - /venv

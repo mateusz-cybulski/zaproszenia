@@ -5,6 +5,7 @@ requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.20.1",
     "fastapi>=0.162.5",
+    "firebase-admin>=7.8.0",
     "psycopg[binary]>=3.3.9",
     "pydantic-settings>=2.16.2",
     "sqlalchemy[asyncio]>=2.1.8",
@@ -46,3 +47,7 @@ pythonpath = ["."]
 addopts = ["-ra", "--strict-markers", "--strict-config"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+
+[[tool.mypy.overrides]]
+module = ["firebase_admin", "firebase_admin.*"]
+ignore_missing_imports = true

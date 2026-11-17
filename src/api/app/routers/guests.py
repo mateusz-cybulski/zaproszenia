@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 
+from app.auth import current_user
 from app.db import Session
 from app.models import Guest
 from app.schemas import GuestRead, GuestWrite
 
-router = APIRouter(prefix="/guests", tags=["guests"])
+router = APIRouter(prefix="/guests", tags=["guests"], dependencies=[Depends(current_user)])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

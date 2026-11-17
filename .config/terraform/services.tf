@@ -146,7 +146,7 @@ resource "google_cloud_run_v2_service" "service" {
       }
 
       dynamic "env" {
-        for_each = merge(local.common_env, each.value.env)
+        for_each = merge(local.common_env, each.key == "frontend" ? local.auth_env : {}, each.value.env)
         content {
           name  = env.key
           value = env.value
