@@ -35,11 +35,11 @@ export function GuestForm({ guest }: GuestFormProps) {
 
   return (
     <form action={formAction} className="grid gap-6" noValidate>
-      <div className="grid gap-4 sm:grid-cols-2">{recipientFields.map(renderField)}</div>
+      <div className="grid grid-cols-2 gap-4">{recipientFields.map(renderField)}</div>
 
       <fieldset className="grid gap-4">
         <legend className="mb-4 text-sm font-medium">Adres pocztowy (opcjonalnie)</legend>
-        <div className="grid gap-4 sm:grid-cols-2">{addressFields.map(renderField)}</div>
+        <div className="grid grid-cols-2 gap-4">{addressFields.map(renderField)}</div>
       </fieldset>
 
       <div className="flex items-center gap-3">

@@ -14,26 +14,23 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const viewer = await requireViewer();
 
   return (
-    <div className="md:grid md:min-h-dvh md:grid-cols-[15rem_minmax(0,1fr)]">
-      <aside className="flex flex-col gap-4 border-b border-sidebar-border bg-sidebar p-3 text-sidebar-foreground md:sticky md:top-0 md:h-dvh md:border-r md:border-b-0 md:p-4">
+    <div className="grid min-h-dvh grid-cols-[15rem_minmax(0,1fr)]">
+      <aside className="sticky top-0 flex h-dvh flex-col gap-4 border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground">
         <Link href={routes.guests()} className="px-3 text-lg font-semibold tracking-tight">
           Zaproszenia
         </Link>
         <SidebarNav />
-        <div className="flex flex-wrap items-center gap-3 px-3 md:mt-auto md:flex-col md:items-stretch md:border-t md:border-sidebar-border md:pt-4">
+        <div className="mt-auto grid gap-3 border-t border-sidebar-border px-3 pt-4">
           {viewer.email && (
-            <p
-              className="min-w-0 flex-1 truncate text-sm text-muted-foreground"
-              title={viewer.email}
-            >
+            <p className="truncate text-sm text-muted-foreground" title={viewer.email}>
               {viewer.email}
             </p>
           )}
-          <ThemeSwitcher className="w-28 md:w-full" />
+          <ThemeSwitcher />
           <LogoutButton />
         </div>
       </aside>
-      <main className="min-w-0 p-4 sm:p-8">{children}</main>
+      <main className="min-w-0 p-8">{children}</main>
     </div>
   );
 }
