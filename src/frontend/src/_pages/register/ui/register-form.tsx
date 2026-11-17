@@ -1,67 +1,18 @@
 "use client";
 
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from "firebase/auth";
-import Link from "next/link";
-import { type FormEvent, useState, useTransition } from "react";
-
 import type { FirebaseClientConfig } from "@/shared/config";
-import { authErrorMessage, clientAuth, continueUrl } from "@/shared/lib/firebase-auth";
-import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 
-const MIN_PASSWORD_LENGTH = 8;
+import { MIN_PASSWORD_LENGTH, useRegister } from "../model/use-register";
+import { RegistrationSent } from "./registration-sent";
 
 export function RegisterForm({ config }: { config: FirebaseClientConfig }) {
-  const [error, setError] = useState<string | null>(null);
-  const [sentTo, setSentTo] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "");
-    const password = String(form.get("password") ?? "");
-    const repeated = String(form.get("password-repeat") ?? "");
-    setError(null);
-
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Hasło musi mieć co najmniej ${MIN_PASSWORD_LENGTH} znaków.`);
-      return;
-    }
-    if (password !== repeated) {
-      setError("Hasła różnią się.");
-      return;
-    }
-
-    startTransition(async () => {
-      const auth = clientAuth(config);
-      try {
-        const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        // Sign-in needs a confirmed address; the link brings the user back to sign in.
-        await sendEmailVerification(user, continueUrl(routes.homeVerified()));
-        await signOut(auth);
-        setSentTo(email);
-      } catch (signUpError) {
-        setError(authErrorMessage(signUpError));
-      }
-    });
-  }
+  const { error, sentTo, pending, submit } = useRegister(config);
 
   if (sentTo) {
-    return (
-      <div role="status" className="grid gap-4 text-sm">
-        <p>
-          Konto założone. Wysłaliśmy link potwierdzający na <strong>{sentTo}</strong>. Kliknij go, a
-          potem zaloguj się.
-        </p>
-        <p className="text-muted-foreground">Nie widzisz wiadomości? Sprawdź folder ze spamem.</p>
-        <Button asChild size="lg" className="w-full">
-          <Link href={routes.home()}>Przejdź do logowania</Link>
-        </Button>
-      </div>
-    );
+    return <RegistrationSent email={sentTo} />;
   }
 
   const describedBy = error ? "register-error" : "register-password-hint";

@@ -1,3 +1,4 @@
 export { GuestTable } from "./ui/guest-table";
-export { formatAddress, recipientName, verificationStatusLabels } from "./model/guest";
+export { verificationStatusLabels } from "./config/verification-status";
+export { formatAddress, recipientName } from "./model/guest";
 export type { Address, Guest, GuestInput, VerificationStatus } from "./model/guest";

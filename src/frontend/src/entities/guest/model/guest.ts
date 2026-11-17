@@ -5,13 +5,11 @@ export type Address = {
   street: string | null;
   postalCode: string | null;
   city: string | null;
-  /** ISO 3166-1 alpha-2, e.g. "PL". */
   country: string;
 };
 
 export type Guest = Address & {
   id: number;
-  /** Empty when the whole institution is invited rather than a person. */
   fullName: string | null;
   position: string | null;
   institution: string | null;
@@ -29,22 +27,12 @@ export type GuestInput = Address & {
   salutation: string | null;
 };
 
-/** Who is invited: the person, or the whole institution without one. */
 export function recipientName(guest: Pick<Guest, "fullName" | "institution">): string {
   return guest.fullName ?? guest.institution ?? "";
 }
 
-/** One-line postal address, e.g. "ul. Długa 1, 00-001 Warszawa"; the country only when not Poland. */
 export function formatAddress(address: Address): string {
   const place = [address.postalCode, address.city].filter(Boolean).join(" ");
   const country = address.country === "PL" ? null : address.country;
   return [address.street, place, country].filter(Boolean).join(", ");
 }
-
-export const verificationStatusLabels: Record<VerificationStatus, string> = {
-  pending: "Do weryfikacji",
-  verified_ai: "Zweryfikowany (AI)",
-  verified_manual: "Zweryfikowany",
-  needs_review: "Wymaga przejrzenia",
-  failed: "Błąd weryfikacji",
-};
