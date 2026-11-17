@@ -72,6 +72,8 @@ variable "GCP_SERVICES_TO_ENABLE" {
     "artifactregistry.googleapis.com",
     "secretmanager.googleapis.com",
     "aiplatform.googleapis.com",
+    "identitytoolkit.googleapis.com",
+    "apikeys.googleapis.com",
   ]
 }
 

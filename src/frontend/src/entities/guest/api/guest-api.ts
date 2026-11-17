@@ -1,6 +1,8 @@
 import "server-only";
 
-import { apiUrl } from "@/shared/config/index.server";
+import { unstable_rethrow } from "next/navigation";
+
+import { apiFetch } from "@/shared/api/index.server";
 
 import type { Guest, GuestInput } from "../model/guest";
 
@@ -18,16 +20,8 @@ function toGuest(dto: GuestDto): Guest {
   return { id: dto.id, name: dto.name, email: dto.email, createdAt: dto.created_at };
 }
 
-async function request(path: string, init?: RequestInit): Promise<Response> {
-  return fetch(`${apiUrl()}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-    cache: "no-store",
-  });
-}
-
 export async function getGuests(): Promise<Guest[]> {
-  const response = await request("/guests");
+  const response = await apiFetch("/guests");
   if (!response.ok) {
     throw new Error(`GET /guests failed with ${response.status}`);
   }
@@ -36,7 +30,7 @@ export async function getGuests(): Promise<Guest[]> {
 }
 
 export async function getGuest(id: number): Promise<Guest | null> {
-  const response = await request(`/guests/${id}`);
+  const response = await apiFetch(`/guests/${id}`);
   if (response.status === 404) {
     return null;
   }
@@ -53,8 +47,10 @@ async function save(
 ): Promise<SaveGuestResult> {
   let response: Response;
   try {
-    response = await request(path, { method, body: JSON.stringify(input) });
-  } catch {
+    response = await apiFetch(path, { method, body: JSON.stringify(input) });
+  } catch (error) {
+    // An expired session redirects to sign-in; only network failures are "unavailable".
+    unstable_rethrow(error);
     return { ok: false, reason: "unavailable" };
   }
   if (response.ok) {
