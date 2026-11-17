@@ -13,7 +13,7 @@ export function ErrorPage({ error, retry }: ErrorPageProps) {
   const digest = error instanceof Error && "digest" in error ? String(error.digest) : undefined;
 
   return (
-    <main className="mx-auto grid w-full max-w-3xl gap-6 p-4 sm:p-8">
+    <main className="mx-auto grid w-full max-w-3xl gap-6 p-8">
       <Card>
         <CardHeader>
           <CardTitle>
