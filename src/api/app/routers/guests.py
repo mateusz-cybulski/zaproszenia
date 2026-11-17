@@ -1,17 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
-from app.auth import current_user
+from app.auth import CurrentUser
 from app.db import Session
 from app.models import Guest
 from app.schemas import GuestRead, GuestWrite
 
-router = APIRouter(prefix="/guests", tags=["guests"], dependencies=[Depends(current_user)])
+router = APIRouter(prefix="/guests", tags=["guests"])
+
+
+async def _own_guest(session: Session, guest_id: int, owner_uid: str) -> Guest:
+    # Someone else's guest looks exactly like a missing one: no hint that the id exists.
+    guest = await session.get(Guest, guest_id)
+    if guest is None or guest.owner_uid != owner_uid:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Guest not found")
+    return guest
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def create_guest(payload: GuestWrite, session: Session) -> GuestRead:
-    guest = Guest(name=payload.name, email=payload.email)
+async def create_guest(payload: GuestWrite, session: Session, user: CurrentUser) -> GuestRead:
+    guest = Guest(owner_uid=user.uid, name=payload.name, email=payload.email)
     async with session.begin():
         session.add(guest)
     await session.refresh(guest)
@@ -19,25 +27,24 @@ async def create_guest(payload: GuestWrite, session: Session) -> GuestRead:
 
 
 @router.get("")
-async def list_guests(session: Session) -> list[GuestRead]:
-    guests = await session.scalars(select(Guest).order_by(Guest.id))
+async def list_guests(session: Session, user: CurrentUser) -> list[GuestRead]:
+    guests = await session.scalars(
+        select(Guest).where(Guest.owner_uid == user.uid).order_by(Guest.id)
+    )
     return [GuestRead.model_validate(guest) for guest in guests]
 
 
 @router.get("/{guest_id}")
-async def get_guest(guest_id: int, session: Session) -> GuestRead:
-    guest = await session.get(Guest, guest_id)
-    if guest is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Guest not found")
-    return GuestRead.model_validate(guest)
+async def get_guest(guest_id: int, session: Session, user: CurrentUser) -> GuestRead:
+    return GuestRead.model_validate(await _own_guest(session, guest_id, user.uid))
 
 
 @router.put("/{guest_id}")
-async def replace_guest(guest_id: int, payload: GuestWrite, session: Session) -> GuestRead:
+async def replace_guest(
+    guest_id: int, payload: GuestWrite, session: Session, user: CurrentUser
+) -> GuestRead:
     async with session.begin():
-        guest = await session.get(Guest, guest_id)
-        if guest is None:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Guest not found")
+        guest = await _own_guest(session, guest_id, user.uid)
         guest.name = payload.name
         guest.email = payload.email
     return GuestRead.model_validate(guest)

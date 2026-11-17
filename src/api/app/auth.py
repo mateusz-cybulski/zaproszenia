@@ -35,6 +35,10 @@ class InvalidCredentialsError(Exception):
     """Bad, expired or revoked token or cookie, or a disabled or deleted account."""
 
 
+class EmailNotVerifiedError(Exception):
+    """The account exists, but its email address has not been confirmed yet."""
+
+
 class IdentityUnavailableError(Exception):
     """Identity Platform could not be reached."""
 
@@ -61,6 +65,9 @@ class FirebaseIdentity:
     async def create_session(self, id_token: str, expires_in: timedelta) -> str:
         def create() -> str:
             claims = firebase_auth.verify_id_token(id_token, app=self._app, check_revoked=True)
+            # Self sign-up is open, so an address must be proven before it gets a session.
+            if not claims.get("email_verified"):
+                raise EmailNotVerifiedError("email address is not verified")
             if time.time() - claims["auth_time"] > MAX_SIGN_IN_AGE_SECONDS:
                 raise InvalidCredentialsError("sign-in is too old to start a session")
             cookie = firebase_auth.create_session_cookie(

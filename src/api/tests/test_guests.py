@@ -1,5 +1,7 @@
 from httpx import AsyncClient
 
+from tests.conftest import OTHER_SESSION_COOKIE
+
 
 async def test_create_and_read_guest(client: AsyncClient) -> None:
     created = await client.post(
@@ -55,3 +57,14 @@ async def test_rejects_invalid_guest(client: AsyncClient) -> None:
     response = await client.post("/guests", json={"name": "", "email": "not-an-email"})
 
     assert response.status_code == 422
+
+
+async def test_guests_are_private_to_their_owner(client: AsyncClient) -> None:
+    created = (await client.post("/guests", json={"name": "Jan"})).json()
+    other = {"Authorization": f"Bearer {OTHER_SESSION_COOKIE}"}
+
+    assert (await client.get("/guests", headers=other)).json() == []
+    assert (await client.get(f"/guests/{created['id']}", headers=other)).status_code == 404
+    replaced = await client.put(f"/guests/{created['id']}", json={"name": "X"}, headers=other)
+    assert replaced.status_code == 404
+    assert (await client.get(f"/guests/{created['id']}")).json() == created

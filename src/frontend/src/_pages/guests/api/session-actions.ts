@@ -34,6 +34,9 @@ export async function startSessionAction(idToken: string): Promise<StartSessionR
     unstable_rethrow(error);
     return { error: "Nie udało się połączyć z serwerem. Spróbuj ponownie." };
   }
+  if (response.status === 403) {
+    return { error: "Najpierw potwierdź adres e-mail linkiem z wiadomości." };
+  }
   if (response.status === 401) {
     return { error: "Logowanie wygasło. Zaloguj się ponownie." };
   }

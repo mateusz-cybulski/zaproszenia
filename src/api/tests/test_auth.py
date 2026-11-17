@@ -5,7 +5,13 @@ from httpx import AsyncClient
 from pydantic import ValidationError
 
 from app.settings import Settings, get_settings
-from tests.conftest import SESSION_COOKIE, USER, VALID_ID_TOKEN, FakeIdentity
+from tests.conftest import (
+    SESSION_COOKIE,
+    UNVERIFIED_ID_TOKEN,
+    USER,
+    VALID_ID_TOKEN,
+    FakeIdentity,
+)
 
 
 async def test_exchanges_id_token_for_session_cookie(
@@ -22,6 +28,12 @@ async def test_rejects_invalid_id_token(anonymous_client: AsyncClient) -> None:
     response = await anonymous_client.post("/auth/session", json={"id_token": "forged"})
 
     assert response.status_code == 401
+
+
+async def test_requires_verified_email(anonymous_client: AsyncClient) -> None:
+    response = await anonymous_client.post("/auth/session", json={"id_token": UNVERIFIED_ID_TOKEN})
+
+    assert response.status_code == 403
 
 
 async def test_me_returns_signed_in_user(client: AsyncClient) -> None:
