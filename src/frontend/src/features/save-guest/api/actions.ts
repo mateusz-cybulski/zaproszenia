@@ -7,7 +7,12 @@ import { z } from "zod";
 import { createGuest, type SaveGuestResult, updateGuest } from "@/entities/guest/index.server";
 import { routes } from "@/shared/routes";
 
-import { type GuestFormState, guestFormSchema } from "../model/guest-form";
+import {
+  guestFields,
+  type GuestFormState,
+  type GuestFormValues,
+  guestFormSchema,
+} from "../model/guest-form";
 
 const failureMessages: Record<Exclude<SaveGuestResult, { ok: true }>["reason"], string> = {
   "not-found": "Ten gość już nie istnieje.",
@@ -18,11 +23,14 @@ const failureMessages: Record<Exclude<SaveGuestResult, { ok: true }>["reason"], 
 type Validated =
   { ok: true; input: z.output<typeof guestFormSchema> } | { ok: false; state: GuestFormState };
 
+function formValues(formData: FormData): GuestFormValues {
+  return Object.fromEntries(
+    guestFields.map((field) => [field, String(formData.get(field) ?? "")]),
+  ) as GuestFormValues;
+}
+
 function validate(formData: FormData): Validated {
-  const values = {
-    name: String(formData.get("name") ?? ""),
-    email: String(formData.get("email") ?? ""),
-  };
+  const values = formValues(formData);
   const parsed = guestFormSchema.safeParse(values);
   if (parsed.success) {
     return { ok: true, input: parsed.data };
@@ -33,7 +41,7 @@ function validate(formData: FormData): Validated {
     state: {
       status: "error",
       message: "Popraw zaznaczone pola.",
-      fieldErrors: { name: fieldErrors.name?.[0], email: fieldErrors.email?.[0] },
+      fieldErrors: Object.fromEntries(guestFields.map((field) => [field, fieldErrors[field]?.[0]])),
       values,
     },
   };
@@ -47,10 +55,7 @@ function failure(
     status: "error",
     message: failureMessages[result.reason],
     fieldErrors: {},
-    values: {
-      name: String(formData.get("name") ?? ""),
-      email: String(formData.get("email") ?? ""),
-    },
+    values: formValues(formData),
   };
 }
 

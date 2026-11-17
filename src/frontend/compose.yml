@@ -12,7 +12,16 @@ services:
       API_URL: http://api:8000
     depends_on:
       - api
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
+    # `docker compose up --watch` (mise run dev): source changes are copied into the
+    # container, where `next dev` picks them up (HMR). node_modules come from the image, so a
+    # dependency change rebuilds it instead of leaving stale packages in a volume.
+    # Files in .dockerignore (node_modules, .next) are never synced.
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: package-lock.json
