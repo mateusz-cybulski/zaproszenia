@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { requireViewer } from "@/entities/viewer/index.server";
 import { Card, CardContent } from "@/shared/ui/card";
+import { Page } from "@/shared/ui/page";
 
 export const metadata: Metadata = { title: "Ustawienia · Zaproszenia" };
 
@@ -10,8 +11,7 @@ export async function SettingsPage() {
   await requireViewer();
 
   return (
-    <div className="mx-auto grid w-full max-w-3xl gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Ustawienia</h1>
+    <Page title="Ustawienia">
       <Card>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -19,6 +19,6 @@ export async function SettingsPage() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }

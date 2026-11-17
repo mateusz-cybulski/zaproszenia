@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+  --spacing-sidebar: 15rem;
+}
+
 @theme inline {
   --font-sans: var(--font-geist), system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);

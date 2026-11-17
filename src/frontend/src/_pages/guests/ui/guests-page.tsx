@@ -4,6 +4,7 @@ import { GuestTable } from "@/entities/guest";
 import { getGuests } from "@/entities/guest/index.server";
 import { GuestForm } from "@/features/save-guest";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Page } from "@/shared/ui/page";
 
 export const metadata: Metadata = { title: "Goście · Zaproszenia" };
 
@@ -11,9 +12,7 @@ export async function GuestsPage() {
   const guests = await getGuests();
 
   return (
-    <div className="mx-auto grid w-full max-w-3xl gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Goście</h1>
-
+    <Page title="Goście">
       <Card>
         <CardHeader>
           <CardTitle>
@@ -35,6 +34,6 @@ export async function GuestsPage() {
           <GuestTable guests={guests} />
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }

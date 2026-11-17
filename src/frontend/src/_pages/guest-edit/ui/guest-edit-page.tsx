@@ -7,6 +7,7 @@ import { GuestForm } from "@/features/save-guest";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Page } from "@/shared/ui/page";
 
 export const metadata: Metadata = { title: "Edycja gościa · Zaproszenia" };
 
@@ -26,7 +27,7 @@ export async function GuestEditPage({ params }: GuestEditPageProps) {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-3xl gap-6">
+    <Page>
       <div>
         <Button asChild variant="ghost" size="sm">
           <Link href={routes.guests()}>← Wróć do listy</Link>
@@ -43,6 +44,6 @@ export async function GuestEditPage({ params }: GuestEditPageProps) {
           <GuestForm guest={guest} />
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }
