@@ -14,7 +14,7 @@ export function ErrorPage({ error, retry }: ErrorPageProps) {
   const digest = error instanceof Error && "digest" in error ? String(error.digest) : undefined;
 
   return (
-    <main className="p-8">
+    <main className="grid min-h-dvh place-items-center p-8">
       <Page>
         <Card>
           <CardHeader>
