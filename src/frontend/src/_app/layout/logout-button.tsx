@@ -1,6 +1,6 @@
 import { Button } from "@/shared/ui/button";
 
-import { logoutAction } from "../api/logout-action";
+import { logoutAction } from "./logout-action";
 
 export function LogoutButton() {
   return (
