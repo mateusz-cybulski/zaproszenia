@@ -88,7 +88,7 @@ jobs:
       # Migrations run before the new API revision is deployed, so new code always meets
       # the new schema. Old instances keep serving meanwhile: migrations must be
       # backwards compatible (expand now, contract in a later deploy).
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v7
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && hashFiles('src/api/alembic.ini') != ''
         with:
           version: "0.13.7"
