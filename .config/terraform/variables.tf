@@ -16,6 +16,13 @@ variable "GCP_BILLING_ACCOUNT_ID" {
 # Optional variables come from GitHub secrets, where an unset secret is an empty
 # string, so "" is treated the same as not set (see locals in main.tf).
 
+variable "DATABASE_URL" {
+  type        = string
+  description = "PostgreSQL URL for the services (postgresql+psycopg://...), stored in Secret Manager as \"database-url\" (optional, empty = no secret)"
+  default     = ""
+  sensitive   = true
+}
+
 variable "GCP_ORG_ID" {
   type        = string
   description = "GCP organization ID (optional, empty = none)"

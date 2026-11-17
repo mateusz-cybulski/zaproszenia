@@ -1,2 +1,5 @@
 # Local dev stack. Each component ships its own compose.yml; `mise run add` appends it here.
 include:
+  - ../src/api/compose.yml
+  - ../src/frontend/compose.yml
+

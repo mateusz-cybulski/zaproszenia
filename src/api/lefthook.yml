@@ -1,0 +1,23 @@
+pre-commit:
+  jobs:
+    - name: api-ruff
+      root: src/api/
+      glob: "*.py"
+      run: uv run --frozen ruff check {staged_files} && uv run --frozen ruff format --check {staged_files}
+
+    # Whole-project checks: a change in one file can break another.
+    - name: api-mypy
+      root: src/api/
+      run: |
+        git diff --cached --name-only --relative -- . | grep -qE '\.py$|^pyproject\.toml$' || exit 0
+        uv run --frozen mypy .
+
+pre-push:
+  jobs:
+    - name: api-pytest
+      root: src/api/
+      glob: "*.py"
+      # Tests start a throwaway PostgreSQL through testcontainers, so Docker must be running.
+      run: |
+        docker info >/dev/null 2>&1 || { echo "Docker is not running: start Docker Desktop (API tests need PostgreSQL)." >&2; exit 1; }
+        uv run --frozen pytest -q
