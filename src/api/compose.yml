@@ -1,0 +1,49 @@
+# Local dev service, included by .config/docker-compose.yml. Paths are relative to this file.
+x-api: &api
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  platform: linux/amd64
+  environment:
+    DATABASE_URL: postgresql+psycopg://api:api@api-db:5432/api
+  volumes:
+    - .:/app
+    - /venv
+
+services:
+  api:
+    <<: *api
+    ports:
+      - "8000:8000"
+    depends_on:
+      api-migrate:
+        condition: service_completed_successfully
+
+  # Applies migrations once before the API starts, like the Cloud Run job planned for
+  # production. Never inside the API process: instances would race each other.
+  api-migrate:
+    <<: *api
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      api-db:
+        condition: service_healthy
+
+  api-db:
+    image: postgres:18-alpine
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: api
+      POSTGRES_PASSWORD: api
+      POSTGRES_DB: api
+    ports:
+      - "5432:5432"
+    volumes:
+      - api-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U api -d api"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  api-db-data:

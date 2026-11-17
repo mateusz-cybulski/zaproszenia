@@ -1,0 +1,26 @@
+pre-commit:
+  jobs:
+    - name: frontend-eslint
+      root: src/frontend/
+      glob: "*.{js,jsx,mjs,cjs,ts,tsx}"
+      run: npx --no-install eslint --max-warnings=0 {staged_files}
+
+    - name: frontend-prettier
+      root: src/frontend/
+      glob: "*.{js,jsx,mjs,cjs,ts,tsx,css,json,md}"
+      run: npx --no-install prettier --check {staged_files}
+
+    # FSD layer/slice rules span files, so lint the whole src/ when any of it changes.
+    - name: frontend-steiger
+      root: src/frontend/
+      run: |
+        git diff --cached --name-only --relative -- src | grep -q . || exit 0
+        npx --no-install steiger ./src
+
+    # Whole-project type check catches cross-file breakage (removed export, deleted file).
+    # No `glob`: lefthook drops deleted files from its lists, so filter with git diff instead.
+    - name: frontend-typecheck
+      root: src/frontend/
+      run: |
+        git diff --cached --name-only --relative -- . | grep -qE '\.(js|jsx|mjs|cjs|ts|tsx)$' || exit 0
+        npx --no-install tsc --noEmit

@@ -1,0 +1,18 @@
+# Local dev service, included by .config/docker-compose.yml. Paths are relative to this file.
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    platform: linux/amd64
+    ports:
+      - "3000:3000"
+    environment:
+      # Server-side calls go through the compose network; on Cloud Run Terraform sets API_URL.
+      API_URL: http://api:8000
+    depends_on:
+      - api
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
