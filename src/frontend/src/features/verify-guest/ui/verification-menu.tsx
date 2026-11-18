@@ -37,7 +37,7 @@ export function VerificationMenu({ guest }: { guest: Guest }) {
           <VerificationBadge
             status={guest.verificationStatus}
             busy={pending}
-            className="cursor-pointer hover:opacity-80"
+            className="hover:opacity-80"
           />
           {!pending && <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />}
         </DropdownMenuTrigger>
