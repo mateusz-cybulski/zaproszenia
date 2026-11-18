@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { verifyGuestManually } from "@/entities/guest/index.server";
 import { routes } from "@/shared/routes";
 
-import { VERIFICATION_FAILED } from "../config/messages";
+import { VERIFICATION_FAILED } from "../config/verification-messages";
 
 export async function verifyGuestManuallyAction(id: number): Promise<{ error?: string }> {
   if (!(await verifyGuestManually(id))) {

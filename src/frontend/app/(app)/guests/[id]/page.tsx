@@ -1,1 +1,1 @@
-export { GuestEditPage as default, metadata } from "@/_pages/guest-edit";
+export { GuestsEditPage as default, metadata } from "@/_pages/guests";

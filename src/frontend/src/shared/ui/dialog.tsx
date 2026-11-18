@@ -36,7 +36,7 @@ function DialogContent({
       >
         {children}
         <DialogPrimitive.Close asChild>
-          <Button variant="ghost" size="icon-sm" className="absolute top-3 right-3">
+          <Button variant="ghost" size="icon-sm" className="absolute top-4.5 right-4.5">
             <XIcon />
             <span className="sr-only">Zamknij</span>
           </Button>

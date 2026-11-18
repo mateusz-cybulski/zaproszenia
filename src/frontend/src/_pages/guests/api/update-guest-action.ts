@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createGuest } from "@/entities/guest/index.server";
+import { updateGuest } from "@/entities/guest/index.server";
 import { routes } from "@/shared/routes";
 
 import type { GuestFormState } from "../model/guest-form";
 import { saveFailureState, validateGuestForm } from "./validate-guest-form";
 
-export async function createGuestAction(
+export async function updateGuestAction(
+  id: number,
   _previous: GuestFormState,
   formData: FormData,
 ): Promise<GuestFormState> {
@@ -16,10 +17,10 @@ export async function createGuestAction(
   if (!validated.ok) {
     return validated.state;
   }
-  const result = await createGuest(validated.input);
+  const result = await updateGuest(id, validated.input);
   if (!result.ok) {
     return saveFailureState(result, formData);
   }
-  revalidatePath(routes.guests());
+  revalidatePath(routes.guests(), "layout");
   return { status: "success" };
 }
