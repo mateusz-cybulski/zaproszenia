@@ -1,8 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { routes } from "@/shared/routes";
-import { Button } from "@/shared/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
 import { formatAddress, type Guest, recipientName } from "../model/guest";
@@ -12,9 +9,15 @@ type GuestTableProps = {
   guests: Guest[];
   emptyMessage: string;
   renderVerification?: (guest: Guest) => ReactNode;
+  renderActions?: (guest: Guest) => ReactNode;
 };
 
-export function GuestTable({ guests, emptyMessage, renderVerification }: GuestTableProps) {
+export function GuestTable({
+  guests,
+  emptyMessage,
+  renderVerification,
+  renderActions,
+}: GuestTableProps) {
   if (guests.length === 0) {
     return <p className="p-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
   }
@@ -27,9 +30,11 @@ export function GuestTable({ guests, emptyMessage, renderVerification }: GuestTa
           <TableHead>Stanowisko i instytucja</TableHead>
           <TableHead>Adres</TableHead>
           <TableHead>Weryfikacja</TableHead>
-          <TableHead className="text-right">
-            <span className="sr-only">Akcje</span>
-          </TableHead>
+          {renderActions && (
+            <TableHead className="text-right">
+              <span className="sr-only">Akcje</span>
+            </TableHead>
+          )}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -59,13 +64,9 @@ export function GuestTable({ guests, emptyMessage, renderVerification }: GuestTa
                   <VerificationBadge status={guest.verificationStatus} />
                 )}
               </TableCell>
-              <TableCell className="text-right">
-                <Button asChild variant="outline" size="sm">
-                  <Link href={routes.guestEdit(guest.id)}>
-                    Edytuj<span className="sr-only"> {name}</span>
-                  </Link>
-                </Button>
-              </TableCell>
+              {renderActions && (
+                <TableCell className="text-right">{renderActions(guest)}</TableCell>
+              )}
             </TableRow>
           );
         })}

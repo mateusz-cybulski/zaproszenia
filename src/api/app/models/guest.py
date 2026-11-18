@@ -41,6 +41,8 @@ class Guest(TimestampMixin, AddressMixin, Base):
     )
     verification_result: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Set when the guest is moved to the deleted list; NULL for active guests.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     @hybrid_property
     def recipient_name(self) -> str:

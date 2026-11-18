@@ -18,6 +18,7 @@ export type Guest = Address & {
   salutation: string | null;
   verificationStatus: VerificationStatus;
   verifiedAt: string | null;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

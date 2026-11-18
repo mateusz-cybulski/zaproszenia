@@ -12,6 +12,7 @@ export type GuestDto = {
   country: string;
   verification_status: VerificationStatus;
   verified_at: string | null;
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -29,6 +30,7 @@ export function toGuest(dto: GuestDto): Guest {
     country: dto.country,
     verificationStatus: dto.verification_status,
     verifiedAt: dto.verified_at,
+    deletedAt: dto.deleted_at,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
   };
