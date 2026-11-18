@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 
 import { getGuest } from "@/entities/guest/index.server";
 import { GuestForm } from "@/features/save-guest";
+import { VerificationMenu } from "@/features/verify-guest";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Card, CardContent } from "@/shared/ui/card";
 import { Page } from "@/shared/ui/page";
 
 export const metadata: Metadata = { title: "Edycja gościa · Zaproszenia" };
@@ -27,19 +28,18 @@ export async function GuestEditPage({ params }: GuestEditPageProps) {
   }
 
   return (
-    <Page>
-      <div>
-        <Button asChild variant="ghost" size="sm">
-          <Link href={routes.guests()}>← Wróć do listy</Link>
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <h1>Edytuj gościa</h1>
-          </CardTitle>
-        </CardHeader>
+    <Page
+      title="Edytuj gościa"
+      actions={
+        <>
+          <VerificationMenu guest={guest} />
+          <Button asChild variant="outline">
+            <Link href={routes.guests()}>← Wróć do listy</Link>
+          </Button>
+        </>
+      }
+    >
+      <Card className="max-w-3xl">
         <CardContent>
           <GuestForm guest={guest} />
         </CardContent>

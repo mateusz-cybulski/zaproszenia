@@ -56,8 +56,9 @@ function toDto(input: GuestInput) {
   };
 }
 
-export async function getGuests(): Promise<Guest[]> {
-  const response = await apiFetch("/guests");
+export async function getGuests({ search }: { search?: string } = {}): Promise<Guest[]> {
+  const query = search ? `?${new URLSearchParams({ q: search })}` : "";
+  const response = await apiFetch(`/guests${query}`);
   if (!response.ok) {
     throw new Error(`GET /guests failed with ${response.status}`);
   }
@@ -107,4 +108,26 @@ export function createGuest(input: GuestInput): Promise<SaveGuestResult> {
 
 export function updateGuest(id: number, input: GuestInput): Promise<SaveGuestResult> {
   return save(`/guests/${id}`, "PUT", input);
+}
+
+async function post(path: string, body?: unknown): Promise<Response | null> {
+  try {
+    return await apiFetch(path, { method: "POST", body: JSON.stringify(body ?? {}) });
+  } catch (error) {
+    unstable_rethrow(error);
+    return null;
+  }
+}
+
+export async function verifyGuestManually(id: number): Promise<boolean> {
+  const response = await post(`/guests/${id}/verification/manual`);
+  return response?.ok ?? false;
+}
+
+export async function verifyAllGuestsManually(): Promise<number | null> {
+  const response = await post("/guests/verification/manual");
+  if (!response?.ok) {
+    return null;
+  }
+  return ((await response.json()) as { verified: number }).verified;
 }

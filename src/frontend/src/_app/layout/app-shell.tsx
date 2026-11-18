@@ -30,7 +30,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
           <LogoutButton />
         </div>
       </aside>
-      <main className="min-w-0 p-8">{children}</main>
+      <main className="min-w-0">{children}</main>
     </div>
   );
 }

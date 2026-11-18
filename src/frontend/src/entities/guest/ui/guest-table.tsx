@@ -1,15 +1,22 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
-import { verificationStatusLabels } from "../config/verification-status";
 import { formatAddress, type Guest, recipientName } from "../model/guest";
+import { VerificationBadge } from "./verification-badge";
 
-export function GuestTable({ guests }: { guests: Guest[] }) {
+type GuestTableProps = {
+  guests: Guest[];
+  emptyMessage: string;
+  renderVerification?: (guest: Guest) => ReactNode;
+};
+
+export function GuestTable({ guests, emptyMessage, renderVerification }: GuestTableProps) {
   if (guests.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nie dodano jeszcze żadnych gości.</p>;
+    return <p className="p-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
   }
 
   return (
@@ -45,8 +52,12 @@ export function GuestTable({ guests }: { guests: Guest[] }) {
               </TableCell>
               <TableCell className="text-muted-foreground">{affiliation || "—"}</TableCell>
               <TableCell className="text-muted-foreground">{address || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">
-                {verificationStatusLabels[guest.verificationStatus]}
+              <TableCell>
+                {renderVerification ? (
+                  renderVerification(guest)
+                ) : (
+                  <VerificationBadge status={guest.verificationStatus} />
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <Button asChild variant="outline" size="sm">

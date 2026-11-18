@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 
 import type { Guest } from "@/entities/guest";
 import { Button } from "@/shared/ui/button";
@@ -12,15 +12,22 @@ import { GuestFormField } from "./guest-form-field";
 
 type GuestFormProps = {
   guest?: Guest;
+  onCreated?: () => void;
 };
 
-export function GuestForm({ guest }: GuestFormProps) {
+export function GuestForm({ guest, onCreated }: GuestFormProps) {
   const action = guest ? updateGuestAction.bind(null, guest.id) : createGuestAction;
   const [state, formAction, pending] = useActionState(action, initialGuestFormState);
 
   const errors = state.status === "error" ? state.fieldErrors : {};
   // React resets the form after every submit; these defaults restore what the user typed on errors.
   const values = state.status === "error" ? state.values : initialGuestFormValues(guest);
+  useEffect(() => {
+    if (state.status === "success") {
+      onCreated?.();
+    }
+  }, [state, onCreated]);
+
   const idPrefix = guest ? `guest-${guest.id}` : "guest-new";
 
   const renderField = (field: FieldConfig) => (
@@ -48,7 +55,6 @@ export function GuestForm({ guest }: GuestFormProps) {
         </Button>
         <p role="status" className="text-sm text-muted-foreground">
           {state.status === "error" && <span className="text-destructive">{state.message}</span>}
-          {state.status === "success" && "Dodano gościa."}
         </p>
       </div>
     </form>
