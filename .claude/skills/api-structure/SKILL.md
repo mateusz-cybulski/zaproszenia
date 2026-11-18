@@ -1,9 +1,9 @@
 ---
 name: api-structure
-description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations."
+description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, and how reference data (rows the app ships, e.g. system templates) gets into the database."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -22,14 +22,16 @@ src/<name>/app/
     event.py          Event + the enums and constants that belong to it
     event_guest.py    association model, in its own module
   schemas/
-    __init__.py       docstring only
+    __init__.py       empty
     common.py         field types shared by several resources (Text300, PostalCode, ...)
     events.py         EventWrite, EventRead, ...
   routers/
-    __init__.py       docstring only
+    __init__.py       empty
     events.py         APIRouter(prefix="/events")
   services/           only once logic outgrows the endpoints (see below)
+    __init__.py       empty
     events.py
+  <task>.py           one-off command run as `python -m app.<task>` (see "Reference data")
 ```
 
 Start with this layout even for a single model: moving from `models.py` to `models/` later is churn, and the structure is the same for one model as for ten.
@@ -76,7 +78,7 @@ from app.models.event import Event, EventStatus
 __all__ = ["Base", "Event", "EventStatus"]
 ```
 
-Schemas and routers are imported by module path (`from app.schemas.events import EventRead`, `from app.routers import events`); their `__init__.py` holds only a docstring.
+Schemas and routers are imported by module path (`from app.schemas.events import EventRead`, `from app.routers import events`); their `__init__.py` is empty.
 
 ## Adding a model, step by step
 
@@ -85,3 +87,13 @@ Schemas and routers are imported by module path (`from app.schemas.events import
 3. Migration: `uv run alembic revision --autogenerate -m "<what changed>"`, then read and fix the generated file: data migrations, server defaults for existing rows (add, backfill, then drop the default if the model has none), and the order of steps in `downgrade`.
 4. `app/schemas/<resource>.py` and `app/routers/<resource>.py`; register the router in `main.py`.
 5. Tests in `tests/test_<resource>.py`; `uv run pytest -q` also runs the migration drift check.
+
+## Reference data: rows the app ships
+
+Rows that the code defines and every user sees (system templates, default categories) are not created by the API process: several instances start at once on Cloud Run, and the API's startup must stay fast and free of writes.
+
+1. Keep the definitions in code (`services/<resource>.py`) and write an idempotent sync: an upsert keyed on a unique column (`insert(...).on_conflict_do_update(index_elements=[Model.system_key], ...)`) plus deleting rows whose key is no longer defined.
+2. Expose it as a module command, `app/<task>.py` with `asyncio.run(main())`, e.g. `python -m app.system_templates`.
+3. Run it right after `alembic upgrade head`: in the migrations service command in `compose.yml` and in the "Migrate database" step of `.github/workflows/terraform.yml`.
+4. Tests run it once after migrating the test database, and clean up only user rows between tests, not the reference rows.
+5. A data migration is the wrong place: migrations are frozen history, while reference rows follow the current code.

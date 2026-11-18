@@ -4,7 +4,7 @@ description: "You MUST use this when asked to review code: a pull request, a bra
 license: MIT
 metadata:
   author: claude-code-templates
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Code Reviewer
@@ -82,7 +82,8 @@ Names introduced or changed by the diff (variables, parameters, functions, types
 Allowed:
 
 - acronyms that are the normal word for the thing: `id`, `url`, `uri`, `api`, `http`, `html`, `css`, `json`, `xml`, `sql`, `uuid`, `ui`, `db`, `io`, `os`, `ip`, `dns`, `env` (as in `process.env`), `i`/`j` as plain numeric loop counters;
-- names fixed from outside the diff: an external API's fields, a library's parameter or option name, a framework convention the code must match (`props` is a full word anyway), existing names the diff only uses.
+- names fixed from outside the diff: an external API's fields, a library's parameter or option name, a framework convention the code must match (`props` is a full word anyway), existing names the diff only uses;
+- values from an external vocabulary, which are data, not names: ISO codes (`"PL"`), grammatical case tags from Morfeusz (`"gen"`, `"dat"`), MIME types. The names around them are still full words (`Case`, `country`).
 
 Put these under a **Naming** heading after the severity sections, one line each: `file:line` `old` -> `new`. They do not change the verdict, and they do not count toward the three-nit limit.
 

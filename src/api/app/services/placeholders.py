@@ -3,6 +3,7 @@ import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from app.schemas.common import Case
 from app.schemas.templates import DateFormat, DeclinablePlaceholder
@@ -199,3 +200,111 @@ def case_example(name: DeclinablePlaceholder, case: Case) -> str:
         return SAMPLE_NOMINATIVE[name]
     source = "full_name" if name == "recipient" else name
     return SAMPLE_DECLENSION[source][case]
+
+
+TOKEN = re.compile(r"\{([a-z_]+)\}")
+DEFAULT_SALUTATION = "Szanowni Państwo"
+DECLINED_SOURCES: tuple[DeclinablePlaceholder, ...] = ("full_name", "position", "institution")
+
+
+def fill(content: str, values: dict[str, str]) -> str:
+    """Substitute values. A line left empty by its placeholders disappears, so an address block
+    has no gap for a guest without, e.g., a position."""
+    lines = []
+    for line in content.split("\n"):
+        filled = TOKEN.sub(lambda match: values.get(match.group(1), ""), line)
+        if TOKEN.search(line) and not filled.strip():
+            continue
+        lines.extend(filled.split("\n"))
+    return "\n".join(lines)
+
+
+def address_lines(
+    street: str | None, postal_code: str | None, city: str | None, country: str | None
+) -> list[str]:
+    lines = [street or "", " ".join(part for part in (postal_code, city) if part)]
+    if country and country != "PL":
+        lines.append(country)
+    return [line for line in lines if line]
+
+
+def guest_values(guest: dict[str, Any]) -> dict[str, str]:
+    full_name = guest.get("full_name") or ""
+    institution = guest.get("institution") or ""
+    position = guest.get("position") or ""
+    address = address_lines(
+        guest.get("street"), guest.get("postal_code"), guest.get("city"), guest.get("country")
+    )
+    # A whole institution invited without a person: its name is the first line.
+    head = [full_name, position, institution] if full_name else [institution, position]
+    values = {
+        "salutation": guest.get("salutation") or DEFAULT_SALUTATION,
+        "recipient": full_name or institution,
+        "full_name": full_name,
+        "position": position,
+        "institution": institution,
+        "address": "\n".join(address),
+        "recipient_block": "\n".join(line for line in [*head, *address] if line),
+    }
+    declension: dict[str, dict[str, str]] = guest.get("declension") or {}
+    for name in DECLINED_SOURCES:
+        for case, form in (declension.get(name) or {}).items():
+            values[f"{name}:{case}"] = form
+    recipient_source = "full_name" if full_name else "institution"
+    for case, form in (declension.get(recipient_source) or {}).items():
+        values[f"recipient:{case}"] = form
+    return values
+
+
+def event_values(
+    name: str, starts_at: datetime, venue: str, address: list[str], invitation_text: str
+) -> dict[str, str]:
+    values = {
+        "event_name": name,
+        "event_time": starts_at.strftime("%H:%M"),
+        "event_weekday": WEEKDAYS[starts_at.weekday()],
+        "venue": venue,
+        "event_address": "\n".join(address),
+        "invitation_text": invitation_text,
+    }
+    for date_format, formatter in DATE_FORMATS.items():
+        values[f"event_date:{date_format}"] = formatter(starts_at)
+    return values
+
+
+def field_values(values: dict[str, str], field: dict[str, Any]) -> dict[str, str]:
+    """Values for one template field: its date format and the cases it asks for."""
+    resolved = {**values, "event_date": values.get(f"event_date:{field['date_format']}", "")}
+    for name, case in field["cases"].items():
+        if case != "nom" and f"{name}:{case}" in values:
+            resolved[name] = values[f"{name}:{case}"]
+    return resolved
+
+
+SAMPLE_GUEST: dict[str, Any] = {
+    "full_name": SAMPLE_NOMINATIVE["full_name"],
+    "position": SAMPLE_NOMINATIVE["position"],
+    "institution": SAMPLE_NOMINATIVE["institution"],
+    "salutation": "Szanowny Panie Rektorze",
+    "declension": SAMPLE_DECLENSION,
+    "street": "pl. Politechniki 1",
+    "postal_code": "00-661",
+    "city": "Warszawa",
+    "country": "PL",
+}
+
+
+def sample_values() -> dict[str, str]:
+    """Sample data for previews, independent of any event."""
+    return {
+        **guest_values(SAMPLE_GUEST),
+        **event_values(
+            "Gala Jubileuszowa",
+            SAMPLE_EVENT_START,
+            "Zamek Królewski",
+            ["pl. Zamkowy 4", "00-277 Warszawa"],
+            "Mamy zaszczyt zaprosić na galę.",
+        ),
+        "sender_name": "Fundacja Przykładowa",
+        "sender_address": "ul. Długa 5\n00-001 Warszawa",
+    }

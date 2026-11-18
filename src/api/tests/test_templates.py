@@ -7,7 +7,7 @@ from pypdf import PdfReader, PdfWriter
 
 from app.main import app
 from app.services.pdf import POINTS_PER_MM
-from app.services.placeholders import to_storage
+from app.services.placeholders import fill, guest_values, to_storage
 from app.services.templates import ensure_system_templates
 from app.storage import LocalStorage
 from tests.conftest import OTHER_SESSION_COOKIE
@@ -287,3 +287,98 @@ async def test_failed_commit_removes_the_stored_file(
     monkeypatch.undo()
 
     assert list(storage.root.rglob("*.pdf")) == []
+
+
+def _text(pdf: bytes) -> str:
+    return "\n".join(page.extract_text() for page in PdfReader(io.BytesIO(pdf)).pages)
+
+
+async def test_preview_fills_the_default_layout_with_sample_data(client: AsyncClient) -> None:
+    system = await _system_template(client, "invitation")
+
+    response = await client.get(f"/templates/{system['id']}/preview")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    text = _text(response.content)
+    assert "Szanowny Panie Rektorze," in text
+    assert "Gala Jubileuszowa" in text
+    assert "czwartek, 15 października 2026 r." in text
+    assert "godz. 18:00" in text
+
+
+async def test_preview_uses_field_cases_and_date_format(client: AsyncClient) -> None:
+    template = (await _upload(client, _pdf())).json()
+    fields = [
+        _field(content="Dla {position} {institution}", cases={"position": "dat"}),
+        _field(id="date", y_mm=60, content="{event_date}", date_format="roman"),
+    ]
+    await client.patch(f"/templates/{template['id']}", json={"fields": fields})
+
+    text = _text((await client.get(f"/templates/{template['id']}/preview")).content)
+
+    assert "Dla Rektorowi Politechnika Warszawska" in text
+    assert "15 X 2026 r." in text
+
+
+async def test_live_preview_image_does_not_save(client: AsyncClient) -> None:
+    template = (await _upload(client, _pdf(pages=2))).json()
+    url = f"/templates/{template['id']}"
+
+    response = await client.post(f"{url}/preview.png", json={"fields": [_field()], "page": 1})
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.content.startswith(b"\x89PNG")
+    assert (await client.get(url)).json()["fields"] == template["fields"]
+
+    unknown = await client.post(f"{url}/preview.png", json={"fields": [_field(content="{x}")]})
+    assert unknown.status_code == 422
+    missing_page = await client.post(f"{url}/preview.png", json={"fields": [], "page": 2})
+    assert missing_page.status_code == 422
+
+
+async def test_page_image(client: AsyncClient) -> None:
+    template = (await _upload(client, _pdf())).json()
+    system = await _system_template(client, "envelope")
+
+    own = await client.get(f"/templates/{template['id']}/page.png")
+    blank = await client.get(f"/templates/{system['id']}/page.png")
+    missing = await client.get(f"/templates/{template['id']}/page.png", params={"page": 1})
+
+    assert own.content.startswith(b"\x89PNG")
+    assert blank.content.startswith(b"\x89PNG")
+    assert missing.status_code == 404
+
+
+async def test_previews_follow_template_access(client: AsyncClient) -> None:
+    template = (await _upload(client, _pdf())).json()
+    client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
+    url = f"/templates/{template['id']}"
+
+    assert (await client.get(f"{url}/preview")).status_code == 404
+    assert (await client.get(f"{url}/page.png")).status_code == 404
+    assert (await client.post(f"{url}/preview.png", json={"fields": []})).status_code == 404
+
+
+def test_fill_drops_lines_left_empty_and_expands_multiline_values() -> None:
+    values = {
+        "full_name": "Jan Kowalski",
+        "position": "",
+        "address": "ul. Długa 5\n00-001 Warszawa",
+    }
+
+    assert fill("{full_name}\n{position}\n{address}", values) == (
+        "Jan Kowalski\nul. Długa 5\n00-001 Warszawa"
+    )
+    assert fill("A\n\nB", values) == "A\n\nB"
+
+
+def test_whole_institution_heads_the_recipient_block() -> None:
+    values = guest_values(
+        {"institution": "Redakcja Radia Kraków", "city": "Kraków", "postal_code": "30-007"}
+    )
+
+    assert values["recipient"] == "Redakcja Radia Kraków"
+    assert values["recipient_block"] == "Redakcja Radia Kraków\n30-007 Kraków"
+    assert values["salutation"] == "Szanowni Państwo"

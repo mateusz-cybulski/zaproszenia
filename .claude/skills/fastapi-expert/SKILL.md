@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: https://github.com/Jeffallan
   company: https://synergetic.solutions
-  version: "1.1.0"
+  version: "1.2.0"
   domain: backend
   triggers: FastAPI, Pydantic, async Python, Python API, REST API Python, SQLAlchemy async, JWT authentication, OpenAPI, Swagger Python
   role: specialist
@@ -164,6 +164,7 @@ In this repo `references/project-setup.md` wins over the other references where 
 - Use Pydantic V2 syntax (`field_validator`, `model_validator`, `model_config`)
 - Use `Annotated` pattern for dependency injection
 - Use async/await for all I/O operations
+- Run CPU-bound work (PDF or image rendering, parsing large files) and blocking libraries with `await asyncio.to_thread(...)` from `async def` endpoints; guard a library that is not thread-safe (e.g. PDFium) with a module-level `threading.Lock`
 - Use `X | None` instead of `Optional[X]`
 - Return proper HTTP status codes
 - Document endpoints (auto-generated OpenAPI)

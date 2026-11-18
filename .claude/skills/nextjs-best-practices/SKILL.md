@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions, proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   next: "16"
 ---
 
@@ -73,7 +73,7 @@ export function FilterBar() { /* useState, onChange ... */ }
   - read them in code that runs per request (e.g. after `await connection()` from `next/server`, or inside a Server Action / Route Handler). In a statically prerendered page `process.env.API_URL` is read at build time, when it is not set.
 - `NEXT_PUBLIC_*` values are inlined at build time. They cannot come from Cloud Run runtime env. Pass runtime values to the client as props from a Server Component instead.
 - `serverRuntimeConfig` and `publicRuntimeConfig` are removed in Next 16. Use env vars.
-- Locally, `docker compose up --watch` runs `Dockerfile.dev` (`next dev`); Compose Watch syncs the source into the container and rebuilds on `package.json`/`package-lock.json` changes (see `platform`). `WATCHPACK_POLLING` is not needed: Turbopack does not read it. Put local-only env in the component's `compose.yml`, not in code.
+- Locally, `docker compose up --watch` runs `Dockerfile.dev` (`next dev`); Compose Watch syncs the source into the container and rebuilds on `package.json`/`package-lock.json` changes (see `platform`). `WATCHPACK_POLLING` is not needed: Turbopack does not read it. After moving or renaming files Turbopack can keep serving the old module ("Module not found" or an old component); `docker restart <project>-frontend-1` fixes it without rebuilding the image. Put local-only env in the component's `compose.yml`, not in code.
 
 ## 7. TypeScript and lint
 

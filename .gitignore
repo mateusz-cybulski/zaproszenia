@@ -9,3 +9,6 @@ tfplan
 
 # Your agents branch checked out for editing (mise run skill-import / skill-publish)
 .agents/
+
+# Rendered template previews and sample PDFs for checking changes by eye
+.previews/
