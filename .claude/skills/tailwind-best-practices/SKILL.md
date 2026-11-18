@@ -3,7 +3,7 @@ name: tailwind-best-practices
 description: "Use when writing, changing or reviewing styles in a component that uses Tailwind CSS (tailwindcss in package.json): class names in JSX/TSX, the Tailwind entry CSS (@import \"tailwindcss\", @theme, @custom-variant, @utility, @source), design tokens, variants and the cn() helper, dark mode, responsive and container queries, focus and motion accessibility, class sorting and linting. Tailwind CSS v4 (CSS-first configuration). Pair with feature-sliced-design for where the files live."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   tailwind: "4"
 ---
 
@@ -133,6 +133,20 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
 - State from ARIA and data attributes instead of extra props: `aria-expanded:rotate-180`, `aria-invalid:border-danger`, `data-[state=open]:block`, `group-hover:`, `peer-checked:`.
 - Motion: animations and transitions behind `motion-safe:`, or remove them with `motion-reduce:`.
 - `sr-only` for text that is only for screen readers; check token color pairs meet WCAG contrast (4.5:1 for body text). Use the `accessibility-scan` skill for UI changes.
+- Cursor: v4 preflight gives buttons the default arrow, not the pointer. Restore it once in the entry CSS, not with `cursor-pointer` on every button:
+
+```css
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  ::file-selector-button {
+    cursor: pointer;
+  }
+}
+```
+
+  Copied UI kits (shadcn/ui) also set `cursor-default` on menu and select items; change those to `cursor-pointer`. Use `cursor-pointer` in markup only for clickable elements that are not buttons (a `<label>` styled as a toggle).
 - Touch targets at least 24x24 CSS px (`size-6` minimum, `size-11` for primary touch actions).
 
 ## 6. Class detection and bundle size
@@ -176,6 +190,7 @@ Set this up once per component, then keep it passing:
 | `@layer utilities { .x {} }` | `@utility x {}` |
 | `@tailwindcss/container-queries` plugin | built in: `@container`, `@md:` |
 | `bg-opacity-50` | `bg-black/50` |
+| buttons show the pointer cursor | buttons show the default cursor: restore it in `@layer base` (section 5) |
 | `shadow-sm`, `rounded-sm`, `blur-sm` (old scale) | renamed scale in v4: check the upgrade guide (`shadow-xs`, `rounded-xs`, ...) before copying v3 snippets |
 
 ## 9. Before finishing
