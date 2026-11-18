@@ -5,7 +5,8 @@ import { useActionState, useEffect } from "react";
 import type { Guest } from "@/entities/guest";
 import { Button } from "@/shared/ui/button";
 
-import { createGuestAction, updateGuestAction } from "../api/actions";
+import { createGuestAction } from "../api/create-guest-action";
+import { updateGuestAction } from "../api/update-guest-action";
 import { addressFields, type FieldConfig, recipientFields } from "../config/guest-fields";
 import { initialGuestFormState, initialGuestFormValues } from "../model/guest-form";
 import { GuestFormField } from "./guest-form-field";

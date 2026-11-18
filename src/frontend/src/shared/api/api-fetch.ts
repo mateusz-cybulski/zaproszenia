@@ -19,7 +19,10 @@ export async function apiFetch(
 ): Promise<Response> {
   const session = await readSessionCookie();
   const headers = new Headers(init.headers);
-  headers.set("Content-Type", "application/json");
+  // FormData needs fetch to set its own multipart Content-Type with the boundary.
+  if (!(init.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
   if (session) {
     headers.set("Authorization", `Bearer ${session}`);
   }

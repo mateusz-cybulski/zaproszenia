@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
-import { verifyGuestManuallyAction } from "../api/actions";
+import { verifyGuestManuallyAction } from "../api/verify-guest-manually-action";
 import { MenuOption } from "./menu-option";
 
 export function VerificationMenu({ guest }: { guest: Guest }) {
@@ -37,7 +37,7 @@ export function VerificationMenu({ guest }: { guest: Guest }) {
           <VerificationBadge
             status={guest.verificationStatus}
             busy={pending}
-            className="cursor-pointer hover:opacity-80"
+            className="hover:opacity-80"
           />
           {!pending && <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />}
         </DropdownMenuTrigger>

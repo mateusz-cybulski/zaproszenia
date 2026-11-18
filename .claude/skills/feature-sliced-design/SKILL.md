@@ -3,7 +3,7 @@ name: feature-sliced-design
 description: "Use when creating, moving or reviewing code in a frontend component that uses Tailwind CSS (e.g. src/frontend with tailwindcss in package.json): where a file goes, how to name layers, slices and segments, which imports are allowed, public APIs (index.ts), and how Tailwind styles, tokens and the cn() helper fit in. Feature-Sliced Design v2.1 on Next.js App Router. Also use when the user mentions FSD, layers, slices, widgets, features or entities."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   fsd: "2.1"
 ---
 
@@ -102,6 +102,17 @@ From top (most specific) to bottom (most reusable):
 | requests, server actions, DTOs | `api/` |
 
   Keep a component file around 100 lines; past that, split it along the table above before adding more. Types stay next to what they describe: a config entry's type in the config file, a component's props type in its component file.
+- One file per operation, in every segment, from the start (not only past 100 lines):
+
+| Instead of | Write |
+|---|---|
+| `api/product-api.ts` with every request | `api/get-products.ts`, `api/get-product.ts`, `api/create-product.ts`, ... |
+| `api/actions.ts` with every Server Action | `api/create-product-action.ts`, `api/delete-product-action.ts`, each with its own `"use server"` |
+| a dialog that also holds its form | `ui/product-form.tsx` and `ui/product-dialog.tsx`, which renders the form |
+| the DTO type, mapper and result type inside a request file | `api/product-dto.ts` (DTO type with its mappers), `api/<result>.ts` (result type with the function that builds it from a response) |
+| messages and limits inside an action or a form | `config/messages.ts`, `config/<topic>.ts` |
+
+  Helpers shared by several operations get their own file in the segment (`api/validate-product-form.ts`, marked `import "server-only"`, since a `"use server"` file may export only async actions). A helper shared across slices goes to `shared` (e.g. `shared/api`). The public API (`index.ts`, `index.server.ts`) re-exports each piece by name.
 - `shared/lib` is not a dump: one folder per topic (`shared/lib/css`, `shared/lib/dates`), each with its own `index.ts`.
 - `shared/db` (custom segment) for database queries if the frontend talks to a database directly. Route handler and server-only code: `index.server.ts` as a separate public API, so client components cannot import it by accident. Add `import "server-only"` in it.
 
@@ -113,7 +124,8 @@ From top (most specific) to bottom (most reusable):
 ```ts
 // src/entities/product/index.ts
 export { ProductCard } from "./ui/product-card";
-export { getProduct, getProducts } from "./api/product";
+export { getProduct } from "./api/get-product";
+export { getProducts } from "./api/get-products";
 export type { Product } from "./model/product";
 ```
 
