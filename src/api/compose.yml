@@ -29,7 +29,7 @@ services:
   # Never migrate inside the API process: instances would race each other.
   api-migrate:
     <<: *api
-    command: ["sh", "-c", "alembic upgrade head && python -m app.seed"]
+    command: ["sh", "-c", "alembic upgrade head && python -m app.system_templates && python -m app.seed"]
     depends_on:
       api-db:
         condition: service_healthy

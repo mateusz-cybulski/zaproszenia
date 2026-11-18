@@ -4,10 +4,8 @@ from typing import Annotated, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from app.models import VerificationStatus
-from app.schemas.common import AddressRead, AddressWrite, Text300
+from app.schemas.common import AddressRead, AddressWrite, ObliqueCase, Text300
 
-# Grammatical cases (Morfeusz tag names). The nominative is simply the value as entered.
-ObliqueCase = Literal["gen", "dat", "acc", "inst", "loc", "voc"]
 Forms = dict[ObliqueCase, Annotated[str, Field(min_length=1, max_length=300)]]
 
 VERIFIED_FIELDS = (

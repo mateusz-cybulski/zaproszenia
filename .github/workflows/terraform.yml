@@ -101,6 +101,7 @@ jobs:
         run: |
           [[ -n "$DATABASE_URL" ]] || { echo "::error::Secret DATABASE_URL is not set"; exit 1; }
           uv run --frozen --no-dev alembic upgrade head
+          uv run --frozen --no-dev python -m app.system_templates
 
       - name: Deploy
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
