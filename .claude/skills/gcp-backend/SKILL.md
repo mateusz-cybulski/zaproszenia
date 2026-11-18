@@ -3,7 +3,7 @@ name: gcp-backend
 description: "Use when Python backend code in this repo talks to Google Cloud: verifying users with Identity Platform / Firebase Auth (firebase-admin, ID tokens, custom claims, tenants), issuing or checking your own JWTs with PyJWT, queuing background work with Cloud Tasks and handling those requests, storing files in Cloud Storage (uploads, downloads, signed URLs), or calling Gemini through Vertex AI with the google-genai SDK. Covers credentials (ADC), IAM roles via service.json, async usage in FastAPI, local dev and testing."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # GCP from a Python backend
@@ -181,10 +181,13 @@ async def upload_url(bucket_name: str, object_name: str, content_type: str) -> s
 ```
 
 - **Uploads and downloads of user files go directly between the browser and GCS** through short-lived V4 signed URLs; the API only signs. Do not stream large files through Cloud Run (request size and memory limits, cost).
+- Exception: the API has to read every byte of the file anyway (validate, convert or rewrite it, e.g. a PDF it normalises) and files are small (up to ~15 MB, under Cloud Run's 32 MiB request limit). Then the upload goes through the API as `multipart/form-data` (needs `python-multipart`): read at most limit + 1 bytes and answer 413 above the limit. Signed URLs would only add a second round trip to fetch the file back.
 - On Cloud Run there is no private key: signing uses the IAM `signBlob` API with `service_account_email` + `access_token`, which needs the IAM Credentials API and `roles/iam.serviceAccountTokenCreator` **on the service's own account** (Terraform binding; a project-level grant would let it impersonate every account).
-- Object names: generated (`uploads/<uuid>`) never raw user filenames; store the original name in the database. Validate `content_type` and size (signed URL conditions or a check after upload).
-- Bucket access: `roles/storage.objectUser` (read/write) or `roles/storage.objectViewer`; bucket with uniform access and public access prevention, created in Terraform.
-- Locally: a separate dev bucket with your ADC credentials, or `fake-gcs-server` in compose; tests use a fake client.
+- Object names: generated (`uploads/<uuid>`, or `users/<uid>/<resource>/<id>.<ext>` from the database id) never raw user filenames; store the original name in the database.
+- Keep the database and the bucket consistent: insert the row and `flush()` to get its id, store the file, then commit; if the commit fails, delete the file just stored. On delete, commit first and delete the file afterwards (a leftover file is harmless, a row pointing at a missing file is not). Copying a row copies its file to a new key. Validate `content_type` and size (signed URL conditions or a check after upload).
+- Bucket access: `roles/storage.objectUser` (read/write) or `roles/storage.objectViewer`, granted on the bucket (`google_storage_bucket_iam_member`), not as a project role in `service.json`; bucket with uniform access and public access prevention, created in Terraform, its name injected into the service as an env var (e.g. `STORAGE_BUCKET`).
+- Put storage behind a small `Protocol` (`put`/`get`/`delete`, async via `asyncio.to_thread`) with a GCS and a local-directory implementation, chosen by settings, and inject it with `Depends` so tests override it with a temporary directory. Locally: the local directory on a named compose volume, a separate dev bucket with your ADC credentials, or `fake-gcs-server`. A local-directory implementation must reject keys that resolve outside its root.
+- The `google-cloud-storage` package has no type information: import `from google.cloud.storage import Client` and add `google.cloud.storage` and `google.cloud.storage.*` to the scoped mypy override (see `python-tooling`).
 
 ## 5. Gemini through Vertex AI (google-genai)
 

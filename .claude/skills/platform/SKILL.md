@@ -3,7 +3,7 @@ name: platform
 description: "Use whenever you add, rename, remove or configure a component under src/, write a Dockerfile, compose.yml, service.json or lefthook.yml for one, read another service's URL, set environment variables or GCP permissions for a service, or wonder how code gets deployed. Describes this repo's platform: each src/<name> with a Dockerfile is a Cloud Run service on its own subdomain, deployed by Terraform from GitHub Actions; local dev runs through docker compose and mise."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Platform: how components become services
@@ -86,6 +86,7 @@ Optional per-service overrides, merged over these defaults:
   - `rebuild` of a one-shot service whose input changes (e.g. a migrations service on `migrations/`), so new migrations apply without restarting the stack.
 
   Do not mount the source (`.:/app`) or keep dependency folders in anonymous volumes (`/app/node_modules`, `/venv`): compose reuses anonymous volumes across rebuilds, so after a dependency change the container keeps the old packages until `docker compose up -V`.
+- Watch never re-reads `compose.yml` itself: new `environment` entries, volumes, ports or a changed `command` apply only after restarting `mise run dev`. Say so whenever you change a `compose.yml`.
 - Watch skips everything in the component's `.dockerignore` (dependency folders, build caches, and `Dockerfile*`, so a `Dockerfile.dev` change needs a manual `docker compose up --build`).
 
 ```yaml
