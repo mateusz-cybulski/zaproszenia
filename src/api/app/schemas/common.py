@@ -1,6 +1,19 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+# Grammatical cases (Morfeusz tag names). The nominative is simply the value as entered.
+Case = Literal["nom", "gen", "dat", "acc", "inst", "loc", "voc"]
+ObliqueCase = Literal["gen", "dat", "acc", "inst", "loc", "voc"]
+CASE_LABELS: dict[Case, str] = {
+    "nom": "Mianownik (kto?)",
+    "gen": "Dopełniacz (kogo?)",
+    "dat": "Celownik (komu?)",
+    "acc": "Biernik (kogo?)",
+    "inst": "Narzędnik (z kim?)",
+    "loc": "Miejscownik (o kim?)",
+    "voc": "Wołacz",
+}
 
 
 def _blank_to_none(value: str | None) -> str | None:

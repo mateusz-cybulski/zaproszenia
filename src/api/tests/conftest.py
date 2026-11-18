@@ -1,3 +1,4 @@
+import asyncio
 import os
 from collections.abc import AsyncIterator, Iterator
 from datetime import timedelta
@@ -7,13 +8,16 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
+from sqlalchemy import delete, text
 from testcontainers.community.postgres import PostgresContainer
 
 from app.auth import EmailNotVerifiedError, InvalidCredentialsError, get_identity
 from app.main import app
+from app.models import Template
 from app.schemas.auth import AuthUser
 from app.settings import get_settings
+from app.storage import LocalStorage, get_storage
+from app.system_templates import main as sync_system_templates
 
 API_ROOT = Path(__file__).parent.parent
 
@@ -24,6 +28,7 @@ def database() -> Iterator[None]:
         os.environ["DATABASE_URL"] = postgres.get_connection_url()
         get_settings.cache_clear()
         command.upgrade(Config(str(API_ROOT / "alembic.ini")), "head")
+        asyncio.run(sync_system_templates())
         yield
     get_settings.cache_clear()
 
@@ -69,13 +74,24 @@ def identity() -> Iterator[FakeIdentity]:
 
 
 @pytest.fixture
-async def anonymous_client(identity: FakeIdentity) -> AsyncIterator[AsyncClient]:
+def storage(tmp_path: Path) -> Iterator[LocalStorage]:
+    local = LocalStorage(tmp_path / "storage")
+    app.dependency_overrides[get_storage] = lambda: local
+    yield local
+    app.dependency_overrides.pop(get_storage, None)
+
+
+@pytest.fixture
+async def anonymous_client(
+    identity: FakeIdentity, storage: LocalStorage
+) -> AsyncIterator[AsyncClient]:
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as test_client:
             yield test_client
         async with app.state.sessionmaker() as session, session.begin():
             await session.execute(text("TRUNCATE guests RESTART IDENTITY"))
+            await session.execute(delete(Template).where(Template.owner_uid.is_not(None)))
 
 
 @pytest.fixture
