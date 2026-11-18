@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Template, TemplateKind
 from app.schemas.templates import TemplateField
+from app.services.pdf import blank_pdf
 from app.services.placeholders import to_storage, unknown_placeholders
 from app.storage import Storage
 
@@ -163,3 +164,10 @@ async def create_with_file(
         if template.pdf_key:
             await storage.delete(template.pdf_key)
         raise
+
+
+async def base_pdf(template: Template, storage: Storage) -> bytes:
+    """The template's pages without fields: the uploaded file, or blank sheets."""
+    if template.pdf_key is None:
+        return blank_pdf(template.pages)
+    return await storage.get(template.pdf_key)

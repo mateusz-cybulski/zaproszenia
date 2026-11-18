@@ -1,7 +1,7 @@
 import asyncio
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy import or_, select
 
 from app.auth import CurrentUser
@@ -9,24 +9,28 @@ from app.db import Session
 from app.models import Template, TemplateKind
 from app.schemas.common import CASE_LABELS
 from app.schemas.templates import (
+    MAX_PAGES,
     CaseRead,
     DateFormatRead,
     DeclinablePlaceholder,
     PlaceholderRead,
     TemplateName,
+    TemplatePreview,
     TemplateRead,
     TemplateUpdate,
 )
-from app.services.pdf import PdfFileError, inspect_pdf
+from app.services.pdf import PdfFileError, inspect_pdf, render, render_png
 from app.services.placeholders import (
     DATE_FORMATS,
     PLACEHOLDERS,
     SAMPLE_EVENT_START,
     SAMPLE_NOMINATIVE,
     case_example,
+    sample_values,
 )
 from app.services.templates import (
     TemplateFieldsError,
+    base_pdf,
     create_with_file,
     default_fields,
     storage_fields,
@@ -35,6 +39,8 @@ from app.storage import FileStorage
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
+PDF_RESPONSE: dict[int | str, dict[str, Any]] = {200: {"content": {"application/pdf": {}}}}
+PNG_RESPONSE: dict[int | str, dict[str, Any]] = {200: {"content": {"image/png": {}}}}
 COPY_SUFFIX = " (kopia)"
 MAX_PDF_BYTES = 15 * 1024 * 1024
 
@@ -134,11 +140,7 @@ async def get_template(template_id: int, session: Session, user: CurrentUser) ->
     return TemplateRead.model_validate(await _visible_template(session, template_id, user.uid))
 
 
-@router.get(
-    "/{template_id}/file",
-    response_class=Response,
-    responses={200: {"content": {"application/pdf": {}}}},
-)
+@router.get("/{template_id}/file", response_class=Response, responses=PDF_RESPONSE)
 async def template_file(
     template_id: int, session: Session, user: CurrentUser, storage: FileStorage
 ) -> Response:
@@ -146,6 +148,55 @@ async def template_file(
     if template.pdf_key is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Template has no file")
     return Response(await storage.get(template.pdf_key), media_type="application/pdf")
+
+
+@router.get("/{template_id}/preview", response_class=Response, responses=PDF_RESPONSE)
+async def preview_template(
+    template_id: int, session: Session, user: CurrentUser, storage: FileStorage
+) -> Response:
+    """The saved template filled with sample data."""
+    template = await _visible_template(session, template_id, user.uid)
+    pdf = await base_pdf(template, storage)
+    rendered = await asyncio.to_thread(render, pdf, template.fields, sample_values())
+    return Response(rendered, media_type="application/pdf")
+
+
+@router.post("/{template_id}/preview.png", response_class=Response, responses=PNG_RESPONSE)
+async def preview_image(
+    template_id: int,
+    payload: TemplatePreview,
+    session: Session,
+    user: CurrentUser,
+    storage: FileStorage,
+) -> Response:
+    """One page with unsaved fields from the editor, filled with sample data."""
+    template = await _visible_template(session, template_id, user.uid)
+    try:
+        fields = storage_fields(payload.fields, template.pages)
+        if payload.page >= len(template.pages):
+            raise TemplateFieldsError(f"Szablon nie ma strony {payload.page + 1}.")
+    except TemplateFieldsError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
+    pdf = await base_pdf(template, storage)
+    rendered = await asyncio.to_thread(render, pdf, fields, sample_values())
+    png = await asyncio.to_thread(render_png, rendered, payload.page)
+    return Response(png, media_type="image/png", headers={"Cache-Control": "no-store"})
+
+
+@router.get("/{template_id}/page.png", response_class=Response, responses=PNG_RESPONSE)
+async def page_image(
+    template_id: int,
+    session: Session,
+    user: CurrentUser,
+    storage: FileStorage,
+    page: Annotated[int, Query(ge=0, lt=MAX_PAGES)] = 0,
+) -> Response:
+    """A template page without fields, e.g. a thumbnail in the template list."""
+    template = await _visible_template(session, template_id, user.uid)
+    if page >= len(template.pages):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Template has no such page")
+    png = await asyncio.to_thread(render_png, await base_pdf(template, storage), page)
+    return Response(png, media_type="image/png")
 
 
 @router.post("/{template_id}/copy", status_code=status.HTTP_201_CREATED)

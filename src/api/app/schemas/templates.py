@@ -52,6 +52,11 @@ class TemplateUpdate(BaseModel):
     fields: Fields | None = None
 
 
+class TemplatePreview(BaseModel):
+    fields: Fields
+    page: int = Field(default=0, ge=0, lt=MAX_PAGES)
+
+
 class TemplateRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
