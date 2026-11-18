@@ -70,6 +70,7 @@ class GuestRead(AddressRead):
     verification_status: VerificationStatus
     verification_result: VerificationResult | None
     verified_at: datetime | None
+    deleted_at: datetime | None
     created_at: datetime
     updated_at: datetime
 

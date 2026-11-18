@@ -249,3 +249,72 @@ async def test_manual_verification_leaves_other_owners_alone(client: AsyncClient
     assert single.status_code == 404
     assert bulk.json() == {"verified": 0}
     assert (await client.get(f"/guests/{created['id']}")).json()["verification_status"] == "pending"
+
+
+async def test_soft_deleted_guest_leaves_the_list_and_can_be_restored(client: AsyncClient) -> None:
+    jan = (await client.post("/guests", json=JAN)).json()
+    anna = (await client.post("/guests", json={**JAN, "full_name": "Anna Nowak"})).json()
+
+    assert (await client.delete(f"/guests/{jan['id']}")).status_code == 204
+
+    active = (await client.get("/guests")).json()
+    assert [guest["id"] for guest in active] == [anna["id"]]
+    deleted = (await client.get("/guests", params={"deleted": "true"})).json()
+    assert [guest["id"] for guest in deleted] == [jan["id"]]
+    assert deleted[0]["deleted_at"] is not None
+    assert (await client.get(f"/guests/{jan['id']}")).status_code == 404
+    assert (await client.put(f"/guests/{jan['id']}", json=JAN)).status_code == 404
+    assert (await client.delete(f"/guests/{jan['id']}")).status_code == 404
+
+    restored = await client.post(f"/guests/{jan['id']}/restore")
+    assert restored.status_code == 200
+    assert restored.json()["deleted_at"] is None
+    assert len((await client.get("/guests")).json()) == 2
+    assert (await client.post(f"/guests/{jan['id']}/restore")).status_code == 404
+
+
+async def test_permanent_delete_removes_active_and_deleted_guests(client: AsyncClient) -> None:
+    jan = (await client.post("/guests", json=JAN)).json()
+    anna = (await client.post("/guests", json={**JAN, "full_name": "Anna Nowak"})).json()
+    await client.delete(f"/guests/{anna['id']}")
+
+    for guest in (jan, anna):
+        response = await client.delete(f"/guests/{guest['id']}", params={"permanent": "true"})
+        assert response.status_code == 204
+
+    assert (await client.get("/guests")).json() == []
+    assert (await client.get("/guests", params={"deleted": "true"})).json() == []
+    assert (await client.post(f"/guests/{anna['id']}/restore")).status_code == 404
+
+
+async def test_deleted_list_is_newest_first(client: AsyncClient) -> None:
+    ids = [
+        (await client.post("/guests", json={**JAN, "full_name": name})).json()["id"]
+        for name in ("A", "B")
+    ]
+    for guest_id in ids:
+        await client.delete(f"/guests/{guest_id}")
+
+    deleted = (await client.get("/guests", params={"deleted": "true"})).json()
+
+    assert [guest["id"] for guest in deleted] == list(reversed(ids))
+
+
+async def test_bulk_verification_skips_deleted_guests(client: AsyncClient) -> None:
+    jan = (await client.post("/guests", json=JAN)).json()
+    await client.delete(f"/guests/{jan['id']}")
+
+    result = (await client.post("/guests/verification/manual", json={})).json()
+
+    assert result == {"verified": 0}
+    assert (await client.post(f"/guests/{jan['id']}/verification/manual")).status_code == 404
+
+
+async def test_deleting_is_private_to_the_owner(client: AsyncClient) -> None:
+    jan = (await client.post("/guests", json=JAN)).json()
+    client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
+
+    assert (await client.delete(f"/guests/{jan['id']}")).status_code == 404
+    permanent = await client.delete(f"/guests/{jan['id']}", params={"permanent": "true"})
+    assert permanent.status_code == 404
+    assert (await client.post(f"/guests/{jan['id']}/restore")).status_code == 404

@@ -19,10 +19,15 @@ from app.schemas.guests import (
 router = APIRouter(prefix="/guests", tags=["guests"])
 
 
-async def _own_guest(session: Session, guest_id: int, owner_uid: str) -> Guest:
+async def _own_guest(
+    session: Session, guest_id: int, owner_uid: str, *, deleted: bool | None = False
+) -> Guest:
+    """The user's guest, active by default; deleted=True for deleted ones, None for either."""
     # Someone else's guest looks exactly like a missing one: no hint that the id exists.
     guest = await session.get(Guest, guest_id)
     if guest is None or guest.owner_uid != owner_uid:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Guest not found")
+    if deleted is not None and (guest.deleted_at is not None) != deleted:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Guest not found")
     return guest
 
@@ -41,7 +46,9 @@ async def verify_many_manually(
     payload: ManualVerification, session: Session, user: CurrentUser
 ) -> ManualVerificationResult:
     statement = select(Guest).where(
-        Guest.owner_uid == user.uid, Guest.verification_status.not_in(VERIFIED_STATUSES)
+        Guest.owner_uid == user.uid,
+        Guest.deleted_at.is_(None),
+        Guest.verification_status.not_in(VERIFIED_STATUSES),
     )
     if payload.guest_ids is not None:
         statement = statement.where(Guest.id.in_(payload.guest_ids))
@@ -75,8 +82,15 @@ async def list_guests(
     session: Session,
     user: CurrentUser,
     q: Annotated[str | None, Query(max_length=200)] = None,
+    deleted: bool = False,
 ) -> list[GuestRead]:
-    statement = select(Guest).where(Guest.owner_uid == user.uid).order_by(Guest.id)
+    statement = select(Guest).where(Guest.owner_uid == user.uid)
+    if deleted:
+        statement = statement.where(Guest.deleted_at.is_not(None)).order_by(
+            Guest.deleted_at.desc(), Guest.id
+        )
+    else:
+        statement = statement.where(Guest.deleted_at.is_(None)).order_by(Guest.id)
     if q and q.strip():
         pattern = f"%{_escape_like(q.strip())}%"
         statement = statement.where(
@@ -111,4 +125,26 @@ async def replace_guest(
             guest.verification_result = None
             guest.verified_at = None
     await session.refresh(guest)  # updated_at is set by the database
+    return GuestRead.model_validate(guest)
+
+
+@router.delete("/{guest_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_guest(
+    guest_id: int, session: Session, user: CurrentUser, permanent: bool = False
+) -> None:
+    """Move the guest to the deleted list, or with permanent=true remove it for good."""
+    async with session.begin():
+        if permanent:
+            await session.delete(await _own_guest(session, guest_id, user.uid, deleted=None))
+        else:
+            guest = await _own_guest(session, guest_id, user.uid)
+            guest.deleted_at = datetime.now(UTC)
+
+
+@router.post("/{guest_id}/restore")
+async def restore_guest(guest_id: int, session: Session, user: CurrentUser) -> GuestRead:
+    async with session.begin():
+        guest = await _own_guest(session, guest_id, user.uid, deleted=True)
+        guest.deleted_at = None
+    await session.refresh(guest)
     return GuestRead.model_validate(guest)

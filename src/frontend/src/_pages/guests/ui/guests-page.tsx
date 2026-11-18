@@ -1,17 +1,18 @@
-import { Plus } from "lucide-react";
+import { ArchiveRestore, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import { GuestTable } from "@/entities/guest";
 import { getGuests } from "@/entities/guest/index.server";
-import { VerificationMenu } from "./verification-menu";
-import { VerifyAllDialog } from "./verify-all-dialog";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Page } from "@/shared/ui/page";
 
 import { SEARCH_MAX_LENGTH } from "../config/search";
+import { GuestRowActions } from "./guest-row-actions";
 import { GuestSearch } from "./guest-search";
+import { VerificationMenu } from "./verification-menu";
+import { VerifyAllDialog } from "./verify-all-dialog";
 
 export const metadata: Metadata = { title: "Goście · Zaproszenia" };
 
@@ -30,6 +31,11 @@ export async function GuestsPage({ searchParams }: GuestsPageProps) {
       description="Baza gości, których zapraszasz na wydarzenia."
       actions={
         <>
+          <Button asChild variant="outline">
+            <Link href={routes.guestsDeleted()} scroll={false}>
+              <ArchiveRestore /> Przywróć
+            </Link>
+          </Button>
           <VerifyAllDialog />
           <Button asChild>
             <Link href={routes.guestAdd()} scroll={false}>
@@ -45,6 +51,7 @@ export async function GuestsPage({ searchParams }: GuestsPageProps) {
           guests={guests}
           emptyMessage={search ? "Brak wyników." : "Nie dodano jeszcze żadnych gości."}
           renderVerification={(guest) => <VerificationMenu guest={guest} />}
+          renderActions={(guest) => <GuestRowActions guest={guest} />}
         />
       </div>
     </Page>

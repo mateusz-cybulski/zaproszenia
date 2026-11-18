@@ -14,7 +14,7 @@ import {
 } from "@/shared/ui/dialog";
 
 import { verifyAllGuestsManuallyAction } from "../api/verify-all-guests-manually-action";
-import { VerificationChoice } from "./verification-choice";
+import { ChoiceButton } from "./choice-button";
 
 export function VerifyAllDialog() {
   const [open, setOpen] = useState(false);
@@ -52,13 +52,13 @@ export function VerifyAllDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
-          <VerificationChoice
+          <ChoiceButton
             icon={Sparkles}
             title="Sprawdź z AI"
             description="AI sprawdzi tytuły, nazwy instytucji i adres oraz zaproponuje zwrot grzecznościowy. Dostępne wkrótce."
             disabled
           />
-          <VerificationChoice
+          <ChoiceButton
             icon={UserCheck}
             title="Zatwierdź ręcznie"
             description="Dane są poprawne: sprawdziłeś je sam i nie potrzebujesz AI."
