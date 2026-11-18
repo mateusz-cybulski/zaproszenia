@@ -6,5 +6,7 @@ export const routes = {
   guests: () => "/guests",
   guestEdit: (id: number) => `/guests/${id}`,
   templates: () => "/templates",
+  templatePageImage: (id: number) => `/api/templates/${id}/page.png`,
+  templatePreview: (id: number) => `/api/templates/${id}/preview`,
   settings: () => "/settings",
 } as const;
