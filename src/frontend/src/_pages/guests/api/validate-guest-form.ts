@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import type { SaveGuestFailure } from "@/entities/guest/index.server";
 
-import { failureMessages, FIX_FIELDS } from "../config/messages";
+import { failureMessages, FIX_FIELDS } from "../config/guest-form-messages";
 import {
   guestFields,
   type GuestFormState,

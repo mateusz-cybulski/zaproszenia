@@ -13,10 +13,10 @@ import { GuestFormField } from "./guest-form-field";
 
 type GuestFormProps = {
   guest?: Guest;
-  onCreated?: () => void;
+  onSaved?: () => void;
 };
 
-export function GuestForm({ guest, onCreated }: GuestFormProps) {
+export function GuestForm({ guest, onSaved }: GuestFormProps) {
   const action = guest ? updateGuestAction.bind(null, guest.id) : createGuestAction;
   const [state, formAction, pending] = useActionState(action, initialGuestFormState);
 
@@ -25,9 +25,9 @@ export function GuestForm({ guest, onCreated }: GuestFormProps) {
   const values = state.status === "error" ? state.values : initialGuestFormValues(guest);
   useEffect(() => {
     if (state.status === "success") {
-      onCreated?.();
+      onSaved?.();
     }
-  }, [state, onCreated]);
+  }, [state, onSaved]);
 
   const idPrefix = guest ? `guest-${guest.id}` : "guest-new";
 

@@ -1,9 +1,13 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { GuestTable } from "@/entities/guest";
 import { getGuests } from "@/entities/guest/index.server";
-import { AddGuestDialog } from "@/features/save-guest";
-import { VerificationMenu, VerifyAllDialog } from "@/features/verify-guest";
+import { VerificationMenu } from "./verification-menu";
+import { VerifyAllDialog } from "./verify-all-dialog";
+import { routes } from "@/shared/routes";
+import { Button } from "@/shared/ui/button";
 import { Page } from "@/shared/ui/page";
 
 import { SEARCH_MAX_LENGTH } from "../config/search";
@@ -11,7 +15,7 @@ import { GuestSearch } from "./guest-search";
 
 export const metadata: Metadata = { title: "Goście · Zaproszenia" };
 
-type GuestsPageProps = {
+export type GuestsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
@@ -27,7 +31,11 @@ export async function GuestsPage({ searchParams }: GuestsPageProps) {
       actions={
         <>
           <VerifyAllDialog />
-          <AddGuestDialog />
+          <Button asChild>
+            <Link href={routes.guestAdd()} scroll={false}>
+              <Plus /> Dodaj gościa
+            </Link>
+          </Button>
         </>
       }
     >
