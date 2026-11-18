@@ -187,3 +187,65 @@ async def test_replace_bumps_updated_at(client: AsyncClient) -> None:
 
     assert replaced["created_at"] == created["created_at"]
     assert replaced["updated_at"] > created["updated_at"]
+
+
+async def test_search_matches_name_or_institution_ignoring_case(client: AsyncClient) -> None:
+    await client.post("/guests", json={"full_name": "Anna Kowalska", "institution": "Muzeum"})
+    await client.post("/guests", json={"full_name": "Jan Nowak", "institution": "Teatr Kowalskich"})
+    await client.post("/guests", json={"full_name": "Piotr Lis", "institution": "Urząd"})
+
+    response = await client.get("/guests", params={"q": " kowal "})
+
+    assert [guest["full_name"] for guest in response.json()] == ["Anna Kowalska", "Jan Nowak"]
+
+
+async def test_search_treats_like_wildcards_as_text(client: AsyncClient) -> None:
+    await client.post("/guests", json={"full_name": "Anna"})
+    await client.post("/guests", json={"full_name": "100% Radio"})
+
+    response = await client.get("/guests", params={"q": "%"})
+
+    assert [guest["full_name"] for guest in response.json()] == ["100% Radio"]
+
+
+async def test_verify_one_guest_manually(client: AsyncClient) -> None:
+    created = (await client.post("/guests", json=JAN)).json()
+
+    response = await client.post(f"/guests/{created['id']}/verification/manual")
+
+    assert response.status_code == 200
+    assert response.json()["verification_status"] == "verified_manual"
+    assert response.json()["verified_at"]
+
+
+async def test_verify_all_unverified_guests_manually(client: AsyncClient) -> None:
+    ids = [(await client.post("/guests", json={"full_name": name})).json()["id"] for name in "ABC"]
+    await _mark_verified(ids[0])
+
+    response = await client.post("/guests/verification/manual", json={})
+
+    assert response.json() == {"verified": 2}
+    statuses = [guest["verification_status"] for guest in (await client.get("/guests")).json()]
+    assert statuses == ["verified_manual"] * 3
+
+
+async def test_verify_selected_guests_manually(client: AsyncClient) -> None:
+    ids = [(await client.post("/guests", json={"full_name": name})).json()["id"] for name in "AB"]
+
+    response = await client.post("/guests/verification/manual", json={"guest_ids": [ids[1]]})
+
+    assert response.json() == {"verified": 1}
+    statuses = [guest["verification_status"] for guest in (await client.get("/guests")).json()]
+    assert statuses == ["pending", "verified_manual"]
+
+
+async def test_manual_verification_leaves_other_owners_alone(client: AsyncClient) -> None:
+    created = (await client.post("/guests", json={"full_name": "Jan"})).json()
+    other = {"Authorization": f"Bearer {OTHER_SESSION_COOKIE}"}
+
+    single = await client.post(f"/guests/{created['id']}/verification/manual", headers=other)
+    bulk = await client.post("/guests/verification/manual", json={}, headers=other)
+
+    assert single.status_code == 404
+    assert bulk.json() == {"verified": 0}
+    assert (await client.get(f"/guests/{created['id']}")).json()["verification_status"] == "pending"

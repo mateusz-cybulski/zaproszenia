@@ -2,7 +2,6 @@
 
 import { Button } from "@/shared/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Page } from "@/shared/ui/page";
 
 type ErrorPageProps = {
   error: unknown;
@@ -15,7 +14,7 @@ export function ErrorPage({ error, retry }: ErrorPageProps) {
 
   return (
     <main className="grid min-h-dvh place-items-center p-8">
-      <Page>
+      <div className="w-full max-w-3xl">
         <Card>
           <CardHeader>
             <CardTitle>
@@ -31,7 +30,7 @@ export function ErrorPage({ error, retry }: ErrorPageProps) {
             {digest && <p className="text-sm text-muted-foreground">Kod błędu: {digest}</p>}
           </CardContent>
         </Card>
-      </Page>
+      </div>
     </main>
   );
 }

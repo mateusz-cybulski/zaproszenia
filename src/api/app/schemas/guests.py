@@ -74,3 +74,12 @@ class GuestRead(AddressRead):
     verified_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class ManualVerification(BaseModel):
+    # None: every guest of the user who is not verified yet.
+    guest_ids: list[int] | None = Field(default=None, max_length=1000)
+
+
+class ManualVerificationResult(BaseModel):
+    verified: int

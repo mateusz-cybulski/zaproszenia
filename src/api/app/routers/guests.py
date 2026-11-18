@@ -1,10 +1,20 @@
-from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
+from datetime import UTC, datetime
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query, status
+from sqlalchemy import or_, select
 
 from app.auth import CurrentUser
 from app.db import Session
-from app.models import Guest, VerificationStatus
-from app.schemas.guests import DECLINED_FIELDS, VERIFIED_FIELDS, GuestRead, GuestWrite
+from app.models import VERIFIED_STATUSES, Guest, VerificationStatus
+from app.schemas.guests import (
+    DECLINED_FIELDS,
+    VERIFIED_FIELDS,
+    GuestRead,
+    GuestWrite,
+    ManualVerification,
+    ManualVerificationResult,
+)
 
 router = APIRouter(prefix="/guests", tags=["guests"])
 
@@ -17,6 +27,40 @@ async def _own_guest(session: Session, guest_id: int, owner_uid: str) -> Guest:
     return guest
 
 
+def _escape_like(text: str) -> str:
+    return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _verify_manually(guest: Guest) -> None:
+    guest.verification_status = VerificationStatus.VERIFIED_MANUAL
+    guest.verified_at = datetime.now(UTC)
+
+
+@router.post("/verification/manual")
+async def verify_many_manually(
+    payload: ManualVerification, session: Session, user: CurrentUser
+) -> ManualVerificationResult:
+    statement = select(Guest).where(
+        Guest.owner_uid == user.uid, Guest.verification_status.not_in(VERIFIED_STATUSES)
+    )
+    if payload.guest_ids is not None:
+        statement = statement.where(Guest.id.in_(payload.guest_ids))
+    async with session.begin():
+        guests = (await session.scalars(statement)).all()
+        for guest in guests:
+            _verify_manually(guest)
+    return ManualVerificationResult(verified=len(guests))
+
+
+@router.post("/{guest_id}/verification/manual")
+async def verify_manually(guest_id: int, session: Session, user: CurrentUser) -> GuestRead:
+    async with session.begin():
+        guest = await _own_guest(session, guest_id, user.uid)
+        _verify_manually(guest)
+    await session.refresh(guest)
+    return GuestRead.model_validate(guest)
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_guest(payload: GuestWrite, session: Session, user: CurrentUser) -> GuestRead:
     guest = Guest(owner_uid=user.uid, **payload.model_dump())
@@ -27,10 +71,21 @@ async def create_guest(payload: GuestWrite, session: Session, user: CurrentUser)
 
 
 @router.get("")
-async def list_guests(session: Session, user: CurrentUser) -> list[GuestRead]:
-    guests = await session.scalars(
-        select(Guest).where(Guest.owner_uid == user.uid).order_by(Guest.id)
-    )
+async def list_guests(
+    session: Session,
+    user: CurrentUser,
+    q: Annotated[str | None, Query(max_length=200)] = None,
+) -> list[GuestRead]:
+    statement = select(Guest).where(Guest.owner_uid == user.uid).order_by(Guest.id)
+    if q and q.strip():
+        pattern = f"%{_escape_like(q.strip())}%"
+        statement = statement.where(
+            or_(
+                Guest.full_name.ilike(pattern, escape="\\"),
+                Guest.institution.ilike(pattern, escape="\\"),
+            )
+        )
+    guests = await session.scalars(statement)
     return [GuestRead.model_validate(guest) for guest in guests]
 
 
