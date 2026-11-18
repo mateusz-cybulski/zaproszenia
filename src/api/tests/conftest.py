@@ -16,6 +16,7 @@ from app.main import app
 from app.models import Template
 from app.schemas.auth import AuthUser
 from app.settings import get_settings
+from app.storage import LocalStorage, get_storage
 from app.system_templates import main as sync_system_templates
 
 API_ROOT = Path(__file__).parent.parent
@@ -73,7 +74,17 @@ def identity() -> Iterator[FakeIdentity]:
 
 
 @pytest.fixture
-async def anonymous_client(identity: FakeIdentity) -> AsyncIterator[AsyncClient]:
+def storage(tmp_path: Path) -> Iterator[LocalStorage]:
+    local = LocalStorage(tmp_path / "storage")
+    app.dependency_overrides[get_storage] = lambda: local
+    yield local
+    app.dependency_overrides.pop(get_storage, None)
+
+
+@pytest.fixture
+async def anonymous_client(
+    identity: FakeIdentity, storage: LocalStorage
+) -> AsyncIterator[AsyncClient]:
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as test_client:

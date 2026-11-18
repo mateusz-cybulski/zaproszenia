@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Template, TemplateKind
 from app.schemas.templates import TemplateField
 from app.services.placeholders import to_storage, unknown_placeholders
+from app.storage import Storage
 
 # A field may end this far past the right edge, so a box drawn up to the edge is not rejected.
 EDGE_TOLERANCE_MM = 0.5
@@ -145,3 +146,20 @@ def storage_fields(
             raise TemplateFieldsError(f"Pole {index} wychodzi poza stronę.")
         stored.append({**field.model_dump(), "content": content})
     return stored
+
+
+async def create_with_file(
+    session: AsyncSession, storage: Storage, template: Template, pdf: bytes | None
+) -> None:
+    """Insert the template and store its PDF under a key built from the new id."""
+    session.add(template)
+    await session.flush()
+    if pdf is not None:
+        template.pdf_key = template.storage_key()
+        await storage.put(template.pdf_key, pdf, "application/pdf")
+    try:
+        await session.commit()
+    except BaseException:
+        if template.pdf_key:
+            await storage.delete(template.pdf_key)
+        raise

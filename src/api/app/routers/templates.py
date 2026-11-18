@@ -1,4 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+import asyncio
+from typing import Annotated
+
+from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
 from sqlalchemy import or_, select
 
 from app.auth import CurrentUser
@@ -10,9 +13,11 @@ from app.schemas.templates import (
     DateFormatRead,
     DeclinablePlaceholder,
     PlaceholderRead,
+    TemplateName,
     TemplateRead,
     TemplateUpdate,
 )
+from app.services.pdf import PdfFileError, inspect_pdf
 from app.services.placeholders import (
     DATE_FORMATS,
     PLACEHOLDERS,
@@ -20,11 +25,18 @@ from app.services.placeholders import (
     SAMPLE_NOMINATIVE,
     case_example,
 )
-from app.services.templates import TemplateFieldsError, storage_fields
+from app.services.templates import (
+    TemplateFieldsError,
+    create_with_file,
+    default_fields,
+    storage_fields,
+)
+from app.storage import FileStorage
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
 COPY_SUFFIX = " (kopia)"
+MAX_PDF_BYTES = 15 * 1024 * 1024
 
 
 async def _visible_template(session: Session, template_id: int, owner_uid: str) -> Template:
@@ -85,23 +97,71 @@ async def list_cases() -> list[CaseRead]:
     ]
 
 
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def create_template(
+    session: Session,
+    user: CurrentUser,
+    storage: FileStorage,
+    name: Annotated[TemplateName, Form()],
+    kind: Annotated[TemplateKind, Form()],
+    file: Annotated[
+        UploadFile, File(description="PDF of an invitation or envelope, up to 4 pages")
+    ],
+) -> TemplateRead:
+    data = await file.read(MAX_PDF_BYTES + 1)
+    if len(data) > MAX_PDF_BYTES:
+        raise HTTPException(
+            status.HTTP_413_CONTENT_TOO_LARGE, "Plik jest za duży (najwyżej 15 MB)."
+        )
+    try:
+        pdf = await asyncio.to_thread(inspect_pdf, data)
+    except PdfFileError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
+    template = Template(
+        owner_uid=user.uid,
+        kind=kind,
+        name=name,
+        pages=pdf.pages,
+        fields=default_fields(kind, pdf.pages),
+    )
+    await create_with_file(session, storage, template, pdf.data)
+    await session.refresh(template)
+    return TemplateRead.model_validate(template)
+
+
 @router.get("/{template_id}")
 async def get_template(template_id: int, session: Session, user: CurrentUser) -> TemplateRead:
     return TemplateRead.model_validate(await _visible_template(session, template_id, user.uid))
 
 
+@router.get(
+    "/{template_id}/file",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+async def template_file(
+    template_id: int, session: Session, user: CurrentUser, storage: FileStorage
+) -> Response:
+    template = await _visible_template(session, template_id, user.uid)
+    if template.pdf_key is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Template has no file")
+    return Response(await storage.get(template.pdf_key), media_type="application/pdf")
+
+
 @router.post("/{template_id}/copy", status_code=status.HTTP_201_CREATED)
-async def copy_template(template_id: int, session: Session, user: CurrentUser) -> TemplateRead:
-    async with session.begin():
-        source = await _visible_template(session, template_id, user.uid)
-        copy = Template(
-            owner_uid=user.uid,
-            kind=source.kind,
-            name=_copy_name(source.name),
-            pages=source.pages,
-            fields=source.fields,
-        )
-        session.add(copy)
+async def copy_template(
+    template_id: int, session: Session, user: CurrentUser, storage: FileStorage
+) -> TemplateRead:
+    source = await _visible_template(session, template_id, user.uid)
+    pdf = await storage.get(source.pdf_key) if source.pdf_key else None
+    copy = Template(
+        owner_uid=user.uid,
+        kind=source.kind,
+        name=_copy_name(source.name),
+        pages=source.pages,
+        fields=source.fields,
+    )
+    await create_with_file(session, storage, copy, pdf)
     await session.refresh(copy)
     return TemplateRead.model_validate(copy)
 
@@ -124,6 +184,12 @@ async def update_template(
 
 
 @router.delete("/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_template(template_id: int, session: Session, user: CurrentUser) -> None:
+async def delete_template(
+    template_id: int, session: Session, user: CurrentUser, storage: FileStorage
+) -> None:
     async with session.begin():
-        await session.delete(await _own_template(session, template_id, user.uid))
+        template = await _own_template(session, template_id, user.uid)
+        pdf_key = template.pdf_key
+        await session.delete(template)
+    if pdf_key:
+        await storage.delete(pdf_key)

@@ -59,6 +59,7 @@ class TemplateRead(BaseModel):
     kind: TemplateKind
     name: str
     is_system: bool
+    has_file: bool
     pages: list[TemplatePage]
     fields: list[TemplateField]
     created_at: datetime

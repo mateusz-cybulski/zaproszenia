@@ -1,5 +1,6 @@
 import os
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,6 +21,10 @@ class Settings(BaseSettings):
     session_days: int = Field(default=7, ge=1, le=14)
     # Every request is signed in as this email, without Google (local development only).
     dev_auth_user: str | None = None
+
+    # Cloud Run gets STORAGE_BUCKET from Terraform; local development keeps files in a directory.
+    storage_bucket: str | None = None
+    local_storage_dir: Path | None = None
 
     @field_validator("dev_auth_user")
     @classmethod

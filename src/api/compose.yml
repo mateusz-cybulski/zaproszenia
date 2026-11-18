@@ -11,8 +11,14 @@ x-api: &api
 services:
   api:
     <<: *api
+    environment:
+      DATABASE_URL: postgresql+psycopg://api:api@api-db:5432/api
+      DEV_AUTH_USER: dev@localhost
+      LOCAL_STORAGE_DIR: /data/storage
     ports:
       - "8000:8000"
+    volumes:
+      - api-storage:/data/storage
     depends_on:
       api-migrate:
         condition: service_completed_successfully
@@ -57,3 +63,4 @@ services:
 
 volumes:
   api-db-data:
+  api-storage:

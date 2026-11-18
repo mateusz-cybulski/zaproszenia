@@ -1,11 +1,36 @@
+import io
 from typing import Any
 
+import pytest
 from httpx import AsyncClient
+from pypdf import PdfReader, PdfWriter
 
 from app.main import app
+from app.services.pdf import POINTS_PER_MM
 from app.services.placeholders import to_storage
 from app.services.templates import ensure_system_templates
+from app.storage import LocalStorage
 from tests.conftest import OTHER_SESSION_COOKIE
+
+
+def _pdf(width_mm: float = 148, height_mm: float = 210, pages: int = 1, rotate: int = 0) -> bytes:
+    writer = PdfWriter()
+    for _ in range(pages):
+        page = writer.add_blank_page(
+            width=width_mm * POINTS_PER_MM, height=height_mm * POINTS_PER_MM
+        )
+        page.rotate(rotate)
+    output = io.BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+async def _upload(client: AsyncClient, pdf: bytes, kind: str = "invitation") -> Any:
+    return await client.post(
+        "/templates",
+        data={"name": "  Karta od grafika ", "kind": kind},
+        files={"file": ("karta.pdf", pdf, "application/pdf")},
+    )
 
 
 def _field(**overrides: Any) -> dict[str, Any]:
@@ -165,3 +190,100 @@ async def test_templates_require_sign_in(anonymous_client: AsyncClient) -> None:
 
 def test_to_storage_keeps_unknown_names() -> None:
     assert to_storage("{Imię i nazwisko}, {nieznane}") == "{full_name}, {nieznane}"
+
+
+async def test_upload_pdf_template(client: AsyncClient, storage: LocalStorage) -> None:
+    response = await _upload(client, _pdf())
+
+    assert response.status_code == 201, response.text
+    template = response.json()
+    assert template["name"] == "Karta od grafika"
+    assert template["has_file"] is True
+    assert template["is_system"] is False
+    assert template["pages"] == [{"width_mm": 148.0, "height_mm": 210.0}]
+    assert "{salutation}," in [field["content"] for field in template["fields"]]
+    assert list(storage.root.rglob("*.pdf")) == [
+        storage.root / "users" / "user-1" / "templates" / f"{template['id']}.pdf"
+    ]
+
+    original = await client.get(f"/templates/{template['id']}/file")
+    assert original.status_code == 200
+    assert original.headers["content-type"] == "application/pdf"
+    assert len(PdfReader(io.BytesIO(original.content)).pages) == 1
+
+
+async def test_envelope_upload_gets_the_envelope_layout(client: AsyncClient) -> None:
+    template = (await _upload(client, _pdf(220, 110), kind="envelope")).json()
+
+    assert [field["id"] for field in template["fields"]] == ["sender", "recipient"]
+
+
+async def test_rotated_pages_are_measured_as_displayed(client: AsyncClient) -> None:
+    template = (await _upload(client, _pdf(148, 210, pages=2, rotate=90))).json()
+
+    assert template["pages"] == [{"width_mm": 210.0, "height_mm": 148.0}] * 2
+    original = await client.get(f"/templates/{template['id']}/file")
+    assert PdfReader(io.BytesIO(original.content)).pages[0].rotation == 0
+
+
+async def test_invalid_uploads_are_rejected(client: AsyncClient, storage: LocalStorage) -> None:
+    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(_pdf())))
+    writer.encrypt("tajne")
+    encrypted = io.BytesIO()
+    writer.write(encrypted)
+
+    cases = {
+        b"to nie jest pdf": "poprawny plik PDF",
+        _pdf(pages=5): "najwyżej 4 strony",
+        encrypted.getvalue(): "hasłem",
+    }
+    for pdf, message in cases.items():
+        response = await _upload(client, pdf)
+        assert response.status_code == 422
+        assert message in response.json()["detail"]
+    assert (await _upload(client, _pdf(), kind="poster")).status_code == 422
+    assert not storage.root.exists()
+    templates = (await client.get("/templates")).json()
+    assert all(template["is_system"] for template in templates)
+
+
+async def test_too_large_upload_is_rejected(client: AsyncClient) -> None:
+    response = await _upload(client, _pdf() + b" " * (15 * 1024 * 1024))
+
+    assert response.status_code == 413
+
+
+async def test_copy_has_its_own_file(client: AsyncClient, storage: LocalStorage) -> None:
+    original = (await _upload(client, _pdf())).json()
+    copy = (await client.post(f"/templates/{original['id']}/copy")).json()
+
+    assert copy["has_file"] is True
+    assert (await client.delete(f"/templates/{original['id']}")).status_code == 204
+
+    assert len(list(storage.root.rglob("*.pdf"))) == 1
+    assert (await client.get(f"/templates/{copy['id']}/file")).status_code == 200
+
+
+async def test_files_follow_template_access(client: AsyncClient) -> None:
+    own = (await _upload(client, _pdf())).json()
+    system = await _system_template(client, "invitation")
+
+    assert system["has_file"] is False
+    assert (await client.get(f"/templates/{system['id']}/file")).status_code == 404
+
+    client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
+    assert (await client.get(f"/templates/{own['id']}/file")).status_code == 404
+
+
+async def test_failed_commit_removes_the_stored_file(
+    client: AsyncClient, storage: LocalStorage, monkeypatch: Any
+) -> None:
+    async def fail_commit(self: Any) -> None:
+        raise RuntimeError("database is gone")
+
+    monkeypatch.setattr("sqlalchemy.ext.asyncio.AsyncSession.commit", fail_commit)
+    with pytest.raises(RuntimeError, match="database is gone"):
+        await _upload(client, _pdf())
+    monkeypatch.undo()
+
+    assert list(storage.root.rglob("*.pdf")) == []
