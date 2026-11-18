@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
-import { verifyGuestManuallyAction } from "../api/actions";
+import { verifyGuestManuallyAction } from "../api/verify-guest-manually-action";
 import { MenuOption } from "./menu-option";
 
 export function VerificationMenu({ guest }: { guest: Guest }) {

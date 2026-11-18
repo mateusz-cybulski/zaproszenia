@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/shared/ui/dialog";
 
-import { verifyAllGuestsManuallyAction } from "../api/actions";
+import { verifyAllGuestsManuallyAction } from "../api/verify-all-guests-manually-action";
 import { VerificationChoice } from "./verification-choice";
 
 export function VerifyAllDialog() {
