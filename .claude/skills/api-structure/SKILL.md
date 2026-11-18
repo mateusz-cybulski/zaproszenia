@@ -1,9 +1,9 @@
 ---
 name: api-structure
-description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, and how reference data (rows the app ships, e.g. system templates) gets into the database."
+description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, and how deleting user data works (soft delete with restore by default)."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -87,6 +87,25 @@ Schemas and routers are imported by module path (`from app.schemas.events import
 3. Migration: `uv run alembic revision --autogenerate -m "<what changed>"`, then read and fix the generated file: data migrations, server defaults for existing rows (add, backfill, then drop the default if the model has none), and the order of steps in `downgrade`.
 4. `app/schemas/<resource>.py` and `app/routers/<resource>.py`; register the router in `main.py`.
 5. Tests in `tests/test_<resource>.py`; `uv run pytest -q` also runs the migration drift check.
+
+## Deleting user data: soft delete by default
+
+When a user deletes something they created (guests, events, contacts), suggest a soft delete with restore before writing a plain `DELETE`. People delete by mistake, and a restore is cheaper than a support request. Hard delete stays available for data that must really go (privacy requests, clean-up). Skip soft delete only for data with no value once removed (sessions, caches, join rows that are rebuilt), and say why.
+
+1. Model: `deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))`, NULL for active rows. A timestamp, not a boolean, so the restore list can show when and sort newest first. Migration: a nullable column, no backfill.
+2. Every read and bulk operation filters `Model.deleted_at.is_(None)`: lists, search, counts, "verify all", exports. A deleted row behaves like a missing one, so `GET/PUT/POST /{id}/...` return 404. Put the check in the shared ownership helper (`_own_<entity>(..., deleted=False)`, with `True` for deleted rows only and `None` for either), not in each endpoint.
+3. Endpoints:
+
+| Endpoint | Does |
+|---|---|
+| `DELETE /<resource>/{id}` | soft delete: sets `deleted_at = now()`, 204 |
+| `DELETE /<resource>/{id}?permanent=true` | hard delete, for an active or an already deleted row, 204 |
+| `GET /<resource>?deleted=true` | only deleted rows, newest `deleted_at` first |
+| `POST /<resource>/{id}/restore` | clears `deleted_at`, returns the row; 404 if it is not deleted |
+
+4. Files in storage and child rows: a soft delete keeps them; only the hard delete removes them (after the commit, see `gcp-backend`).
+5. Tests: a soft-deleted row leaves the list and reappears after restore; it is 404 for read, update and its actions, and skipped by bulk operations; hard delete works on active and deleted rows; all of it is private to the owner.
+6. Unique constraints that should allow re-creating a deleted row need a partial index (`WHERE deleted_at IS NULL`).
 
 ## Reference data: rows the app ships
 
