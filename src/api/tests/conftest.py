@@ -11,7 +11,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete, text
 from testcontainers.community.postgres import PostgresContainer
 
-from app.auth import EmailNotVerifiedError, InvalidCredentialsError, get_identity
+from app.auth import (
+    EmailNotVerifiedError,
+    IdentityUnavailableError,
+    InvalidCredentialsError,
+    get_identity,
+)
 from app.main import app
 from app.models import Template
 from app.schemas.auth import AuthUser
@@ -44,6 +49,8 @@ OTHER_USER = AuthUser(uid="user-2", email="anna@example.com")
 class FakeIdentity:
     def __init__(self) -> None:
         self.revoked: list[str] = []
+        self.deleted: list[str] = []
+        self.unavailable = False
         self.session_lifetimes: list[timedelta] = []
 
     async def create_session(self, id_token: str, expires_in: timedelta) -> str:
@@ -63,6 +70,11 @@ class FakeIdentity:
 
     async def revoke_sessions(self, uid: str) -> None:
         self.revoked.append(uid)
+
+    async def delete_user(self, uid: str) -> None:
+        if self.unavailable:
+            raise IdentityUnavailableError("identity platform is down")
+        self.deleted.append(uid)
 
 
 @pytest.fixture
@@ -90,7 +102,7 @@ async def anonymous_client(
         async with AsyncClient(transport=transport, base_url="http://test") as test_client:
             yield test_client
         async with app.state.sessionmaker() as session, session.begin():
-            await session.execute(text("TRUNCATE guests RESTART IDENTITY"))
+            await session.execute(text("TRUNCATE guests, profiles RESTART IDENTITY"))
             await session.execute(delete(Template).where(Template.owner_uid.is_not(None)))
 
 

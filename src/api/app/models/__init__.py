@@ -3,6 +3,7 @@
 
 from app.models.base import AddressMixin, Base, TimestampMixin, str_enum
 from app.models.guest import VERIFIED_STATUSES, Guest, VerificationStatus
+from app.models.profile import Profile
 from app.models.template import Template, TemplateKind
 
 __all__ = [
@@ -10,6 +11,7 @@ __all__ = [
     "AddressMixin",
     "Base",
     "Guest",
+    "Profile",
     "Template",
     "TemplateKind",
     "TimestampMixin",

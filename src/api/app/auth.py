@@ -8,6 +8,7 @@ httpOnly cookie and sends it with every API request as `Authorization: Bearer <c
 import asyncio
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import timedelta
 from functools import cached_property, lru_cache
 from typing import Annotated, Any, Protocol
@@ -44,6 +45,8 @@ class Identity(Protocol):
     async def verify_session(self, session_cookie: str) -> AuthUser: ...
 
     async def revoke_sessions(self, uid: str) -> None: ...
+
+    async def delete_user(self, uid: str) -> None: ...
 
 
 class FirebaseIdentity:
@@ -82,6 +85,14 @@ class FirebaseIdentity:
             firebase_auth.revoke_refresh_tokens(uid, app=self._app)
 
         await _call(revoke)
+
+    async def delete_user(self, uid: str) -> None:
+        def delete() -> None:
+            firebase_auth.delete_user(uid, app=self._app)
+
+        # An account that is already gone counts as deleted.
+        with suppress(InvalidCredentialsError):
+            await _call(delete)
 
 
 async def _call[T](function: Callable[[], T]) -> T:

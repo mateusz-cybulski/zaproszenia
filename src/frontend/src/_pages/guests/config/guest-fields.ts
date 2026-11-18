@@ -1,14 +1,8 @@
-import { countries } from "@/shared/config";
+import type { FormFieldConfig } from "@/shared/ui/form-field";
 
 import type { GuestField } from "../model/guest-form";
 
-export type FieldConfig = {
-  name: GuestField;
-  label: string;
-  hint?: string;
-} & ({ maxLength: number } | { options: readonly { value: string; label: string }[] });
-
-export const recipientFields: FieldConfig[] = [
+export const recipientFields: FormFieldConfig<GuestField>[] = [
   {
     name: "fullName",
     label: "Imię i nazwisko",
@@ -22,16 +16,5 @@ export const recipientFields: FieldConfig[] = [
     label: "Zwrot grzecznościowy",
     maxLength: 300,
     hint: "Np. „Szanowny Panie Dyrektorze”.",
-  },
-];
-
-export const addressFields: FieldConfig[] = [
-  { name: "street", label: "Ulica i numer", maxLength: 300 },
-  { name: "postalCode", label: "Kod pocztowy", maxLength: 20 },
-  { name: "city", label: "Miejscowość", maxLength: 200 },
-  {
-    name: "country",
-    label: "Kraj",
-    options: countries.map((country) => ({ value: country.code, label: country.name })),
   },
 ];

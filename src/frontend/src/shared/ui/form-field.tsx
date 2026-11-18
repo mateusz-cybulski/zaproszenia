@@ -2,16 +2,22 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { NativeSelect } from "@/shared/ui/native-select";
 
-import type { FieldConfig } from "../config/guest-fields";
+export type FormFieldConfig<Name extends string = string> = {
+  name: Name;
+  label: string;
+  hint?: string;
+  // Default "off": most forms here hold other people's data, where autofill offers the user's own.
+  autoComplete?: string;
+} & ({ maxLength: number } | { options: readonly { value: string; label: string }[] });
 
-type GuestFormFieldProps = {
+type FormFieldProps = {
   id: string;
-  field: FieldConfig;
+  field: FormFieldConfig;
   defaultValue: string;
   error?: string;
 };
 
-export function GuestFormField({ id, field, defaultValue, error }: GuestFormFieldProps) {
+export function FormField({ id, field, defaultValue, error }: FormFieldProps) {
   const describedBy =
     [error ? `${id}-error` : null, field.hint ? `${id}-hint` : null].filter(Boolean).join(" ") ||
     undefined;
@@ -38,8 +44,7 @@ export function GuestFormField({ id, field, defaultValue, error }: GuestFormFiel
           id={id}
           name={field.name}
           defaultValue={defaultValue}
-          // Data of the guest, not of the user: browser autofill would offer the wrong values.
-          autoComplete="off"
+          autoComplete={field.autoComplete ?? "off"}
           maxLength={field.maxLength}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
