@@ -20,7 +20,7 @@ async def _guest(client: AsyncClient, **fields: Any) -> int:
 async def _names_on_list(client: AsyncClient, event_id: int) -> list[str]:
     response = await client.get(f"/events/{event_id}/guests")
     assert response.status_code == 200
-    return [event_guest["guest"]["full_name"] for event_guest in response.json()]
+    return [event_guest["guest"]["full_name"] for event_guest in response.json()["items"]]
 
 
 async def test_add_guests_to_an_event(client: AsyncClient) -> None:
@@ -32,7 +32,7 @@ async def test_add_guests_to_an_event(client: AsyncClient) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"added": 2, "already_present": 0, "not_found": []}
-    event_guests = (await client.get(f"/events/{event_id}/guests")).json()
+    event_guests = (await client.get(f"/events/{event_id}/guests")).json()["items"]
     assert [event_guest["guest"]["full_name"] for event_guest in event_guests] == [
         "Anna Nowak",
         "Piotr Lis",
@@ -51,7 +51,7 @@ async def test_list_is_sorted_by_recipient_including_institutions(client: AsyncC
     ]
     await client.post(f"/events/{event_id}/guests", json={"guest_ids": ids})
 
-    event_guests = (await client.get(f"/events/{event_id}/guests")).json()
+    event_guests = (await client.get(f"/events/{event_id}/guests")).json()["items"]
 
     recipients = [
         event_guest["guest"]["full_name"] or event_guest["guest"]["institution"]
@@ -106,7 +106,9 @@ async def test_change_invitation_status(client: AsyncClient) -> None:
     assert response.json()["status"] == "accepted"
     assert response.json()["guest"]["id"] == jan
     assert invalid.status_code == 422
-    assert (await client.get(f"/events/{event_id}/guests")).json()[0]["status"] == "accepted"
+    assert (await client.get(f"/events/{event_id}/guests")).json()["items"][0][
+        "status"
+    ] == "accepted"
 
 
 async def test_remove_guest_from_the_list_keeps_the_guest(client: AsyncClient) -> None:
@@ -149,7 +151,7 @@ async def test_deleted_guest_leaves_lists_and_returns_when_restored(client: Asyn
 
     assert hidden == []
     assert status_change.status_code == 404
-    event_guests = (await client.get(f"/events/{event_id}/guests")).json()
+    event_guests = (await client.get(f"/events/{event_id}/guests")).json()["items"]
     assert [(item["guest"]["id"], item["status"]) for item in event_guests] == [(jan, "sent")]
 
 

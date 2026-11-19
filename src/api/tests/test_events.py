@@ -116,7 +116,7 @@ async def test_list_events_latest_first(client: AsyncClient) -> None:
     await _create(client, name="Wiosna", starts_at="2026-04-01T12:00:00")
     await _create(client, name="Jesień", starts_at="2026-10-01T12:00:00")
 
-    events = (await client.get("/events")).json()
+    events = (await client.get("/events")).json()["items"]
 
     assert [event["name"] for event in events] == ["Jesień", "Wiosna"]
 
@@ -155,7 +155,7 @@ async def test_events_are_private_to_their_owner(client: AsyncClient) -> None:
     event = await _create(client)
     client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
 
-    assert (await client.get("/events")).json() == []
+    assert (await client.get("/events")).json()["items"] == []
     assert (await client.get(f"/events/{event['id']}")).status_code == 404
     assert (await client.put(f"/events/{event['id']}", json=GALA)).status_code == 404
     assert (await client.delete(f"/events/{event['id']}")).status_code == 404
@@ -170,8 +170,8 @@ async def test_soft_deleted_event_leaves_the_list_and_can_be_restored(client: As
 
     assert (await client.delete(f"/events/{gala['id']}")).status_code == 204
 
-    assert [event["id"] for event in (await client.get("/events")).json()] == [other["id"]]
-    deleted = (await client.get("/events", params={"deleted": "true"})).json()
+    assert [event["id"] for event in (await client.get("/events")).json()["items"]] == [other["id"]]
+    deleted = (await client.get("/events", params={"deleted": "true"})).json()["items"]
     assert [event["id"] for event in deleted] == [gala["id"]]
     assert deleted[0]["deleted_at"] is not None
     assert (await client.get(f"/events/{gala['id']}")).status_code == 404
@@ -180,7 +180,7 @@ async def test_soft_deleted_event_leaves_the_list_and_can_be_restored(client: As
     restored = await client.post(f"/events/{gala['id']}/restore")
     assert restored.status_code == 200
     assert restored.json()["deleted_at"] is None
-    assert len((await client.get("/events")).json()) == 2
+    assert len((await client.get("/events")).json()["items"]) == 2
     assert (await client.post(f"/events/{gala['id']}/restore")).status_code == 404
 
 
@@ -193,8 +193,8 @@ async def test_permanent_delete_removes_active_and_deleted_events(client: AsyncC
         response = await client.delete(f"/events/{event['id']}", params={"permanent": "true"})
         assert response.status_code == 204
 
-    assert (await client.get("/events")).json() == []
-    assert (await client.get("/events", params={"deleted": "true"})).json() == []
+    assert (await client.get("/events")).json()["items"] == []
+    assert (await client.get("/events", params={"deleted": "true"})).json()["items"] == []
 
 
 async def test_events_require_sign_in(anonymous_client: AsyncClient) -> None:

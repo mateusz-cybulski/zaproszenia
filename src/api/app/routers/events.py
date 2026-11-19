@@ -8,10 +8,12 @@ from sqlalchemy import select
 
 from app.auth import CurrentUser
 from app.db import Session
-from app.dependencies import OwnEvent, find_own_event, find_visible_template
+from app.dependencies import OwnEvent, Pagination, find_own_event, find_visible_template
 from app.models import Event, Profile, Template, TemplateKind
 from app.schemas.events import EventRead, EventTemplates, EventWrite
+from app.schemas.pagination import Page
 from app.schemas.templates import MAX_PAGES
+from app.services.pagination import paginate
 from app.services.pdf import render, render_png
 from app.services.placeholders import event_preview_values
 from app.services.templates import base_pdf
@@ -73,8 +75,8 @@ async def create_event(payload: EventWrite, session: Session, user: CurrentUser)
 
 @router.get("")
 async def list_events(
-    session: Session, user: CurrentUser, deleted: bool = False
-) -> list[EventRead]:
+    session: Session, user: CurrentUser, pagination: Pagination, deleted: bool = False
+) -> Page[EventRead]:
     statement = select(Event).where(Event.owner_uid == user.uid)
     if deleted:
         statement = statement.where(Event.deleted_at.is_not(None)).order_by(
@@ -84,8 +86,13 @@ async def list_events(
         statement = statement.where(Event.deleted_at.is_(None)).order_by(
             Event.starts_at.desc(), Event.id
         )
-    events = await session.scalars(statement)
-    return [EventRead.model_validate(event) for event in events]
+    events, total = await paginate(session, statement, pagination)
+    return Page[EventRead](
+        items=[EventRead.model_validate(event) for event in events],
+        total=total,
+        page=pagination.page,
+        page_size=pagination.page_size,
+    )
 
 
 @router.get("/{event_id}")
