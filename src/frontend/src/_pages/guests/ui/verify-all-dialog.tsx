@@ -3,7 +3,7 @@
 import { ShieldCheck, Sparkles, UserCheck } from "lucide-react";
 import { useState } from "react";
 
-import { useAction } from "@/shared/lib/actions";
+import { useAction } from "@/shared/lib/action-call";
 import { Button } from "@/shared/ui/button";
 import { ChoiceButton } from "@/shared/ui/choice-button";
 import {

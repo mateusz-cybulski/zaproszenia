@@ -3,7 +3,7 @@ import { type TemplateAsset, fetchTemplateAsset } from "@/entities/template/inde
 type TemplateAssetContext = { params: Promise<{ id: string }> };
 
 // The page image never changes: a template's PDF cannot be replaced, only uploaded anew.
-const cacheControl: Record<TemplateAsset, string> = {
+const CACHE_CONTROL: Record<TemplateAsset, string> = {
   "page.png": "private, max-age=31536000, immutable",
   preview: "private, no-store",
 };
@@ -20,7 +20,7 @@ async function proxyAsset(asset: TemplateAsset, { params }: TemplateAssetContext
   return new Response(response.body, {
     headers: {
       "Content-Type": response.headers.get("Content-Type") ?? "application/octet-stream",
-      "Cache-Control": cacheControl[asset],
+      "Cache-Control": CACHE_CONTROL[asset],
     },
   });
 }

@@ -1,18 +1,21 @@
-import type { Template, TemplateKind } from "../model/template";
+import { z } from "zod";
 
-export type TemplateDto = {
-  id: number;
-  kind: TemplateKind;
-  name: string;
-  is_system: boolean;
-  has_file: boolean;
-  pages: { width_mm: number; height_mm: number }[];
-  fields: unknown[];
-  updated_at: string;
-};
+import { apiTimestamp } from "@/shared/api";
 
-export function toTemplate(dto: TemplateDto): Template {
-  return {
+import { TEMPLATE_KINDS } from "../model/template";
+
+export const templateDtoSchema = z
+  .object({
+    id: z.int(),
+    kind: z.enum(TEMPLATE_KINDS),
+    name: z.string(),
+    is_system: z.boolean(),
+    has_file: z.boolean(),
+    pages: z.array(z.object({ width_mm: z.number(), height_mm: z.number() })),
+    fields: z.array(z.unknown()),
+    updated_at: apiTimestamp,
+  })
+  .transform((dto) => ({
     id: dto.id,
     kind: dto.kind,
     name: dto.name,
@@ -21,5 +24,6 @@ export function toTemplate(dto: TemplateDto): Template {
     pages: dto.pages.map((page) => ({ widthMm: page.width_mm, heightMm: page.height_mm })),
     fieldCount: dto.fields.length,
     updatedAt: dto.updated_at,
-  };
-}
+  }));
+
+export const templateListSchema = z.array(templateDtoSchema);

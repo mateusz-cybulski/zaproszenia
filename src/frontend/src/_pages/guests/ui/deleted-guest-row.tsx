@@ -1,7 +1,7 @@
 "use client";
 
 import { type Guest, recipientName } from "@/entities/guest";
-import { useAction } from "@/shared/lib/actions";
+import { useAction } from "@/shared/lib/action-call";
 import { formatAddress } from "@/shared/lib/address";
 import { formatDateTime } from "@/shared/lib/dates";
 import { PurgeButton } from "@/shared/ui/purge-button";

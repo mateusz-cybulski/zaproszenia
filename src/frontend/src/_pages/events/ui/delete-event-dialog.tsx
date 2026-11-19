@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { DeleteChoiceDialog } from "@/shared/ui/delete-choice-dialog";
 
 import { deleteEventAction } from "../api/delete-event-action";
-import { deleteCopy } from "../config/messages";
+import { DELETE_COPY } from "../config/messages";
 
 export function DeleteEventDialog({ event }: { event: Event }) {
   return (
@@ -18,9 +18,12 @@ export function DeleteEventDialog({ event }: { event: Event }) {
         </Button>
       }
       title={`Usunąć wydarzenie „${event.name}”?`}
-      description={deleteCopy.description}
-      soft={{ title: deleteCopy.softTitle, description: deleteCopy.softDescription }}
-      permanent={{ title: deleteCopy.permanentTitle, description: deleteCopy.permanentDescription }}
+      description={DELETE_COPY.description}
+      soft={{ title: DELETE_COPY.softTitle, description: DELETE_COPY.softDescription }}
+      permanent={{
+        title: DELETE_COPY.permanentTitle,
+        description: DELETE_COPY.permanentDescription,
+      }}
       remove={(permanent) => deleteEventAction(event.id, permanent)}
     />
   );

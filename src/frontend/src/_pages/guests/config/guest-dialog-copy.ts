@@ -1,4 +1,4 @@
-export const guestDialogCopy = {
+export const GUEST_DIALOG_COPY = {
   add: {
     title: "Dodaj gościa",
     description: "Podaj imię i nazwisko albo samą instytucję, jeśli zapraszasz ją jako całość.",

@@ -2,8 +2,8 @@
 
 import { ChevronDown, Sparkles, UserCheck } from "lucide-react";
 
-import { type Guest, VerificationBadge, verificationStatusLabels } from "@/entities/guest";
-import { useAction } from "@/shared/lib/actions";
+import { type Guest, VerificationBadge, VERIFICATION_STATUS_LABELS } from "@/entities/guest";
+import { useAction } from "@/shared/lib/action-call";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +18,7 @@ import { MenuOption } from "./menu-option";
 export function VerificationMenu({ guest }: { guest: Guest }) {
   const verify = useAction(() => verifyGuestManuallyAction(guest.id));
   const { pending, error } = verify;
-  const label = verificationStatusLabels[guest.verificationStatus];
+  const label = VERIFICATION_STATUS_LABELS[guest.verificationStatus];
 
   return (
     <div className="grid justify-items-start gap-1">

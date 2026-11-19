@@ -3,7 +3,8 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 
-import { type ActionResult, useAction } from "@/shared/lib/actions";
+import type { ActionResult } from "@/shared/lib/actions";
+import { useAction } from "@/shared/lib/action-call";
 import { Button } from "@/shared/ui/button";
 import {
   Dialog,

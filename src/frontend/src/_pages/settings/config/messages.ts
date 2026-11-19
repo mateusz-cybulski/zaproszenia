@@ -1,6 +1,5 @@
-export const settingsMessages = {
+export const SETTINGS_MESSAGES = {
   saved: "Zapisano dane nadawcy.",
-  fixFields: "Popraw zaznaczone pola.",
   invalid: "API odrzuciło dane. Sprawdź pola formularza.",
   unavailable: "Nie udało się połączyć z API. Spróbuj ponownie.",
   accountKept:

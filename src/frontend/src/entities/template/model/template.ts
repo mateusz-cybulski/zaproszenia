@@ -1,14 +1,11 @@
-export type TemplateKind = "invitation" | "envelope";
+import type { z } from "zod";
 
-export type TemplatePage = { widthMm: number; heightMm: number };
+import type { templateDtoSchema } from "../api/template-dto";
 
-export type Template = {
-  id: number;
-  kind: TemplateKind;
-  name: string;
-  isSystem: boolean;
-  hasFile: boolean;
-  pages: TemplatePage[];
-  fieldCount: number;
-  updatedAt: string;
-};
+export const TEMPLATE_KINDS = ["invitation", "envelope"] as const;
+
+export type TemplateKind = (typeof TEMPLATE_KINDS)[number];
+
+export type Template = z.output<typeof templateDtoSchema>;
+
+export type TemplatePage = Template["pages"][number];

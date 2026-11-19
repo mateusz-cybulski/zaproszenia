@@ -1,20 +1,20 @@
+import type { z } from "zod";
+
 import type { Address } from "@/shared/lib/address";
 
-export type VerificationStatus =
-  "pending" | "verified_ai" | "verified_manual" | "needs_review" | "failed";
+import type { guestDtoSchema } from "../api/guest-dto";
 
-export type Guest = Address & {
-  id: number;
-  fullName: string | null;
-  position: string | null;
-  institution: string | null;
-  salutation: string | null;
-  verificationStatus: VerificationStatus;
-  verifiedAt: string | null;
-  deletedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+export const VERIFICATION_STATUSES = [
+  "pending",
+  "verified_ai",
+  "verified_manual",
+  "needs_review",
+  "failed",
+] as const;
+
+export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
+
+export type Guest = z.output<typeof guestDtoSchema>;
 
 export type GuestInput = Address & {
   fullName: string | null;

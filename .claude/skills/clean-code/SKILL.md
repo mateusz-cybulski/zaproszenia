@@ -3,7 +3,7 @@ name: clean-code
 description: "Use whenever you write or change code in this repo, in any language: how to name variables, functions, types and constants so the name says what the thing is (full words, no abbreviations, no names made of a bare number like Text300), when a literal number or string must become a named constant, how to group related constants (limits, sizes, timeouts) and related field types in one typed namespace (a @final class such as TextLimit or TextField) instead of a dictionary with string keys or copies in several layers, and the naming convention that keeps those namespaces from clashing with variables. Applies to Python, TypeScript and the rest; code-reviewer checks the same rules in reviews."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Clean code: names and constants
@@ -66,13 +66,13 @@ Type aliases as class members work with mypy `--strict` and Pydantic alike: the 
 Use `enum.StrEnum` / `IntEnum` instead when the members are a closed set of **choices** (statuses, kinds) rather than settings: an enum value can be stored and validated, a limit cannot be "one of" anything.
 
 ```ts
-// TypeScript: a const object, read-only and fully typed
-export const TextLimit = {
+// TypeScript: a const object, read-only and fully typed; the constant's name is UPPER_SNAKE_CASE
+export const TEXT_LIMIT = {
   short: 300,
   long: 5000,
 } as const;
 
-type TextLimitName = keyof typeof TextLimit; // "short" | "long"
+type TextLimitName = keyof typeof TEXT_LIMIT; // "short" | "long"
 ```
 
 TypeScript types cannot be members of an object: there, only constants are grouped this way; types stay module-level `export type`.
@@ -83,12 +83,15 @@ The convention keeps a namespace from ever clashing with a variable of the same 
 
 | What | Container | Container name | Member names | Example |
 |---|---|---|---|---|
-| Group of constants | Python: `@final` class, `Final` members; TS: `as const` object | `PascalCase` `<Concept><Kind>`: `TextLimit`, `PaperSize`, `RequestTimeout` | Python `UPPER_SNAKE`, TS `camelCase` | `TextLimit.SHORT` |
+| Group of constants | Python: `@final` class with `Final` members | `PascalCase` `<Concept><Kind>` (it is a class): `TextLimit`, `PaperSize`, `RequestTimeout` | `UPPER_SNAKE` | `TextLimit.SHORT` |
+| Group of constants | TS/JS: `as const` object | `UPPER_SNAKE` `<CONCEPT>_<KIND>` (it is a constant): `TEXT_LIMIT`, `DELETE_COPY`, `FAILURE_MESSAGES` | `camelCase` keys; data values as keys in lookup maps (`FAILURE_MESSAGES["not-found"]`) | `TEXT_LIMIT.short` |
 | Group of field types | Python `@final` class | `PascalCase` `<Concept>Field`: `TextField` | `PascalCase` (they are types); `Optional` prefix when the field may be empty, no prefix when it is required | `TextField.OptionalShort` |
 | Variables, parameters, modules | — | `snake_case` / `camelCase`, never the bare container name | — | `text`, `field_text` |
 
-- **The container always has a suffix** saying what it holds (`Limit`, `Size`, `Field`, `Timeout`). A bare concept (`Text`, `Paper`) is left free for variables and classes of the business concept itself.
-- **The concept joins related containers**: `TextLimit.SHORT` and `TextField.OptionalShort` read as a pair.
+- **In TypeScript and JavaScript every module-level constant is `UPPER_SNAKE_CASE`**: a fixed primitive (`MAX_PDF_BYTES`, `DELETE_CONFIRMATION`) and a fixed object or array (copy, labels, lookup maps, option lists, form field configs: `DELETE_COPY`, `VERIFICATION_STATUS_LABELS`, `COUNTRIES`, `ADDRESS_FIELDS`). Keys inside stay `camelCase`. In Python the group is a class, so it is `PascalCase` with `UPPER_SNAKE` members (`TextLimit.SHORT`).
+- A `const` binding alone does not make a constant. `camelCase` stays for locals inside functions, functions, components, hooks, zod schemas, objects of functions (`routes.guests()`), stateful instances (a `Map` used as a cache, a `Set` of listeners, an `Intl.DateTimeFormat`), and names a framework requires (`export const metadata` in Next).
+- **The container always has a suffix** saying what it holds (`Limit`, `Size`, `Field`, `Copy`, `Labels`). A bare concept (`Text`, `Paper`) is left free for variables and classes of the business concept itself.
+- **The concept joins related containers**: `TextLimit.SHORT` and `TextField.OptionalShort` read as a pair; the frontend mirror is `TEXT_LIMIT.short`.
 - Members are named by their meaning (`SHORT`, `A5`, `MAX_ATTEMPTS`), not by their value.
 - **Do not group in a lowercase module instead** (`from app.schemas import text`, then `text.OptionalShort`): the module name collides with every local `text` variable.
 - A type with its own validation (`Country`, `Timezone`) stays a separate module-level alias; the namespace holds the family that differs only by limit and optionality.
@@ -100,5 +103,5 @@ The convention keeps a namespace from ever clashing with a variable of the same 
 1. Every new name is full words and says what the thing is, not what value or shape it has.
 2. No rule-carrying literal appears twice; each has one named home.
 3. Related constants and field types are members of one typed namespace (a `@final` class, an `as const` object, or an enum for choices), not a string-keyed dictionary or a lowercase module.
-4. Namespaces follow the naming table: `PascalCase` `<Concept><Kind>`, never a bare word a variable could use.
+4. Namespaces follow the naming table, never a bare word a variable could use: in Python a `PascalCase` class with `UPPER_SNAKE` members, in TS/JS an `UPPER_SNAKE` constant with `camelCase` keys.
 5. The namespace sits in a layer every user can import without breaking the import rules.

@@ -4,14 +4,13 @@ import { revalidatePath } from "next/cache";
 
 import { restoreEvent } from "@/entities/event/index.server";
 import { routes } from "@/shared/routes";
-import type { ActionResult } from "@/shared/lib/actions";
+import { type ActionResult, isRecordId } from "@/shared/lib/actions";
 
-import { deleteCopy } from "../config/messages";
-import { isEventId } from "../model/event-id";
+import { DELETE_COPY } from "../config/messages";
 
 export async function restoreEventAction(id: number): Promise<ActionResult> {
-  if (!isEventId(id) || !(await restoreEvent(id))) {
-    return { error: deleteCopy.restoreFailed };
+  if (!isRecordId(id) || !(await restoreEvent(id))) {
+    return { error: DELETE_COPY.restoreFailed };
   }
   revalidatePath(routes.events(), "layout");
   return {};

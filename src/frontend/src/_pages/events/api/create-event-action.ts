@@ -1,25 +1,27 @@
 "use server";
 
+import type { SubmissionResult } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod/v4";
 import { revalidatePath } from "next/cache";
 
 import { createEvent } from "@/entities/event/index.server";
 import { routes } from "@/shared/routes";
 
-import type { EventFormState } from "../model/event-form";
-import { saveFailureState, validateEventForm } from "./validate-event-form";
+import { FAILURE_MESSAGES } from "../config/messages";
+import { eventFormSchema } from "../model/event-form";
 
 export async function createEventAction(
-  _previous: EventFormState,
+  _previous: SubmissionResult | undefined,
   formData: FormData,
-): Promise<EventFormState> {
-  const validated = validateEventForm(formData);
-  if (!validated.ok) {
-    return validated.state;
+): Promise<SubmissionResult> {
+  const submission = parseWithZod(formData, { schema: eventFormSchema });
+  if (submission.status !== "success") {
+    return submission.reply();
   }
-  const result = await createEvent(validated.input);
+  const result = await createEvent(submission.value);
   if (!result.ok) {
-    return saveFailureState(result, formData);
+    return submission.reply({ formErrors: [FAILURE_MESSAGES[result.reason]] });
   }
   revalidatePath(routes.events(), "layout");
-  return { status: "success" };
+  return submission.reply({ resetForm: true });
 }

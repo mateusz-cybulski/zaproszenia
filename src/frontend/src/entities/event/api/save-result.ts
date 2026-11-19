@@ -1,13 +1,12 @@
-import type { Event } from "../model/event";
-import { type EventDto, toEvent } from "./event-dto";
-
 export type SaveEventFailure = { ok: false; reason: "not-found" | "invalid" | "unavailable" };
 
-export type SaveEventResult = { ok: true; event: Event } | SaveEventFailure;
+export type SaveEventResult = { ok: true } | SaveEventFailure;
 
-export async function toSaveResult(response: Response | null): Promise<SaveEventResult> {
+// The saved event is not read back: a body the client does not expect must not fail a write
+// that already happened.
+export function toSaveResult(response: Response | null): SaveEventResult {
   if (response?.ok) {
-    return { ok: true, event: toEvent((await response.json()) as EventDto) };
+    return { ok: true };
   }
   if (response?.status === 404) {
     return { ok: false, reason: "not-found" };

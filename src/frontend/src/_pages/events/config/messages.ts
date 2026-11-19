@@ -1,19 +1,17 @@
 import type { SaveEventFailure } from "@/entities/event/index.server";
 
-export const eventDialogCopy = {
+export const EVENT_DIALOG_COPY = {
   title: "Nowe wydarzenie",
   description: "Miejsce, treść zaproszenia i szablony uzupełnisz w szczegółach wydarzenia.",
 } as const;
 
-export const failureMessages: Record<SaveEventFailure["reason"], string> = {
+export const FAILURE_MESSAGES: Record<SaveEventFailure["reason"], string> = {
   "not-found": "To wydarzenie już nie istnieje.",
   invalid: "API odrzuciło dane. Sprawdź pola formularza.",
   unavailable: "Nie udało się połączyć z API. Spróbuj ponownie.",
 };
 
-export const FIX_FIELDS = "Popraw zaznaczone pola.";
-
-export const deleteCopy = {
+export const DELETE_COPY = {
   description: "Wybierz, czy wydarzenie ma trafić do usuniętych, czy zniknąć na stałe.",
   softTitle: "Przenieś do usuniętych",
   softDescription:

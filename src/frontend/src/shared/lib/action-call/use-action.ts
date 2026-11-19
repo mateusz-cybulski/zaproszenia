@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-import type { ActionResult } from "./action-result";
+import type { ActionResult } from "@/shared/lib/actions";
 
 type UseActionOptions = { onSuccess?: () => void };
 

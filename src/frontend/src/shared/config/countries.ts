@@ -1,6 +1,6 @@
 // ISO 3166-1 alpha-2 with Polish names from CLDR, generated once and kept static: names built
 // with Intl at runtime differ between Node and browsers and would break hydration.
-export const countries: readonly { code: string; name: string }[] = [
+export const COUNTRIES: readonly { code: string; name: string }[] = [
   { code: "AF", name: "Afganistan" },
   { code: "AL", name: "Albania" },
   { code: "DZ", name: "Algieria" },
@@ -252,10 +252,10 @@ export const countries: readonly { code: string; name: string }[] = [
   { code: "AE", name: "Zjednoczone Emiraty Arabskie" },
 ];
 
-const namesByCode = new Map(countries.map((country) => [country.code, country.name]));
+const NAMES_BY_CODE = new Map(COUNTRIES.map((country) => [country.code, country.name]));
 
-export const countryCodes = countries.map((country) => country.code);
+export const COUNTRY_CODES = COUNTRIES.map((country) => country.code);
 
 export function countryName(code: string): string {
-  return namesByCode.get(code) ?? code;
+  return NAMES_BY_CODE.get(code) ?? code;
 }

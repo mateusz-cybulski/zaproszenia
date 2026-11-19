@@ -1,7 +1,7 @@
 "use client";
 
 import { type Event, formatVenue } from "@/entities/event";
-import { useAction } from "@/shared/lib/actions";
+import { useAction } from "@/shared/lib/action-call";
 import { formatDateTime, formatLongDateTime } from "@/shared/lib/dates";
 import { PurgeButton } from "@/shared/ui/purge-button";
 import { RestoreButton } from "@/shared/ui/restore-button";

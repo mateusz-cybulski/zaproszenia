@@ -3,7 +3,7 @@
 import { Copy, Eye } from "lucide-react";
 
 import type { Template } from "@/entities/template";
-import { useAction } from "@/shared/lib/actions";
+import { useAction } from "@/shared/lib/action-call";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 

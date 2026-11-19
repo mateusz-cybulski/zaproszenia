@@ -1,7 +1,9 @@
 import { z } from "zod";
 
-import { countryCodes } from "@/shared/config";
+import { COUNTRY_CODES } from "@/shared/config";
+
+const CHOOSE_COUNTRY = "Wybierz kraj z listy.";
 
 export const countryCode = z
-  .string()
-  .refine((code) => countryCodes.includes(code), "Wybierz kraj z listy.");
+  .string({ error: CHOOSE_COUNTRY })
+  .refine((code) => COUNTRY_CODES.includes(code), CHOOSE_COUNTRY);

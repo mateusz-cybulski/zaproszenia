@@ -1,13 +1,12 @@
-import type { Guest } from "../model/guest";
-import { type GuestDto, toGuest } from "./guest-dto";
-
 export type SaveGuestFailure = { ok: false; reason: "not-found" | "invalid" | "unavailable" };
 
-export type SaveGuestResult = { ok: true; guest: Guest } | SaveGuestFailure;
+export type SaveGuestResult = { ok: true } | SaveGuestFailure;
 
-export async function toSaveResult(response: Response | null): Promise<SaveGuestResult> {
+// The saved guest is not read back: a body the client does not expect must not fail a write
+// that already happened.
+export function toSaveResult(response: Response | null): SaveGuestResult {
   if (response?.ok) {
-    return { ok: true, guest: toGuest((await response.json()) as GuestDto) };
+    return { ok: true };
   }
   if (response?.status === 404) {
     return { ok: false, reason: "not-found" };

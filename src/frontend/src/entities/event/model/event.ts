@@ -1,18 +1,10 @@
-import { type Address, formatAddress } from "@/shared/lib/address";
+import type { z } from "zod";
 
-export type Event = Address & {
-  id: number;
-  name: string;
-  startsAt: string;
-  timeZone: string;
-  venueName: string | null;
-  invitationText: string | null;
-  invitationTemplateId: number | null;
-  envelopeTemplateId: number | null;
-  deletedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+import { formatAddress } from "@/shared/lib/address";
+
+import type { eventDtoSchema } from "../api/event-dto";
+
+export type Event = z.output<typeof eventDtoSchema>;
 
 // A new event: the API fills in the rest, including the system templates.
 export type EventDraft = {

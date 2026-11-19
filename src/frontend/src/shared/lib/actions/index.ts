@@ -1,2 +1,2 @@
 export type { ActionResult } from "./action-result";
-export { useAction } from "./use-action";
+export { isRecordId, parseRecordId } from "./record-id";

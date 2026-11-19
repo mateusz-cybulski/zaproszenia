@@ -3,7 +3,10 @@ import { LoaderCircle } from "lucide-react";
 import { cn } from "@/shared/lib/css";
 import { Badge } from "@/shared/ui/badge";
 
-import { verificationStatusLabels, verificationStatusStyles } from "../config/verification-status";
+import {
+  VERIFICATION_STATUS_LABELS,
+  VERIFICATION_STATUS_STYLES,
+} from "../config/verification-status";
 import type { VerificationStatus } from "../model/guest";
 
 type VerificationBadgeProps = {
@@ -13,11 +16,11 @@ type VerificationBadgeProps = {
 };
 
 export function VerificationBadge({ status, busy = false, className }: VerificationBadgeProps) {
-  const { className: statusClassName, icon: Icon } = verificationStatusStyles[status];
+  const { className: statusClassName, icon: Icon } = VERIFICATION_STATUS_STYLES[status];
   return (
     <Badge variant="outline" className={cn(statusClassName, className)}>
       {busy ? <LoaderCircle className="animate-spin" /> : <Icon />}
-      {busy ? "Weryfikuję…" : verificationStatusLabels[status]}
+      {busy ? "Weryfikuję…" : VERIFICATION_STATUS_LABELS[status]}
     </Badge>
   );
 }

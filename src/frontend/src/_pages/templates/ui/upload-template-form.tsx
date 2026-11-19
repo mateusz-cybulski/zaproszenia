@@ -3,8 +3,8 @@
 import { Upload } from "lucide-react";
 import { type FormEvent, useState } from "react";
 
-import { templateKindLabels, templateKinds } from "@/entities/template";
-import { useAction } from "@/shared/lib/actions";
+import { TEMPLATE_KIND_LABELS, TEMPLATE_KINDS } from "@/entities/template";
+import { useAction } from "@/shared/lib/action-call";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -65,9 +65,9 @@ export function UploadTemplateForm({ onUploaded, onCancel }: UploadTemplateFormP
         <div className="grid gap-2">
           <Label htmlFor="template-kind">Rodzaj</Label>
           <NativeSelect id="template-kind" name="kind" defaultValue="invitation">
-            {templateKinds.map((kind) => (
+            {TEMPLATE_KINDS.map((kind) => (
               <option key={kind} value={kind}>
-                {templateKindLabels[kind]}
+                {TEMPLATE_KIND_LABELS[kind]}
               </option>
             ))}
           </NativeSelect>

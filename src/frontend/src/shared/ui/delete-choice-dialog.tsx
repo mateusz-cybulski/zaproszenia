@@ -3,7 +3,8 @@
 import { Archive, Trash } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
-import { type ActionResult, useAction } from "@/shared/lib/actions";
+import type { ActionResult } from "@/shared/lib/actions";
+import { useAction } from "@/shared/lib/action-call";
 import { ChoiceButton } from "@/shared/ui/choice-button";
 import {
   Dialog,

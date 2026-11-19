@@ -14,29 +14,38 @@ export type FormFieldConfig<Name extends string = string> = {
   | { options: readonly { value: string; label: string }[] }
 );
 
-type FormFieldProps = {
+// The part of Conform's field metadata a plain input needs.
+export type FormFieldMeta = {
   id: string;
-  field: FormFieldConfig;
-  defaultValue: string;
-  error?: string;
+  name: string;
+  key: string | undefined;
+  defaultValue: string | undefined;
+  errors: string[] | undefined;
+  errorId: string;
+  descriptionId: string;
 };
 
-export function FormField({ id, field, defaultValue, error }: FormFieldProps) {
+type FormFieldProps = { field: FormFieldConfig; meta: FormFieldMeta };
+
+export function FormField({ field, meta }: FormFieldProps) {
+  const error = meta.errors?.[0];
   const describedBy =
-    [error ? `${id}-error` : null, field.hint ? `${id}-hint` : null].filter(Boolean).join(" ") ||
-    undefined;
+    [error ? meta.errorId : null, field.hint ? meta.descriptionId : null]
+      .filter(Boolean)
+      .join(" ") || undefined;
+  const inputProps = {
+    id: meta.id,
+    name: meta.name,
+    defaultValue: meta.defaultValue ?? "",
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": describedBy,
+  };
 
   return (
     <div className="grid content-start gap-2">
-      <Label htmlFor={id}>{field.label}</Label>
+      <Label htmlFor={meta.id}>{field.label}</Label>
       {"options" in field ? (
-        <NativeSelect
-          id={id}
-          name={field.name}
-          defaultValue={defaultValue}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy}
-        >
+        <NativeSelect key={meta.key} {...inputProps}>
           {field.options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -45,23 +54,20 @@ export function FormField({ id, field, defaultValue, error }: FormFieldProps) {
         </NativeSelect>
       ) : (
         <Input
-          id={id}
-          name={field.name}
+          key={meta.key}
+          {...inputProps}
           type={"inputType" in field ? field.inputType : "text"}
-          defaultValue={defaultValue}
           autoComplete={field.autoComplete ?? "off"}
           maxLength={"maxLength" in field ? field.maxLength : undefined}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy}
         />
       )}
       {field.hint && (
-        <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+        <p id={meta.descriptionId} className="text-xs text-muted-foreground">
           {field.hint}
         </p>
       )}
       {error && (
-        <p id={`${id}-error`} className="text-sm text-destructive">
+        <p id={meta.errorId} className="text-sm text-destructive">
           {error}
         </p>
       )}
