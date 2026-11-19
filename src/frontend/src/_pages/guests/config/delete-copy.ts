@@ -1,4 +1,4 @@
-export const deleteCopy = {
+export const DELETE_COPY = {
   softTitle: "Przenieś do usuniętych",
   softDescription: "Gość zniknie z listy. Przywrócisz go przyciskiem „Przywróć” w nagłówku.",
   permanentTitle: "Usuń na stałe",

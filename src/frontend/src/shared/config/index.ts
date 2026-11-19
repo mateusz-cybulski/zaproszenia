@@ -1,5 +1,6 @@
 export { firebaseClientConfig, SESSION_COOKIE } from "./auth";
 export type { FirebaseClientConfig } from "./auth";
-export { addressFields } from "./address-fields";
+export { ADDRESS_FIELDS } from "./address-fields";
 export type { AddressField } from "./address-fields";
-export { countries, countryCodes, countryName } from "./countries";
+export { COUNTRIES, COUNTRY_CODES, countryName } from "./countries";
+export { TEXT_LIMIT } from "./text-limit";

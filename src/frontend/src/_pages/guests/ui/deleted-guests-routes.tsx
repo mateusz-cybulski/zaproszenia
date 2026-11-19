@@ -1,7 +1,7 @@
 import { getDeletedGuests } from "@/entities/guest/index.server";
 import { requireViewer } from "@/entities/viewer/index.server";
 
-import type { Dismissal } from "../model/dismissal";
+import type { Dismissal } from "@/shared/lib/dialogs";
 import { DeletedGuestsDialog } from "./deleted-guests-dialog";
 import { GuestsPage, type GuestsPageProps } from "./guests-page";
 

@@ -9,14 +9,14 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 
-import type { Dismissal } from "../model/dismissal";
-import { useDismiss } from "../model/use-dismiss";
+import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
+import { routes } from "@/shared/routes";
 import { DeletedGuestRow } from "./deleted-guest-row";
 
 type DeletedGuestsDialogProps = { guests: Guest[]; dismissal: Dismissal };
 
 export function DeletedGuestsDialog({ guests, dismissal }: DeletedGuestsDialogProps) {
-  const dismiss = useDismiss(dismissal);
+  const dismiss = useDismiss(dismissal, routes.guests());
 
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>

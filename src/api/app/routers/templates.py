@@ -6,6 +6,7 @@ from sqlalchemy import or_, select
 
 from app.auth import CurrentUser
 from app.db import Session
+from app.dependencies import find_visible_template
 from app.models import Template, TemplateKind
 from app.schemas.common import CASE_LABELS
 from app.schemas.templates import (
@@ -45,15 +46,8 @@ COPY_SUFFIX = " (kopia)"
 MAX_PDF_BYTES = 15 * 1024 * 1024
 
 
-async def _visible_template(session: Session, template_id: int, owner_uid: str) -> Template:
-    template = await session.get(Template, template_id)
-    if template is None or template.owner_uid not in (None, owner_uid):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Template not found")
-    return template
-
-
 async def _own_template(session: Session, template_id: int, owner_uid: str) -> Template:
-    template = await _visible_template(session, template_id, owner_uid)
+    template = await find_visible_template(session, template_id, owner_uid)
     if template.is_system:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN, "System templates are read-only; copy the template first"
@@ -137,14 +131,14 @@ async def create_template(
 
 @router.get("/{template_id}")
 async def get_template(template_id: int, session: Session, user: CurrentUser) -> TemplateRead:
-    return TemplateRead.model_validate(await _visible_template(session, template_id, user.uid))
+    return TemplateRead.model_validate(await find_visible_template(session, template_id, user.uid))
 
 
 @router.get("/{template_id}/file", response_class=Response, responses=PDF_RESPONSE)
 async def template_file(
     template_id: int, session: Session, user: CurrentUser, storage: FileStorage
 ) -> Response:
-    template = await _visible_template(session, template_id, user.uid)
+    template = await find_visible_template(session, template_id, user.uid)
     if template.pdf_key is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Template has no file")
     return Response(await storage.get(template.pdf_key), media_type="application/pdf")
@@ -155,7 +149,7 @@ async def preview_template(
     template_id: int, session: Session, user: CurrentUser, storage: FileStorage
 ) -> Response:
     """The saved template filled with sample data."""
-    template = await _visible_template(session, template_id, user.uid)
+    template = await find_visible_template(session, template_id, user.uid)
     pdf = await base_pdf(template, storage)
     rendered = await asyncio.to_thread(render, pdf, template.fields, sample_values())
     return Response(rendered, media_type="application/pdf")
@@ -170,7 +164,7 @@ async def preview_image(
     storage: FileStorage,
 ) -> Response:
     """One page with unsaved fields from the editor, filled with sample data."""
-    template = await _visible_template(session, template_id, user.uid)
+    template = await find_visible_template(session, template_id, user.uid)
     try:
         fields = storage_fields(payload.fields, template.pages)
         if payload.page >= len(template.pages):
@@ -192,7 +186,7 @@ async def page_image(
     page: Annotated[int, Query(ge=0, lt=MAX_PAGES)] = 0,
 ) -> Response:
     """A template page without fields, e.g. a thumbnail in the template list."""
-    template = await _visible_template(session, template_id, user.uid)
+    template = await find_visible_template(session, template_id, user.uid)
     if page >= len(template.pages):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Template has no such page")
     png = await asyncio.to_thread(render_png, await base_pdf(template, storage), page)
@@ -203,7 +197,7 @@ async def page_image(
 async def copy_template(
     template_id: int, session: Session, user: CurrentUser, storage: FileStorage
 ) -> TemplateRead:
-    source = await _visible_template(session, template_id, user.uid)
+    source = await find_visible_template(session, template_id, user.uid)
     pdf = await storage.get(source.pdf_key) if source.pdf_key else None
     copy = Template(
         owner_uid=user.uid,

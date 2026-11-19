@@ -4,7 +4,7 @@ import { routes } from "@/shared/routes";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/card";
 
-import { templateKindLabels } from "../config/template-kind";
+import { TEMPLATE_KIND_LABELS } from "../config/template-kind";
 import { pageSizeLabel } from "../lib/page-size";
 import type { Template } from "../model/template";
 
@@ -32,7 +32,7 @@ export function TemplateCard({ template, actions }: TemplateCardProps) {
       <CardHeader>
         <CardTitle className="flex items-start justify-between gap-2">
           <span className="min-w-0 break-words">{template.name}</span>
-          <Badge variant="outline">{templateKindLabels[template.kind]}</Badge>
+          <Badge variant="outline">{TEMPLATE_KIND_LABELS[template.kind]}</Badge>
         </CardTitle>
         <CardDescription>{details.join(" · ")}</CardDescription>
       </CardHeader>

@@ -1,8 +1,9 @@
 import "server-only";
 
-import { apiFetch } from "@/shared/api/index.server";
+import { apiFetch, parseResponse } from "@/shared/api/index.server";
 
 import type { Viewer } from "../model/viewer";
+import { viewerDtoSchema } from "./viewer-dto";
 
 export async function getViewer(): Promise<Viewer | null> {
   const response = await apiFetch("/auth/me", { onUnauthorized: "return" });
@@ -12,5 +13,5 @@ export async function getViewer(): Promise<Viewer | null> {
   if (!response.ok) {
     throw new Error(`GET /auth/me failed with ${response.status}`);
   }
-  return (await response.json()) as Viewer;
+  return parseResponse(response, viewerDtoSchema);
 }

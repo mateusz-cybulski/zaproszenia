@@ -1,27 +1,20 @@
-import { countryName } from "@/shared/config";
+import type { z } from "zod";
 
-export type VerificationStatus =
-  "pending" | "verified_ai" | "verified_manual" | "needs_review" | "failed";
+import type { Address } from "@/shared/lib/address";
 
-export type Address = {
-  street: string | null;
-  postalCode: string | null;
-  city: string | null;
-  country: string;
-};
+import type { guestDtoSchema } from "../api/guest-dto";
 
-export type Guest = Address & {
-  id: number;
-  fullName: string | null;
-  position: string | null;
-  institution: string | null;
-  salutation: string | null;
-  verificationStatus: VerificationStatus;
-  verifiedAt: string | null;
-  deletedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+export const VERIFICATION_STATUSES = [
+  "pending",
+  "verified_ai",
+  "verified_manual",
+  "needs_review",
+  "failed",
+] as const;
+
+export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
+
+export type Guest = z.output<typeof guestDtoSchema>;
 
 export type GuestInput = Address & {
   fullName: string | null;
@@ -32,10 +25,4 @@ export type GuestInput = Address & {
 
 export function recipientName(guest: Pick<Guest, "fullName" | "institution">): string {
   return guest.fullName ?? guest.institution ?? "";
-}
-
-export function formatAddress(address: Address): string {
-  const place = [address.postalCode, address.city].filter(Boolean).join(" ");
-  const country = address.country === "PL" ? null : countryName(address.country);
-  return [address.street, place, country].filter(Boolean).join(", ");
 }

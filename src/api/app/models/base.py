@@ -1,5 +1,6 @@
 import enum
 from datetime import datetime
+from typing import Final, final
 
 from sqlalchemy import DateTime, Enum, MetaData, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -12,6 +13,20 @@ NAMING_CONVENTION = {
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
 }
+
+
+@final
+class TextLimit:
+    """Maximum text lengths, read by both the columns and the request schemas."""
+
+    SHORT: Final = 300  # one line: names, positions, institutions, street, venue
+    LONG: Final = 5000  # paragraphs: the invitation text
+    CITY: Final = 200
+    POSTAL_CODE: Final = 20
+    COUNTRY_CODE: Final = 2  # ISO 3166-1 alpha-2
+    TEMPLATE_NAME: Final = 200
+    TIMEZONE: Final = 64
+    USER_ID: Final = 128  # Identity Platform uid
 
 
 class Base(DeclarativeBase):
@@ -38,7 +53,7 @@ class TimestampMixin:
 
 
 class AddressMixin:
-    street: Mapped[str | None] = mapped_column(String(300))
-    postal_code: Mapped[str | None] = mapped_column(String(20))
-    city: Mapped[str | None] = mapped_column(String(200))
-    country: Mapped[str] = mapped_column(String(2), default="PL")
+    street: Mapped[str | None] = mapped_column(String(TextLimit.SHORT))
+    postal_code: Mapped[str | None] = mapped_column(String(TextLimit.POSTAL_CODE))
+    city: Mapped[str | None] = mapped_column(String(TextLimit.CITY))
+    country: Mapped[str] = mapped_column(String(TextLimit.COUNTRY_CODE), default="PL")

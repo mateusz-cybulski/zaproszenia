@@ -1,5 +1,5 @@
 import { requireViewer } from "@/entities/viewer/index.server";
-import type { Dismissal } from "../model/dismissal";
+import type { Dismissal } from "@/shared/lib/dialogs";
 import { GuestDialog } from "./guest-dialog";
 
 export async function GuestAddDialog({ dismissal }: { dismissal: Dismissal }) {

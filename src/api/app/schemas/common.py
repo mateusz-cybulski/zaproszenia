@@ -1,6 +1,8 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, final
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+from app.models import TextLimit
 
 # Grammatical cases (Morfeusz tag names). The nominative is simply the value as entered.
 Case = Literal["nom", "gen", "dat", "acc", "inst", "loc", "voc"]
@@ -20,18 +22,32 @@ def _blank_to_none(value: str | None) -> str | None:
     return value or None
 
 
-Text300 = Annotated[str | None, Field(max_length=300), AfterValidator(_blank_to_none)]
-Text200 = Annotated[str | None, Field(max_length=200), AfterValidator(_blank_to_none)]
-PostalCode = Annotated[str | None, Field(max_length=20), AfterValidator(_blank_to_none)]
+@final
+class TextField:
+    Short = Annotated[str, Field(min_length=1, max_length=TextLimit.SHORT)]
+    OptionalShort = Annotated[
+        str | None, Field(max_length=TextLimit.SHORT), AfterValidator(_blank_to_none)
+    ]
+    OptionalLong = Annotated[
+        str | None, Field(max_length=TextLimit.LONG), AfterValidator(_blank_to_none)
+    ]
+    OptionalCity = Annotated[
+        str | None, Field(max_length=TextLimit.CITY), AfterValidator(_blank_to_none)
+    ]
+    OptionalPostalCode = Annotated[
+        str | None, Field(max_length=TextLimit.POSTAL_CODE), AfterValidator(_blank_to_none)
+    ]
+
+
 Country = Annotated[str, Field(pattern=r"^[A-Za-z]{2}$"), AfterValidator(str.upper)]
 
 
 class AddressWrite(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    street: Text300 = None
-    postal_code: PostalCode = None
-    city: Text200 = None
+    street: TextField.OptionalShort = None
+    postal_code: TextField.OptionalPostalCode = None
+    city: TextField.OptionalCity = None
     country: Country = "PL"
 
 

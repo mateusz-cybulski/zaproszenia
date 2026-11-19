@@ -4,7 +4,7 @@ description: "You MUST use this when asked to review code: a pull request, a bra
 license: MIT
 metadata:
   author: claude-code-templates
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 # Code Reviewer
@@ -63,6 +63,7 @@ Go file by file. For each change ask "what input, state or timing makes this wro
 6. **Contracts**: public API, CLI flags, event payloads, file formats or DB columns renamed or retyped without updating every consumer.
 7. **Tests**: the change has no test where one is cheap, or the test does not exercise the new path.
 8. **Abbreviated names** (project rule, see below).
+9. **Names and constants** (`clean-code`): names made of a bare number or shape (`Text300`), a rule-carrying literal repeated in several places (a length on the column and again in the schema), related constants kept in a string-keyed dictionary instead of a typed namespace.
 
 Do not report: formatting, other naming choices or import order (unless the repo has a rule and no linter enforces it), pre-existing problems the diff did not touch or make worse, hypothetical future requirements, or "consider adding a comment".
 

@@ -11,9 +11,9 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 
-import { guestDialogCopy } from "../config/guest-dialog-copy";
-import type { Dismissal } from "../model/dismissal";
-import { useDismiss } from "../model/use-dismiss";
+import { GUEST_DIALOG_COPY } from "../config/guest-dialog-copy";
+import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
+import { routes } from "@/shared/routes";
 import { GuestForm } from "./guest-form";
 
 type GuestDialogProps = {
@@ -23,8 +23,8 @@ type GuestDialogProps = {
 };
 
 export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProps) {
-  const dismiss = useDismiss(dismissal);
-  const copy = guest ? guestDialogCopy.edit : guestDialogCopy.add;
+  const dismiss = useDismiss(dismissal, routes.guests());
+  const copy = guest ? GUEST_DIALOG_COPY.edit : GUEST_DIALOG_COPY.add;
 
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>

@@ -102,7 +102,9 @@ async def anonymous_client(
         async with AsyncClient(transport=transport, base_url="http://test") as test_client:
             yield test_client
         async with app.state.sessionmaker() as session, session.begin():
-            await session.execute(text("TRUNCATE guests, profiles RESTART IDENTITY"))
+            await session.execute(
+                text("TRUNCATE event_guests, events, guests, profiles RESTART IDENTITY")
+            )
             await session.execute(delete(Template).where(Template.owner_uid.is_not(None)))
 
 

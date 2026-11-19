@@ -1,4 +1,4 @@
-import { PAPER_SIZE_TOLERANCE_MM, paperSizes } from "../config/paper-sizes";
+import { PAPER_SIZE_TOLERANCE_MM, PAPER_SIZES } from "../config/paper-sizes";
 import type { TemplatePage } from "../model/template";
 
 function matches(actualMm: number, expectedMm: number): boolean {
@@ -7,7 +7,7 @@ function matches(actualMm: number, expectedMm: number): boolean {
 
 export function pageSizeLabel({ widthMm, heightMm }: TemplatePage): string {
   const [shorter, longer] = [Math.min(widthMm, heightMm), Math.max(widthMm, heightMm)];
-  const paper = paperSizes.find(
+  const paper = PAPER_SIZES.find(
     (size) => matches(shorter, size.widthMm) && matches(longer, size.heightMm),
   );
   const millimetres = `${Math.round(widthMm)} × ${Math.round(heightMm)} mm`;

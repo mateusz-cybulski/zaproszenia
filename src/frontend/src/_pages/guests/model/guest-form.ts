@@ -1,29 +1,18 @@
 import { z } from "zod";
 
 import type { Guest } from "@/entities/guest";
+import { TEXT_LIMIT } from "@/shared/config";
 import { addressSchemaShape, optionalText } from "@/shared/lib/forms";
 
 export const RECIPIENT_REQUIRED =
   "Podaj imię i nazwisko albo instytucję (np. redakcję zapraszaną jako całość).";
 
-export const guestFields = [
-  "fullName",
-  "position",
-  "institution",
-  "salutation",
-  "street",
-  "postalCode",
-  "city",
-  "country",
-] as const;
-export type GuestField = (typeof guestFields)[number];
-
 export const guestFormSchema = z
   .object({
-    fullName: optionalText(300),
-    position: optionalText(300),
-    institution: optionalText(300),
-    salutation: optionalText(300),
+    fullName: optionalText(TEXT_LIMIT.short),
+    position: optionalText(TEXT_LIMIT.short),
+    institution: optionalText(TEXT_LIMIT.short),
+    salutation: optionalText(TEXT_LIMIT.short),
     ...addressSchemaShape,
   })
   .refine((guest) => guest.fullName !== null || guest.institution !== null, {
@@ -31,9 +20,9 @@ export const guestFormSchema = z
     path: ["fullName"],
   });
 
-export type GuestFormValues = Record<GuestField, string>;
+export type GuestField = keyof z.input<typeof guestFormSchema>;
 
-export function initialGuestFormValues(guest?: Guest): GuestFormValues {
+export function guestFormDefaults(guest?: Guest) {
   return {
     fullName: guest?.fullName ?? "",
     position: guest?.position ?? "",
@@ -45,15 +34,3 @@ export function initialGuestFormValues(guest?: Guest): GuestFormValues {
     country: guest?.country ?? "PL",
   };
 }
-
-export type GuestFormState =
-  | { status: "idle" }
-  | { status: "success" }
-  | {
-      status: "error";
-      message: string;
-      fieldErrors: Partial<Record<GuestField, string>>;
-      values: GuestFormValues;
-    };
-
-export const initialGuestFormState: GuestFormState = { status: "idle" };

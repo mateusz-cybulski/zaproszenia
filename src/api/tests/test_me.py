@@ -76,6 +76,8 @@ async def test_delete_me_removes_all_data_files_and_account(
     )
     assert template.status_code == 201
     assert list(storage.root.rglob("*.pdf"))
+    event = await client.post("/events", json={"name": "Gala", "starts_at": "2026-10-15T18:00"})
+    assert event.status_code == 201
 
     client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
     other_guest = (await client.post("/guests", json={"full_name": "Obcy Gość"})).json()
@@ -90,6 +92,7 @@ async def test_delete_me_removes_all_data_files_and_account(
     templates = (await client.get("/templates")).json()
     assert [template["is_system"] for template in templates] == [True, True]
     assert (await client.get("/me")).json()["sender_name"] is None
+    assert (await client.get("/events")).json() == []
     assert list(storage.root.rglob("*.pdf")) == []
 
     client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"

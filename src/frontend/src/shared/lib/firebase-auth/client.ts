@@ -13,7 +13,7 @@ export function clientAuth(config: FirebaseClientConfig): Auth {
   return auth;
 }
 
-const messages: Record<string, string> = {
+const ERROR_MESSAGES: Record<string, string> = {
   "auth/invalid-credential": "Nieprawidłowy e-mail lub hasło.",
   "auth/invalid-email": "Nieprawidłowy adres e-mail.",
   "auth/missing-email": "Podaj adres e-mail.",
@@ -28,8 +28,8 @@ const messages: Record<string, string> = {
 };
 
 export function authErrorMessage(error: unknown): string {
-  if (error instanceof FirebaseError && error.code in messages) {
-    return messages[error.code];
+  if (error instanceof FirebaseError && error.code in ERROR_MESSAGES) {
+    return ERROR_MESSAGES[error.code];
   }
   return "Coś poszło nie tak. Spróbuj ponownie.";
 }

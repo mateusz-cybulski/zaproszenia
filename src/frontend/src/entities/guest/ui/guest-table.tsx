@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
-import { formatAddress, type Guest, recipientName } from "../model/guest";
+import { formatAddress } from "@/shared/lib/address";
+
+import { type Guest, recipientName } from "../model/guest";
 import { VerificationBadge } from "./verification-badge";
 
 type GuestTableProps = {

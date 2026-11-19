@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.db import create_engine_and_sessionmaker
-from app.routers import auth, guests, me, templates
+from app.routers import auth, event_guests, events, guests, me, templates
 
 
 @asynccontextmanager
@@ -18,6 +18,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Zaproszenia API", lifespan=lifespan)
 app.include_router(auth.router)
+app.include_router(events.router)
+app.include_router(event_guests.router)
 app.include_router(guests.router)
 app.include_router(me.router)
 app.include_router(templates.router)

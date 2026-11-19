@@ -1,6 +1,7 @@
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { NativeSelect } from "@/shared/ui/native-select";
+import { Textarea } from "@/shared/ui/textarea";
 
 export type FormFieldConfig<Name extends string = string> = {
   name: Name;
@@ -8,55 +9,75 @@ export type FormFieldConfig<Name extends string = string> = {
   hint?: string;
   // Default "off": most forms here hold other people's data, where autofill offers the user's own.
   autoComplete?: string;
-} & ({ maxLength: number } | { options: readonly { value: string; label: string }[] });
+} & (
+  | { maxLength: number; multiline?: false }
+  | { maxLength: number; multiline: true; rows: number }
+  | { inputType: "datetime-local" }
+  | { options: readonly { value: string; label: string }[] }
+);
 
-type FormFieldProps = {
+// The part of Conform's field metadata a plain input needs.
+export type FormFieldMeta = {
   id: string;
-  field: FormFieldConfig;
-  defaultValue: string;
-  error?: string;
+  name: string;
+  key: string | undefined;
+  defaultValue: string | undefined;
+  errors: string[] | undefined;
+  errorId: string;
+  descriptionId: string;
 };
 
-export function FormField({ id, field, defaultValue, error }: FormFieldProps) {
+type FormFieldProps = { field: FormFieldConfig; meta: FormFieldMeta };
+
+export function FormField({ field, meta }: FormFieldProps) {
+  const error = meta.errors?.[0];
   const describedBy =
-    [error ? `${id}-error` : null, field.hint ? `${id}-hint` : null].filter(Boolean).join(" ") ||
-    undefined;
+    [error ? meta.errorId : null, field.hint ? meta.descriptionId : null]
+      .filter(Boolean)
+      .join(" ") || undefined;
+  const inputProps = {
+    id: meta.id,
+    name: meta.name,
+    defaultValue: meta.defaultValue ?? "",
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": describedBy,
+  };
 
   return (
     <div className="grid content-start gap-2">
-      <Label htmlFor={id}>{field.label}</Label>
+      <Label htmlFor={meta.id}>{field.label}</Label>
       {"options" in field ? (
-        <NativeSelect
-          id={id}
-          name={field.name}
-          defaultValue={defaultValue}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy}
-        >
+        <NativeSelect key={meta.key} {...inputProps}>
           {field.options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </NativeSelect>
-      ) : (
-        <Input
-          id={id}
-          name={field.name}
-          defaultValue={defaultValue}
+      ) : "multiline" in field && field.multiline ? (
+        <Textarea
+          key={meta.key}
+          {...inputProps}
+          rows={field.rows}
           autoComplete={field.autoComplete ?? "off"}
           maxLength={field.maxLength}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy}
+        />
+      ) : (
+        <Input
+          key={meta.key}
+          {...inputProps}
+          type={"inputType" in field ? field.inputType : "text"}
+          autoComplete={field.autoComplete ?? "off"}
+          maxLength={"maxLength" in field ? field.maxLength : undefined}
         />
       )}
       {field.hint && (
-        <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+        <p id={meta.descriptionId} className="text-xs text-muted-foreground">
           {field.hint}
         </p>
       )}
       {error && (
-        <p id={`${id}-error`} className="text-sm text-destructive">
+        <p id={meta.errorId} className="text-sm text-destructive">
           {error}
         </p>
       )}

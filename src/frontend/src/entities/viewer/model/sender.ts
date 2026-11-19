@@ -1,3 +1,7 @@
+import type { z } from "zod";
+
+import type { senderDtoSchema } from "../api/sender-dto";
+
 export type SenderInput = {
   senderName: string | null;
   street: string | null;
@@ -6,7 +10,4 @@ export type SenderInput = {
   country: string;
 };
 
-export type Sender = SenderInput & {
-  email: string | null;
-  complete: boolean;
-};
+export type Sender = z.output<typeof senderDtoSchema>;

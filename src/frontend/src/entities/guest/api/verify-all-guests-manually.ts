@@ -1,6 +1,10 @@
 import "server-only";
 
-import { apiFetchOrNull } from "@/shared/api/index.server";
+import { z } from "zod";
+
+import { apiFetchOrNull, parseResponse } from "@/shared/api/index.server";
+
+const verifiedCountSchema = z.object({ verified: z.int() });
 
 export async function verifyAllGuestsManually(): Promise<number | null> {
   const response = await apiFetchOrNull("/guests/verification/manual", {
@@ -10,5 +14,5 @@ export async function verifyAllGuestsManually(): Promise<number | null> {
   if (!response?.ok) {
     return null;
   }
-  return ((await response.json()) as { verified: number }).verified;
+  return (await parseResponse(response, verifiedCountSchema)).verified;
 }

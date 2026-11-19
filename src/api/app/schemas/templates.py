@@ -3,14 +3,14 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from app.models import TemplateKind
+from app.models import TemplateKind, TextLimit
 from app.schemas.common import Case
 
 MAX_PAGES = 4
 MAX_FIELDS = 50
 
 TemplateName = Annotated[
-    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=TextLimit.TEMPLATE_NAME)
 ]
 FontName = Literal["serif", "serif-bold", "serif-italic", "sans", "sans-bold"]
 Alignment = Literal["left", "center", "right"]

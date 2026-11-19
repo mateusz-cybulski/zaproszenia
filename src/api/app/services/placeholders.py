@@ -4,7 +4,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
+from app.models import Event, Profile
 from app.schemas.common import Case
 from app.schemas.templates import DateFormat, DeclinablePlaceholder
 
@@ -292,6 +294,30 @@ SAMPLE_GUEST: dict[str, Any] = {
     "city": "Warszawa",
     "country": "PL",
 }
+
+
+def sender_values(name: str | None, address: list[str]) -> dict[str, str]:
+    return {"sender_name": name or "", "sender_address": "\n".join(address)}
+
+
+def event_preview_values(event: Event, profile: Profile | None) -> dict[str, str]:
+    """This event and sender with the sample guest: how the event's invitations will look."""
+    starts_at = event.starts_at.astimezone(ZoneInfo(event.timezone))
+    sender = profile or Profile(country="PL")
+    return {
+        **guest_values(SAMPLE_GUEST),
+        **event_values(
+            event.name,
+            starts_at,
+            event.venue_name or "",
+            address_lines(event.street, event.postal_code, event.city, event.country),
+            event.invitation_text or "",
+        ),
+        **sender_values(
+            sender.sender_name,
+            address_lines(sender.street, sender.postal_code, sender.city, sender.country),
+        ),
+    }
 
 
 def sample_values() -> dict[str, str]:
