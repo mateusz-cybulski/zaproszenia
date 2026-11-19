@@ -3,8 +3,8 @@
 import { z } from "zod";
 
 import { uploadTemplate } from "@/entities/template/index.server";
+import type { ActionResult } from "@/shared/lib/actions";
 
-import type { ActionResult } from "../model/action-result";
 import { uploadTemplateSchema } from "../model/upload-template";
 import { toActionResult } from "./change-result";
 

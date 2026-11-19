@@ -1,9 +1,9 @@
 "use server";
 
 import { copyTemplate } from "@/entities/template/index.server";
+import type { ActionResult } from "@/shared/lib/actions";
 
 import { NOT_FOUND } from "../config/messages";
-import type { ActionResult } from "../model/action-result";
 import { templateIdSchema } from "../model/template-id";
 import { toActionResult } from "./change-result";
 

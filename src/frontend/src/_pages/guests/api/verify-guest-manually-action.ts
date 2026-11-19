@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 
 import { verifyGuestManually } from "@/entities/guest/index.server";
 import { routes } from "@/shared/routes";
+import type { ActionResult } from "@/shared/lib/actions";
 
 import { VERIFICATION_FAILED } from "../config/verification-messages";
 
-export async function verifyGuestManuallyAction(id: number): Promise<{ error?: string }> {
+export async function verifyGuestManuallyAction(id: number): Promise<ActionResult> {
   if (!(await verifyGuestManually(id))) {
     return { error: VERIFICATION_FAILED };
   }

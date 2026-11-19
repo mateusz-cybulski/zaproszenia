@@ -1,9 +1,9 @@
 "use client";
 
 import { ChevronDown, Sparkles, UserCheck } from "lucide-react";
-import { useState, useTransition } from "react";
 
 import { type Guest, VerificationBadge, verificationStatusLabels } from "@/entities/guest";
+import { useAction } from "@/shared/lib/actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,15 +16,9 @@ import { verifyGuestManuallyAction } from "../api/verify-guest-manually-action";
 import { MenuOption } from "./menu-option";
 
 export function VerificationMenu({ guest }: { guest: Guest }) {
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const verify = useAction(() => verifyGuestManuallyAction(guest.id));
+  const { pending, error } = verify;
   const label = verificationStatusLabels[guest.verificationStatus];
-
-  function verifyManually() {
-    startTransition(async () => {
-      setError((await verifyGuestManuallyAction(guest.id)).error ?? null);
-    });
-  }
 
   return (
     <div className="grid justify-items-start gap-1">
@@ -49,7 +43,7 @@ export function VerificationMenu({ guest }: { guest: Guest }) {
             <MenuOption icon={Sparkles} title="Zweryfikuj z AI" description="Dostępne wkrótce" />
           </DropdownMenuItem>
           {guest.verificationStatus !== "verified_manual" && (
-            <DropdownMenuItem onSelect={verifyManually}>
+            <DropdownMenuItem onSelect={() => verify.run()}>
               <MenuOption
                 icon={UserCheck}
                 title="Zatwierdź ręcznie"
