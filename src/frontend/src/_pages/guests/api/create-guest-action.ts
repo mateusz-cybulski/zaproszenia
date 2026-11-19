@@ -23,5 +23,5 @@ export async function createGuestAction(
     return submission.reply({ formErrors: [FAILURE_MESSAGES[result.reason]] });
   }
   revalidatePath(routes.guests(), "layout");
-  return submission.reply({ resetForm: true });
+  return submission.reply();
 }

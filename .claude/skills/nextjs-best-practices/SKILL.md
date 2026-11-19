@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.5.0"
+  version: "1.6.0"
   next: "16"
 ---
 
@@ -63,6 +63,24 @@ return { form, fields };
 - A Server Action is a public endpoint. Validate input on the server (e.g. with a schema) and check authorization inside every action.
 - An id argument is typed with the entity's branded id (`id: GuestId`) so our own callers cannot pass the wrong one, **and** checked in the first line (`if (!isGuestId(id)) return { error: … }`), because a caller outside our code can send anything. The check is the boundary: keep it even though the type already says `GuestId`.
 - After a mutation, invalidate with the APIs from section 2 or `redirect()`. Do not rely on client-side refetching.
+
+### Forms with fields (Conform)
+
+Forms are Conform (`@conform-to/react`, `@conform-to/zod/v4`) on top of `useActionState`, through `useServerForm({ schema, action, defaultValue, onSuccess })` from `@/shared/lib/server-form`. One zod schema validates in the browser and again in the action.
+
+```ts
+// the action
+const submission = parseWithZod(formData, { schema: guestFormSchema });
+if (submission.status !== "success") return submission.reply();
+const result = await createGuest(submission.value);
+if (!result.ok) return submission.reply({ formErrors: [FAILURE_MESSAGES[result.reason]] });
+revalidatePath(routes.guests(), "layout");
+return submission.reply();
+```
+
+- **Validate on submit, re-validate on input** (`shouldValidate: "onSubmit"`, `shouldRevalidate: "onInput"`). Not on blur: pressing a dialog's close button blurs the field, the error grows the vertically centred dialog and moves the button before the click lands, so the dialog needs a second click.
+- **Reply to success with a plain `submission.reply()`.** `reply({ resetForm: true })` returns only `{ initialValue: null }`, without `status: "success"`, so `onSuccess` (closing the dialog) never runs. A form that closes on success needs no reset; one that stays on screen resets on the client in `onSuccess` (`form.reset()` or a new `key`).
+- Fields render through `FormField` with Conform's field metadata; `FormStatus` announces the form error or success message.
 
 ### Calling actions from buttons and dialogs
 

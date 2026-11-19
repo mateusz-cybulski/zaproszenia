@@ -23,5 +23,5 @@ export async function createEventAction(
     return submission.reply({ formErrors: [FAILURE_MESSAGES[result.reason]] });
   }
   revalidatePath(routes.events(), "layout");
-  return submission.reply({ resetForm: true });
+  return submission.reply();
 }

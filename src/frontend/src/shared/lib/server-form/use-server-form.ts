@@ -16,7 +16,8 @@ type UseServerFormOptions<
   onSuccess?: () => void;
 };
 
-// The same schema checks fields in the browser as the user leaves them, and again in the action.
+// The same schema checks the form in the browser, then again in the action. Not on blur: leaving a
+// field for the dialog's close button would show errors, grow the dialog and move the button away.
 export function useServerForm<
   Schema extends z.ZodType<Record<string, unknown>, Record<string, unknown>>,
 >({ schema, action, defaultValue, onSuccess }: UseServerFormOptions<Schema>) {
@@ -24,10 +25,11 @@ export function useServerForm<
   const [form, fields] = useForm<z.input<Schema>, z.output<Schema>>({
     lastResult,
     defaultValue,
-    shouldValidate: "onBlur",
+    shouldValidate: "onSubmit",
     shouldRevalidate: "onInput",
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
   });
+  // Only a plain submission.reply() carries status "success"; reply({ resetForm }) does not.
   const succeed = useEffectEvent(() => onSuccess?.());
 
   useEffect(() => {
