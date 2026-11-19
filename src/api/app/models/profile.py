@@ -1,7 +1,7 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import AddressMixin, Base, TimestampMixin
+from app.models.base import AddressMixin, Base, TextLimit, TimestampMixin
 
 
 class Profile(TimestampMixin, AddressMixin, Base):
@@ -9,5 +9,5 @@ class Profile(TimestampMixin, AddressMixin, Base):
 
     __tablename__ = "profiles"
 
-    owner_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
-    sender_name: Mapped[str | None] = mapped_column(String(300))
+    owner_uid: Mapped[str] = mapped_column(String(TextLimit.USER_ID), primary_key=True)
+    sender_name: Mapped[str | None] = mapped_column(String(TextLimit.SHORT))

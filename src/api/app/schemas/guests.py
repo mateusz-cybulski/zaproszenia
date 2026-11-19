@@ -3,10 +3,10 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.models import VerificationStatus
-from app.schemas.common import AddressRead, AddressWrite, ObliqueCase, Text300
+from app.models import TextLimit, VerificationStatus
+from app.schemas.common import AddressRead, AddressWrite, ObliqueCase, TextField
 
-Forms = dict[ObliqueCase, Annotated[str, Field(min_length=1, max_length=300)]]
+Forms = dict[ObliqueCase, Annotated[str, Field(min_length=1, max_length=TextLimit.SHORT)]]
 
 VERIFIED_FIELDS = (
     "full_name",
@@ -48,10 +48,10 @@ class VerificationResult(BaseModel):
 
 
 class GuestWrite(AddressWrite):
-    full_name: Text300 = None
-    position: Text300 = None
-    institution: Text300 = None
-    salutation: Text300 = None
+    full_name: TextField.OptionalShort = None
+    position: TextField.OptionalShort = None
+    institution: TextField.OptionalShort = None
+    salutation: TextField.OptionalShort = None
 
     @model_validator(mode="after")
     def _require_recipient(self) -> Self:

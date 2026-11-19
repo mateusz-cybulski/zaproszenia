@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import AddressMixin, Base, TimestampMixin, str_enum
+from app.models.base import AddressMixin, Base, TextLimit, TimestampMixin, str_enum
 
 
 class VerificationStatus(enum.StrEnum):
@@ -30,11 +30,11 @@ class Guest(TimestampMixin, AddressMixin, Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    owner_uid: Mapped[str] = mapped_column(String(128), index=True)
-    full_name: Mapped[str | None] = mapped_column(String(300))
-    position: Mapped[str | None] = mapped_column(String(300))
-    institution: Mapped[str | None] = mapped_column(String(300))
-    salutation: Mapped[str | None] = mapped_column(String(300))
+    owner_uid: Mapped[str] = mapped_column(String(TextLimit.USER_ID), index=True)
+    full_name: Mapped[str | None] = mapped_column(String(TextLimit.SHORT))
+    position: Mapped[str | None] = mapped_column(String(TextLimit.SHORT))
+    institution: Mapped[str | None] = mapped_column(String(TextLimit.SHORT))
+    salutation: Mapped[str | None] = mapped_column(String(TextLimit.SHORT))
     declension: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     verification_status: Mapped[VerificationStatus] = mapped_column(
         str_enum(VerificationStatus), default=VerificationStatus.PENDING

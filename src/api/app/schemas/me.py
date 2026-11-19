@@ -1,8 +1,8 @@
-from app.schemas.common import AddressRead, AddressWrite, Text300
+from app.schemas.common import AddressRead, AddressWrite, TextField
 
 
 class MeWrite(AddressWrite):
-    sender_name: Text300 = None
+    sender_name: TextField.OptionalShort = None
 
 
 class MeRead(AddressRead):
