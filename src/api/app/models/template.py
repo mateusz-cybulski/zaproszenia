@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin, str_enum
+from app.storage_keys import user_files_prefix
 
 
 class TemplateKind(enum.StrEnum):
@@ -39,4 +40,4 @@ class Template(TimestampMixin, Base):
         return self.pdf_key is not None
 
     def storage_key(self) -> str:
-        return f"users/{self.owner_uid}/templates/{self.id}.pdf"
+        return f"{user_files_prefix(self.owner_uid or 'system')}templates/{self.id}.pdf"

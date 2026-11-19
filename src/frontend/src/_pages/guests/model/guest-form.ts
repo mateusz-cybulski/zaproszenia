@@ -1,15 +1,7 @@
 import { z } from "zod";
 
 import type { Guest } from "@/entities/guest";
-import { countryCodes } from "@/shared/config";
-
-function optionalText(max: number) {
-  return z
-    .string()
-    .trim()
-    .max(max, `Maksymalnie ${max} znaków.`)
-    .transform((value) => value || null);
-}
+import { addressSchemaShape, optionalText } from "@/shared/lib/forms";
 
 export const RECIPIENT_REQUIRED =
   "Podaj imię i nazwisko albo instytucję (np. redakcję zapraszaną jako całość).";
@@ -32,10 +24,7 @@ export const guestFormSchema = z
     position: optionalText(300),
     institution: optionalText(300),
     salutation: optionalText(300),
-    street: optionalText(300),
-    postalCode: optionalText(20),
-    city: optionalText(200),
-    country: z.string().refine((code) => countryCodes.includes(code), "Wybierz kraj z listy."),
+    ...addressSchemaShape,
   })
   .refine((guest) => guest.fullName !== null || guest.institution !== null, {
     message: RECIPIENT_REQUIRED,

@@ -3,7 +3,7 @@ name: tailwind-best-practices
 description: "Use when writing, changing or reviewing styles in a component that uses Tailwind CSS (tailwindcss in package.json): class names in JSX/TSX, the Tailwind entry CSS (@import \"tailwindcss\", @theme, @custom-variant, @utility, @source), design tokens, variants and the cn() helper, dark mode, responsive and container queries, focus and motion accessibility, class sorting and linting. Tailwind CSS v4 (CSS-first configuration). Pair with feature-sliced-design for where the files live."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   tailwind: "4"
 ---
 
@@ -103,6 +103,15 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
 ```
 
 - `className` from a parent is for placement (margin, width, grid position). A new look is a new variant, not a parent override.
+- Stay within the design system. Screens are built from the UI kit (`shared/ui`) and its variants only; a page or feature never restyles a kit component: no extra colours, borders, rings, shadows, radii or backgrounds through `className`.
+
+| Off the design system | Within it |
+|---|---|
+| `<Card className="ring-destructive/30">` for a danger zone | a plain `Card`; the danger is carried by the `destructive` button and the copy |
+| `<Button className="bg-green-600">` | an existing variant, or a new `variant` in `shared/ui/button` used everywhere it applies |
+| `<Badge className="border-amber-500 text-amber-700">` for a status | a status token (`--color-warning`) mapped in one config, used by every status badge |
+
+  When a design genuinely needs a look the kit lacks, add the variant to the kit component (and tokens to `@theme`) first, then use it; never a one-off override in one screen. If unsure whether a look exists, look at the component's variants before writing classes.
 - No `@apply` to build component classes (`.btn { @apply ... }`): it is a second styling system next to components. `@apply` is acceptable only for styling markup you do not control (CMS HTML, third-party widgets), ideally scoped.
 - Custom utilities with `@utility`, not `@layer utilities`, so variants work: `@utility scrollbar-none { scrollbar-width: none; }` -> `md:scrollbar-none`.
 - Custom variants with `@custom-variant`: `@custom-variant theme-contrast (&:where([data-contrast=more] *));`.
@@ -196,5 +205,6 @@ Set this up once per component, then keep it passing:
 ## 9. Before finishing
 
 1. No dynamic class names, no unexplained arbitrary values, no conflicting classes on one element.
-2. Every interactive element has a visible `focus-visible` style; animations respect `motion-reduce`.
-3. Run in `src/<name>`: `npx --no-install eslint --max-warnings=0 .` and `npx --no-install tsc --noEmit` (plus `npx --no-install prettier --check .` if Prettier is set up).
+2. Kit components (`shared/ui`) are used as they are or through their variants: no `className` that changes their colour, border, ring, shadow, radius or background (section 3).
+3. Every interactive element has a visible `focus-visible` style; animations respect `motion-reduce`.
+4. Run in `src/<name>`: `npx --no-install eslint --max-warnings=0 .` and `npx --no-install tsc --noEmit` (plus `npx --no-install prettier --check .` if Prettier is set up).

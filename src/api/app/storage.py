@@ -1,4 +1,5 @@
 import asyncio
+import shutil
 from contextlib import suppress
 from functools import lru_cache
 from pathlib import Path
@@ -19,6 +20,8 @@ class Storage(Protocol):
         ...
 
     async def delete(self, key: str) -> None: ...
+
+    async def delete_prefix(self, prefix: str) -> None: ...
 
 
 class LocalStorage:
@@ -46,6 +49,12 @@ class LocalStorage:
     async def delete(self, key: str) -> None:
         await asyncio.to_thread(self._path(key).unlink, missing_ok=True)
 
+    async def delete_prefix(self, prefix: str) -> None:
+        path = self._path(prefix)
+        if path == self.root:
+            raise ValueError("Refusing to delete the whole storage root")
+        await asyncio.to_thread(shutil.rmtree, path, ignore_errors=True)
+
 
 class GcsStorage:
     def __init__(self, bucket_name: str) -> None:
@@ -65,6 +74,17 @@ class GcsStorage:
     async def delete(self, key: str) -> None:
         with suppress(NotFound):
             await asyncio.to_thread(self.bucket.blob(key).delete)
+
+    async def delete_prefix(self, prefix: str) -> None:
+        if not prefix.strip("/"):
+            raise ValueError("Refusing to delete the whole bucket")
+
+        def delete_all() -> None:
+            for blob in self.bucket.list_blobs(prefix=prefix):
+                with suppress(NotFound):
+                    blob.delete()
+
+        await asyncio.to_thread(delete_all)
 
 
 @lru_cache

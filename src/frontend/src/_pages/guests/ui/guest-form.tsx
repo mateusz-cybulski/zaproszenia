@@ -3,13 +3,18 @@
 import { useActionState, useEffect } from "react";
 
 import type { Guest } from "@/entities/guest";
+import { addressFields } from "@/shared/config";
 import { Button } from "@/shared/ui/button";
+import { FormField, type FormFieldConfig } from "@/shared/ui/form-field";
 
 import { createGuestAction } from "../api/create-guest-action";
 import { updateGuestAction } from "../api/update-guest-action";
-import { addressFields, type FieldConfig, recipientFields } from "../config/guest-fields";
-import { initialGuestFormState, initialGuestFormValues } from "../model/guest-form";
-import { GuestFormField } from "./guest-form-field";
+import { recipientFields } from "../config/guest-fields";
+import {
+  type GuestField,
+  initialGuestFormState,
+  initialGuestFormValues,
+} from "../model/guest-form";
 
 type GuestFormProps = {
   guest?: Guest;
@@ -31,8 +36,8 @@ export function GuestForm({ guest, onSaved }: GuestFormProps) {
 
   const idPrefix = guest ? `guest-${guest.id}` : "guest-new";
 
-  const renderField = (field: FieldConfig) => (
-    <GuestFormField
+  const renderField = (field: FormFieldConfig<GuestField>) => (
+    <FormField
       key={field.name}
       id={`${idPrefix}-${field.name}`}
       field={field}
