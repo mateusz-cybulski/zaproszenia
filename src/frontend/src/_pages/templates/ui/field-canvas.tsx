@@ -7,7 +7,13 @@ import type { Placeholder, TemplateField, TemplatePage } from "@/entities/templa
 import { cn } from "@/shared/lib/css";
 
 import { EDITOR_COPY } from "../config/field-presets";
-import { clamp, estimatedHeightMm, MIN_FIELD_WIDTH_MM, roundToTenth } from "../lib/field-geometry";
+import {
+  clamp,
+  estimatedHeightMm,
+  MIN_FIELD_WIDTH_MM,
+  MIN_ROOM_BELOW_FIELD_MM,
+  roundToTenth,
+} from "../lib/field-geometry";
 
 type Drag = {
   id: string;
@@ -73,7 +79,7 @@ export function FieldCanvas({
     if (current.mode === "move") {
       onChange(current.id, {
         xMm: roundToTenth(clamp(field.xMm + deltaX, 0, page.widthMm - field.widthMm)),
-        yMm: roundToTenth(clamp(field.yMm + deltaY, 0, page.heightMm - 2)),
+        yMm: roundToTenth(clamp(field.yMm + deltaY, 0, page.heightMm - MIN_ROOM_BELOW_FIELD_MM)),
       });
     } else {
       onChange(current.id, {

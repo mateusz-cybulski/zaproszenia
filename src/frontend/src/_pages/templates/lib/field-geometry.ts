@@ -4,6 +4,8 @@ import { withExamples } from "@/entities/template";
 const MM_PER_POINT = 25.4 / 72;
 const MIN_FIELD_HEIGHT_MM = 4;
 export const MIN_FIELD_WIDTH_MM = 5;
+// A field may not start lower than this above the bottom edge, so its frame stays reachable.
+export const MIN_ROOM_BELOW_FIELD_MM = 2;
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
