@@ -17,3 +17,5 @@ export const routes = {
   templatePreview: (id: number) => `/api/templates/${id}/preview`,
   settings: () => "/settings",
 } as const;
+export { withQuery } from "./with-query";
+export type { SearchParams } from "./search-params";

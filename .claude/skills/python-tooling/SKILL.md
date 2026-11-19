@@ -3,7 +3,7 @@ name: python-tooling
 description: "Use when creating, configuring or changing a Python component in this repo (src/<name> with pyproject.toml): Python 3.14, uv (dependencies, lockfile, uv run), ruff (lint and format), mypy strict with the Pydantic plugin, pytest, the component's mise.toml, lefthook hooks, Dockerfile and Dockerfile.dev for Cloud Run. Also use when adding or upgrading a Python dependency, fixing ruff/mypy/pytest failures, or writing Python code that must pass them."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.3.0"
   python: "3.14"
 ---
 
@@ -108,6 +108,7 @@ extend-select = [
 strict = true
 plugins = ["pydantic.mypy"]
 warn_unreachable = true
+enable_error_code = ["deprecated"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -115,6 +116,7 @@ init_typed = true
 warn_required_dynamic_aliases = true
 ```
 
+- `enable_error_code = ["deprecated"]` makes a call to anything marked `@deprecated` (PEP 702) an error, not just a strike-through in the editor. Use the replacement the deprecation message names; never silence it with `# type: ignore[deprecated]`.
 - Every function is fully annotated; no implicit `Any`. Use `X | None`, `list[int]`, `collections.abc` types.
 - A library without types: install its `types-*` stub package into `dev`; if none exists, add a scoped override, not a global `ignore_missing_imports`:
 
@@ -170,6 +172,9 @@ pre-push:
       glob: "*.py"
       run: uv run --frozen pytest -q
 ```
+
+
+The same checks run in `.github/workflows/checks.yml` on every push (see `platform`): `uv sync --frozen`, ruff check and format, mypy and pytest over the whole component, with Python and uv versions read from the component's `mise.toml`.
 
 ## 8. Docker
 

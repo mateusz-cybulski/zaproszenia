@@ -1,15 +1,23 @@
 import "server-only";
 
+import { type Page, pageSchema } from "@/shared/api";
 import { apiFetch, parseResponse } from "@/shared/api/index.server";
+import { withQuery } from "@/shared/routes";
 
 import type { EventGuest } from "../model/event-guest";
 import type { EventId } from "../model/event-id";
-import { eventGuestListSchema } from "./event-guest-dto";
+import { eventGuestDtoSchema } from "./event-guest-dto";
 
-export async function getEventGuests(id: EventId): Promise<EventGuest[]> {
-  const response = await apiFetch(`/events/${id}/guests`);
+const eventGuestPageSchema = pageSchema(eventGuestDtoSchema);
+
+export async function getEventGuests(
+  id: EventId,
+  { page }: { page?: number } = {},
+): Promise<Page<EventGuest>> {
+  const path = withQuery(`/events/${id}/guests`, { page });
+  const response = await apiFetch(path);
   if (!response.ok) {
-    throw new Error(`GET /events/${id}/guests failed with ${response.status}`);
+    throw new Error(`GET ${path} failed with ${response.status}`);
   }
-  return parseResponse(response, eventGuestListSchema);
+  return parseResponse(response, eventGuestPageSchema);
 }

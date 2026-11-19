@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import type { Event, EventGuest } from "@/entities/event";
-import type { Guest } from "@/entities/guest";
 import type { Template } from "@/entities/template";
+import type { Page } from "@/shared/api";
 import { SegmentedControl } from "@/shared/ui/segmented-control";
 
 import { EVENT_SECTION_COPY } from "../config/messages";
@@ -16,8 +16,7 @@ import { TemplateChoiceForm } from "./template-choice-form";
 type EventSectionsProps = {
   event: Event;
   templates: Template[];
-  eventGuests: EventGuest[];
-  guests: Guest[];
+  eventGuests: Page<EventGuest>;
   initialSection: EventSection;
   onSaved: () => void;
 };
@@ -31,7 +30,6 @@ export function EventSections({
   event,
   templates,
   eventGuests,
-  guests,
   initialSection,
   onSaved,
 }: EventSectionsProps) {
@@ -67,7 +65,7 @@ export function EventSections({
       )}
       {opened.has("guests") && (
         <div hidden={section !== "guests"}>
-          <EventGuestsSection event={event} eventGuests={eventGuests} guests={guests} />
+          <EventGuestsSection event={event} eventGuests={eventGuests} />
         </div>
       )}
     </>

@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import InvitationStatus
 from app.schemas.guests import GuestRead
+from app.services.guests import SEARCH_MAX_LENGTH
 
 MAX_GUESTS_PER_REQUEST = 1000
 
@@ -19,6 +20,11 @@ class EventGuestRead(BaseModel):
 
 class EventGuestsAdd(BaseModel):
     guest_ids: list[int] = Field(min_length=1, max_length=MAX_GUESTS_PER_REQUEST)
+
+
+class EventGuestsAddMatching(BaseModel):
+    # The same search as the guest list; None adds every active guest not on the list yet.
+    q: str | None = Field(default=None, max_length=SEARCH_MAX_LENGTH)
 
 
 class EventGuestsAddResult(BaseModel):

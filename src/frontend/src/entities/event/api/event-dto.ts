@@ -42,8 +42,6 @@ export const eventDtoSchema = z
     updatedAt: dto.updated_at,
   }));
 
-export const eventListSchema = z.array(eventDtoSchema);
-
 export function toEventBody(input: EventInput) {
   return {
     name: input.name,

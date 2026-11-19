@@ -1,23 +1,39 @@
+import type { Dismissal } from "@/shared/lib/dialogs";
+import { parsePage } from "@/shared/lib/pagination";
+import type { SearchParams } from "@/shared/routes";
+
 import { parseEventSection } from "../model/event-section";
 import { EventEditDialog } from "./event-edit-dialog";
 import { EventsPage } from "./events-page";
 
-type EventRouteProps = {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+type EventRouteProps = { params: Promise<{ id: string }>; searchParams: SearchParams };
 
-export async function EventEditModal({ params, searchParams }: EventRouteProps) {
-  const [{ id }, { section }] = await Promise.all([params, searchParams]);
-  return <EventEditDialog id={id} section={parseEventSection(section)} dismissal="back" />;
+// The guest list has its own page parameter, so the events list behind keeps its page.
+async function EventEdit({
+  params,
+  searchParams,
+  dismissal,
+}: EventRouteProps & { dismissal: Dismissal }) {
+  const [{ id }, { section, guests_page: guestsPage }] = await Promise.all([params, searchParams]);
+  return (
+    <EventEditDialog
+      id={id}
+      section={parseEventSection(section)}
+      guestsPage={parsePage(guestsPage)}
+      dismissal={dismissal}
+    />
+  );
 }
 
-export async function EventsEditPage({ params, searchParams }: EventRouteProps) {
-  const [{ id }, { section }] = await Promise.all([params, searchParams]);
+export function EventEditModal(props: EventRouteProps) {
+  return <EventEdit {...props} dismissal="back" />;
+}
+
+export function EventsEditPage(props: EventRouteProps) {
   return (
     <>
-      <EventsPage />
-      <EventEditDialog id={id} section={parseEventSection(section)} dismissal="to-list" />
+      <EventsPage searchParams={props.searchParams} />
+      <EventEdit {...props} dismissal="to-list" />
     </>
   );
 }

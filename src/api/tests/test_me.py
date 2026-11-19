@@ -86,13 +86,13 @@ async def test_delete_me_removes_all_data_files_and_account(
     assert (await client.delete("/me")).status_code == 204
 
     assert identity.deleted == [USER.uid]
-    assert (await client.get("/guests")).json() == []
-    assert (await client.get("/guests", params={"deleted": "true"})).json() == []
+    assert (await client.get("/guests")).json()["items"] == []
+    assert (await client.get("/guests", params={"deleted": "true"})).json()["items"] == []
     assert (await client.get(f"/guests/{guest['id']}")).status_code == 404
     templates = (await client.get("/templates")).json()
     assert [template["is_system"] for template in templates] == [True, True]
     assert (await client.get("/me")).json()["sender_name"] is None
-    assert (await client.get("/events")).json() == []
+    assert (await client.get("/events")).json()["items"] == []
     assert list(storage.root.rglob("*.pdf")) == []
 
     client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
@@ -109,4 +109,4 @@ async def test_delete_me_reports_an_account_it_could_not_remove(
 
     assert response.status_code == 503
     assert response.json()["detail"]["code"] == "account_kept"
-    assert (await client.get("/guests")).json() == []
+    assert (await client.get("/guests")).json()["items"] == []

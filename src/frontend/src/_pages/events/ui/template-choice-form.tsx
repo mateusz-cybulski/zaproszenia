@@ -1,7 +1,5 @@
 "use client";
 
-import { getFormProps } from "@conform-to/react";
-
 import type { Event } from "@/entities/event";
 import type { Template } from "@/entities/template";
 import { useServerForm } from "@/shared/lib/server-form";
@@ -16,14 +14,14 @@ import { TemplateChoice } from "./template-choice";
 type TemplateChoiceFormProps = { event: Event; templates: Template[] };
 
 export function TemplateChoiceForm({ event, templates }: TemplateChoiceFormProps) {
-  const { form, fields, formAction, pending, lastResult } = useServerForm({
+  const { fields, formProps, pending, lastResult } = useServerForm({
     schema: templateChoiceSchema,
     action: setEventTemplatesAction.bind(null, event.id),
     defaultValue: templateChoiceDefaults(event),
   });
 
   return (
-    <form {...getFormProps(form)} action={formAction} className="grid gap-6">
+    <form {...formProps} className="grid gap-6">
       <p className="text-sm text-muted-foreground">{EVENT_SECTION_COPY.templatesDescription}</p>
       <div className="grid grid-cols-2 items-start gap-6">
         <TemplateChoice

@@ -1,10 +1,10 @@
 import "server-only";
 
 export { addEventGuests } from "./api/add-event-guests";
+export { addMatchingEventGuests } from "./api/add-matching-event-guests";
 export { createEvent } from "./api/create-event";
 export { deleteEvent } from "./api/delete-event";
 export { fetchEventPreview } from "./api/fetch-event-preview";
-export { getDeletedEvents } from "./api/get-deleted-events";
 export { getEvent } from "./api/get-event";
 export { getEventGuests } from "./api/get-event-guests";
 export { getEvents } from "./api/get-events";

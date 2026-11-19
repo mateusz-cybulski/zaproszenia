@@ -1,17 +1,21 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import Select, select
+from sqlalchemy import Select, insert, literal, select
 from sqlalchemy.orm import contains_eager
 
 from app.auth import CurrentUser
 from app.db import Session
-from app.dependencies import OwnEvent
+from app.dependencies import OwnEvent, Pagination
 from app.models import EventGuest, Guest
 from app.schemas.event_guests import (
     EventGuestRead,
     EventGuestsAdd,
+    EventGuestsAddMatching,
     EventGuestsAddResult,
     EventGuestUpdate,
 )
+from app.schemas.pagination import Page
+from app.services.guests import guest_search
+from app.services.pagination import paginate
 
 router = APIRouter(prefix="/events/{event_id}/guests", tags=["events"])
 
@@ -35,10 +39,17 @@ async def _event_guest(session: Session, event_id: int, guest_id: int) -> EventG
 
 
 @router.get("")
-async def list_event_guests(event: OwnEvent, session: Session) -> list[EventGuestRead]:
+async def list_event_guests(
+    event: OwnEvent, session: Session, pagination: Pagination
+) -> Page[EventGuestRead]:
     statement = _active_guests_of(event.id).order_by(Guest.recipient_name, Guest.id)
-    event_guests = await session.scalars(statement)
-    return [EventGuestRead.model_validate(event_guest) for event_guest in event_guests]
+    event_guests, total = await paginate(session, statement, pagination)
+    return Page[EventGuestRead](
+        items=[EventGuestRead.model_validate(event_guest) for event_guest in event_guests],
+        total=total,
+        page=pagination.page,
+        page_size=pagination.page_size,
+    )
 
 
 @router.post("")
@@ -68,6 +79,29 @@ async def add_event_guests(
     return EventGuestsAddResult(
         added=len(new_ids), already_present=len(present), not_found=sorted(requested - found)
     )
+
+
+@router.post("/matching")
+async def add_matching_event_guests(
+    event: OwnEvent, payload: EventGuestsAddMatching, session: Session, user: CurrentUser
+) -> EventGuestsAddResult:
+    """Every active guest that matches the search and is not on the list yet, in one statement."""
+    on_list = select(EventGuest.guest_id).where(EventGuest.event_id == event.id)
+    candidates = select(literal(event.id), Guest.id).where(
+        Guest.owner_uid == user.uid,
+        Guest.deleted_at.is_(None),
+        Guest.id.not_in(on_list),
+    )
+    if payload.q and payload.q.strip():
+        candidates = candidates.where(guest_search(payload.q))
+    added = await session.scalars(
+        insert(EventGuest)
+        .from_select(["event_id", "guest_id"], candidates)
+        .returning(EventGuest.guest_id)
+    )
+    count = len(added.all())
+    await session.commit()
+    return EventGuestsAddResult(added=count, already_present=0, not_found=[])
 
 
 @router.patch("/{guest_id}")

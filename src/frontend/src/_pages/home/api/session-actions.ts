@@ -13,7 +13,8 @@ const sessionDtoSchema = z.object({ session_cookie: z.string(), expires_in: z.in
 
 // Server Actions check the request origin, so another site cannot sign a visitor into an
 // attacker's account.
-export async function startSessionAction(idToken: string): Promise<StartSessionResult> {
+// On success it redirects, so the caller receives undefined.
+export async function startSessionAction(idToken: string): Promise<StartSessionResult | undefined> {
   if (!firebaseClientConfig()) {
     return { error: "Logowanie jest wyłączone." };
   }

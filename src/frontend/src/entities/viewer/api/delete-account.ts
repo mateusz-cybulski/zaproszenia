@@ -13,6 +13,6 @@ export async function deleteAccount(): Promise<DeleteAccountResult> {
   if (response?.ok) {
     return "deleted";
   }
-  const body = await response?.json().catch(() => null);
+  const body: unknown = await response?.json().catch(() => null);
   return accountKeptSchema.safeParse(body).success ? "account-kept" : "unavailable";
 }

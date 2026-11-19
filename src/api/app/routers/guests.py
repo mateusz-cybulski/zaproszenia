@@ -2,11 +2,12 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
 from app.auth import CurrentUser
 from app.db import Session
-from app.models import VERIFIED_STATUSES, Guest, VerificationStatus
+from app.dependencies import Pagination, find_own_event
+from app.models import VERIFIED_STATUSES, EventGuest, Guest, VerificationStatus
 from app.schemas.guests import (
     DECLINED_FIELDS,
     VERIFIED_FIELDS,
@@ -15,6 +16,9 @@ from app.schemas.guests import (
     ManualVerification,
     ManualVerificationResult,
 )
+from app.schemas.pagination import Page
+from app.services.guests import SEARCH_MAX_LENGTH, guest_search
+from app.services.pagination import paginate
 
 router = APIRouter(prefix="/guests", tags=["guests"])
 
@@ -30,10 +34,6 @@ async def _own_guest(
     if deleted is not None and (guest.deleted_at is not None) != deleted:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Guest not found")
     return guest
-
-
-def _escape_like(text: str) -> str:
-    return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 def _verify_manually(guest: Guest) -> None:
@@ -81,9 +81,13 @@ async def create_guest(payload: GuestWrite, session: Session, user: CurrentUser)
 async def list_guests(
     session: Session,
     user: CurrentUser,
-    q: Annotated[str | None, Query(max_length=200)] = None,
+    pagination: Pagination,
+    q: Annotated[str | None, Query(max_length=SEARCH_MAX_LENGTH)] = None,
     deleted: bool = False,
-) -> list[GuestRead]:
+    not_on_event: Annotated[
+        int | None, Query(description="Only guests not on this event's list")
+    ] = None,
+) -> Page[GuestRead]:
     statement = select(Guest).where(Guest.owner_uid == user.uid)
     if deleted:
         statement = statement.where(Guest.deleted_at.is_not(None)).order_by(
@@ -92,15 +96,18 @@ async def list_guests(
     else:
         statement = statement.where(Guest.deleted_at.is_(None)).order_by(Guest.id)
     if q and q.strip():
-        pattern = f"%{_escape_like(q.strip())}%"
-        statement = statement.where(
-            or_(
-                Guest.full_name.ilike(pattern, escape="\\"),
-                Guest.institution.ilike(pattern, escape="\\"),
-            )
-        )
-    guests = await session.scalars(statement)
-    return [GuestRead.model_validate(guest) for guest in guests]
+        statement = statement.where(guest_search(q))
+    if not_on_event is not None:
+        event = await find_own_event(session, not_on_event, user.uid)
+        on_list = select(EventGuest.guest_id).where(EventGuest.event_id == event.id)
+        statement = statement.where(Guest.id.not_in(on_list))
+    guests, total = await paginate(session, statement, pagination)
+    return Page[GuestRead](
+        items=[GuestRead.model_validate(guest) for guest in guests],
+        total=total,
+        page=pagination.page,
+        page_size=pagination.page_size,
+    )
 
 
 @router.get("/{guest_id}")

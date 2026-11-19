@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.6.0"
+  version: "1.10.0"
   next: "16"
 ---
 
@@ -80,6 +80,7 @@ return submission.reply();
 
 - **Validate on submit, re-validate on input** (`shouldValidate: "onSubmit"`, `shouldRevalidate: "onInput"`). Not on blur: pressing a dialog's close button blurs the field, the error grows the vertically centred dialog and moves the button before the click lands, so the dialog needs a second click.
 - **Reply to success with a plain `submission.reply()`.** `reply({ resetForm: true })` returns only `{ initialValue: null }`, without `status: "success"`, so `onSuccess` (closing the dialog) never runs. A form that closes on success needs no reset; one that stays on screen resets on the client in `onSuccess` (`form.reset()` or a new `key`).
+- **A form that stays on screen keeps what was saved.** React 19 resets a `<form action>` after the action, back to the values it rendered with, so a settings form would show empty or stale fields after a successful save. `useServerForm` returns `formProps` that submit from `onSubmit` (Conform validates, then the action runs in `startTransition`), which React does not reset; `action` stays for a browser without JavaScript. Spread `formProps` on the form, never `action={formAction}` alone.
 - Fields render through `FormField` with Conform's field metadata; `FormStatus` announces the form error or success message.
 
 ### Calling actions from buttons and dialogs
@@ -99,6 +100,14 @@ const copy = useAction(() => copyTemplateAction(template.id));
 - Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the `useAction`. Two actions in one row are two hooks; show `first.error ?? second.error`.
 - Client hooks live in their own `shared/lib` topic (`action-call`, `server-form`), never in an index that `"use server"` files import: a Server Action module must not pull a `"use client"` module through a shared barrel.
 - A raw `startTransition` is fine only where no `ActionResult` comes back: router navigation (search as you type), or client SDK flows such as sign-in.
+
+### Paged lists
+
+- The page is in the URL (`/guests?page=2&q=kow`), read on the server with `parsePage()` (`@/shared/lib/pagination`; anything odd is page 1), and fetched by the entity's list function, which parses the API's envelope with `pageSchema(itemSchema)` (`@/shared/api`) into `Page<Item>`.
+- `Pagination` (`@/shared/ui/pagination`) renders "51–100 z 137", previous and next, and `1 … 4 5 6 … 12`, as links from `hrefForPage(page)`; build them with `withQuery(path, params)` (`@/shared/routes`), leaving page 1 and empty values out. A page past the end says it is empty and links back.
+- **A dialog over a list has its own page parameter** (`deleted_page`, `guests_page`), so the list behind keeps its page when the dialog is opened by URL.
+- Changing the search starts again at page 1 (the search URL carries only `q`).
+- A picker inside a dialog searches on the server and appends with "Show more"; "add all matching" calls an API endpoint with the same search instead of collecting ids in the browser.
 
 ## 4. Routing files
 
@@ -128,8 +137,21 @@ const copy = useAction(() => copyTemplateAction(template.id));
 
 ## 7. TypeScript and lint
 
-- Code must pass the component's lefthook checks (`src/<name>/lefthook.yml`): `eslint --max-warnings=0` (`eslint-config-next` core-web-vitals + typescript) and a whole-project `tsc --noEmit`. Run them before finishing: `cd src/<name> && npx --no-install eslint --max-warnings=0 . && npx --no-install tsc --noEmit`.
+- Code must pass the component's lefthook checks (`src/<name>/lefthook.yml`), which `.github/workflows/checks.yml` runs again over the whole project on every push (see `platform`): `eslint --max-warnings=0` (`eslint-config-next` core-web-vitals + typescript) and a whole-project `tsc --noEmit`. Run them before finishing: `cd src/<name> && npx --no-install eslint --max-warnings=0 . && npx --no-install tsc --noEmit`.
 - `next lint` no longer exists; `next build` does not lint. Use ESLint directly.
+- `tsconfig.json` has `strict` and `noUncheckedIndexedAccess`: `items[0]` and `record[key]` are `T | undefined`, so a missing element is handled, not assumed away. Destructured array items (`const [first] = items`) too.
+- **Typed lint rules.** `tsc` accepts code that these catch, so `eslint.config.mjs` turns them on with typed linting (below): `no-floating-promises`, `no-misused-promises` and `await-thenable` (a promise nobody waits for, an `async` function where a plain one is expected), the `no-unsafe-*` family (an `any` flowing on unchecked; type a JSON body as `unknown` and parse it), `no-unnecessary-condition` (a check the types say can never fail, i.e. dead code or a type that lies), `switch-exhaustiveness-check` (a `default` counts), and `no-deprecated`. Fix the finding; do not disable the rule on the line. A Server Action that redirects returns `Promise<Result | undefined>`, since the caller receives undefined after the redirect.
+- **No deprecated APIs.** `@typescript-eslint/no-deprecated` makes a deprecated type or function fail the lint instead of only showing struck through:
+
+```js
+{
+  files: ["**/*.{ts,tsx}"],
+  languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+  rules: { "@typescript-eslint/no-deprecated": "error", "@typescript-eslint/no-floating-promises": "error", /* ... */ },
+}
+```
+
+  Use the replacement the deprecation names. In React 19.2+ types, for example, `FormEvent` is deprecated: an `onSubmit` handler takes `SubmitEvent<HTMLFormElement>` (its `nativeEvent.submitter` is typed), an `onChange` handler `ChangeEvent`. When unsure of a type's current name, read it in `node_modules/@types/react/index.d.ts` rather than writing it from memory.
 - No `any`. Type exported `metadata` as `Metadata`. Prefer `import type` for type-only imports.
 - `typescript` is aliased to TS 6 for typescript-eslint; `@typescript/native` is TS 7. Do not "fix" the aliases in `package.json`.
 

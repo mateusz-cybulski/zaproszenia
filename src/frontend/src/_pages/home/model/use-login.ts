@@ -4,7 +4,7 @@ import {
   signOut,
   type User,
 } from "firebase/auth";
-import { type FormEvent, useState, useTransition } from "react";
+import { type SubmitEvent, useState, useTransition } from "react";
 
 import type { FirebaseClientConfig } from "@/shared/config";
 import { authErrorMessage, clientAuth, continueUrl } from "@/shared/lib/firebase-auth";
@@ -18,7 +18,7 @@ export function useLogin(config: FirebaseClientConfig) {
   const [resent, setResent] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "");
@@ -43,9 +43,7 @@ export function useLogin(config: FirebaseClientConfig) {
         setError(authErrorMessage(signInError));
         return;
       }
-      // On success the action redirects to the guest list and returns nothing.
-      const result: Awaited<ReturnType<typeof startSessionAction>> | undefined =
-        await startSessionAction(idToken);
+      const result = await startSessionAction(idToken);
       setError(result?.error ?? null);
     });
   }

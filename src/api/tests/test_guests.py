@@ -97,7 +97,7 @@ async def test_list_guests_in_creation_order(client: AsyncClient) -> None:
     response = await client.get("/guests")
 
     assert response.status_code == 200
-    assert [guest["full_name"] for guest in response.json()] == ["Anna", "Piotr"]
+    assert [guest["full_name"] for guest in response.json()["items"]] == ["Anna", "Piotr"]
 
 
 async def test_missing_guest_returns_404(client: AsyncClient) -> None:
@@ -157,7 +157,7 @@ async def test_guests_are_private_to_their_owner(client: AsyncClient) -> None:
     created = (await client.post("/guests", json={"full_name": "Jan"})).json()
     other = {"Authorization": f"Bearer {OTHER_SESSION_COOKIE}"}
 
-    assert (await client.get("/guests", headers=other)).json() == []
+    assert (await client.get("/guests", headers=other)).json()["items"] == []
     assert (await client.get(f"/guests/{created['id']}", headers=other)).status_code == 404
     replaced = await client.put(f"/guests/{created['id']}", json={"full_name": "X"}, headers=other)
     assert replaced.status_code == 404
@@ -196,7 +196,10 @@ async def test_search_matches_name_or_institution_ignoring_case(client: AsyncCli
 
     response = await client.get("/guests", params={"q": " kowal "})
 
-    assert [guest["full_name"] for guest in response.json()] == ["Anna Kowalska", "Jan Nowak"]
+    assert [guest["full_name"] for guest in response.json()["items"]] == [
+        "Anna Kowalska",
+        "Jan Nowak",
+    ]
 
 
 async def test_search_treats_like_wildcards_as_text(client: AsyncClient) -> None:
@@ -205,7 +208,7 @@ async def test_search_treats_like_wildcards_as_text(client: AsyncClient) -> None
 
     response = await client.get("/guests", params={"q": "%"})
 
-    assert [guest["full_name"] for guest in response.json()] == ["100% Radio"]
+    assert [guest["full_name"] for guest in response.json()["items"]] == ["100% Radio"]
 
 
 async def test_verify_one_guest_manually(client: AsyncClient) -> None:
@@ -225,7 +228,9 @@ async def test_verify_all_unverified_guests_manually(client: AsyncClient) -> Non
     response = await client.post("/guests/verification/manual", json={})
 
     assert response.json() == {"verified": 2}
-    statuses = [guest["verification_status"] for guest in (await client.get("/guests")).json()]
+    statuses = [
+        guest["verification_status"] for guest in (await client.get("/guests")).json()["items"]
+    ]
     assert statuses == ["verified_manual"] * 3
 
 
@@ -235,7 +240,9 @@ async def test_verify_selected_guests_manually(client: AsyncClient) -> None:
     response = await client.post("/guests/verification/manual", json={"guest_ids": [ids[1]]})
 
     assert response.json() == {"verified": 1}
-    statuses = [guest["verification_status"] for guest in (await client.get("/guests")).json()]
+    statuses = [
+        guest["verification_status"] for guest in (await client.get("/guests")).json()["items"]
+    ]
     assert statuses == ["pending", "verified_manual"]
 
 
@@ -257,9 +264,9 @@ async def test_soft_deleted_guest_leaves_the_list_and_can_be_restored(client: As
 
     assert (await client.delete(f"/guests/{jan['id']}")).status_code == 204
 
-    active = (await client.get("/guests")).json()
+    active = (await client.get("/guests")).json()["items"]
     assert [guest["id"] for guest in active] == [anna["id"]]
-    deleted = (await client.get("/guests", params={"deleted": "true"})).json()
+    deleted = (await client.get("/guests", params={"deleted": "true"})).json()["items"]
     assert [guest["id"] for guest in deleted] == [jan["id"]]
     assert deleted[0]["deleted_at"] is not None
     assert (await client.get(f"/guests/{jan['id']}")).status_code == 404
@@ -269,7 +276,7 @@ async def test_soft_deleted_guest_leaves_the_list_and_can_be_restored(client: As
     restored = await client.post(f"/guests/{jan['id']}/restore")
     assert restored.status_code == 200
     assert restored.json()["deleted_at"] is None
-    assert len((await client.get("/guests")).json()) == 2
+    assert len((await client.get("/guests")).json()["items"]) == 2
     assert (await client.post(f"/guests/{jan['id']}/restore")).status_code == 404
 
 
@@ -282,8 +289,8 @@ async def test_permanent_delete_removes_active_and_deleted_guests(client: AsyncC
         response = await client.delete(f"/guests/{guest['id']}", params={"permanent": "true"})
         assert response.status_code == 204
 
-    assert (await client.get("/guests")).json() == []
-    assert (await client.get("/guests", params={"deleted": "true"})).json() == []
+    assert (await client.get("/guests")).json()["items"] == []
+    assert (await client.get("/guests", params={"deleted": "true"})).json()["items"] == []
     assert (await client.post(f"/guests/{anna['id']}/restore")).status_code == 404
 
 
@@ -295,7 +302,7 @@ async def test_deleted_list_is_newest_first(client: AsyncClient) -> None:
     for guest_id in ids:
         await client.delete(f"/guests/{guest_id}")
 
-    deleted = (await client.get("/guests", params={"deleted": "true"})).json()
+    deleted = (await client.get("/guests", params={"deleted": "true"})).json()["items"]
 
     assert [guest["id"] for guest in deleted] == list(reversed(ids))
 

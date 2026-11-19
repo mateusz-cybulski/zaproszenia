@@ -4,6 +4,7 @@ import { MAX_PDF_MEGABYTES } from "./upload";
 
 export const NOT_FOUND = "Ten szablon już nie istnieje.";
 export const FILE_TOO_LARGE = `Plik jest za duży (najwyżej ${MAX_PDF_MEGABYTES} MB).`;
+export const INVALID_UPLOAD = "Sprawdź plik i pola formularza.";
 export const DELETE_FAILED = "Nie udało się usunąć szablonu. Spróbuj ponownie.";
 
 export const FAILURE_MESSAGES: Record<TemplateChangeFailure["reason"], string> = {

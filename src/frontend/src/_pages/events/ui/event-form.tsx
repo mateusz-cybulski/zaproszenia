@@ -1,7 +1,5 @@
 "use client";
 
-import { getFormProps } from "@conform-to/react";
-
 import type { Event } from "@/entities/event";
 import { ADDRESS_FIELDS } from "@/shared/config";
 import { useServerForm } from "@/shared/lib/server-form";
@@ -23,7 +21,7 @@ import { type EventField, eventFormDefaults, eventFormSchema } from "../model/ev
 type EventFormProps = { event?: Event; onSaved?: () => void };
 
 export function EventForm({ event, onSaved }: EventFormProps) {
-  const { form, fields, formAction, pending, lastResult } = useServerForm({
+  const { fields, formProps, pending, lastResult } = useServerForm({
     schema: eventFormSchema,
     action: event ? updateEventAction.bind(null, event.id) : createEventAction,
     defaultValue: eventFormDefaults(event),
@@ -35,7 +33,7 @@ export function EventForm({ event, onSaved }: EventFormProps) {
   );
 
   return (
-    <form {...getFormProps(form)} action={formAction} className="grid gap-6">
+    <form {...formProps} className="grid gap-6">
       <div className="grid grid-cols-2 gap-4">
         {renderField(NAME_FIELD)}
         {renderField(STARTS_AT_FIELD)}

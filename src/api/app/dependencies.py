@@ -1,10 +1,12 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Query, status
 
 from app.auth import CurrentUser
 from app.db import Session
 from app.models import Event, Template
+from app.schemas.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.services.pagination import PageRequest
 
 
 async def find_own_event(
@@ -31,6 +33,16 @@ async def find_visible_template(session: Session, template_id: int, owner_uid: s
 async def _active_own_event(event_id: int, session: Session, user: CurrentUser) -> Event:
     return await find_own_event(session, event_id, user.uid)
 
+
+def _page_request(
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = DEFAULT_PAGE_SIZE,
+) -> PageRequest:
+    return PageRequest(page=page, page_size=page_size)
+
+
+# ?page= (from 1) and ?page_size= on every list endpoint.
+Pagination = Annotated[PageRequest, Depends(_page_request)]
 
 # The user's active event from the {event_id} path parameter, or 404.
 OwnEvent = Annotated[Event, Depends(_active_own_event)]
