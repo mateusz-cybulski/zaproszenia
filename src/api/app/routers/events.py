@@ -1,11 +1,12 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy import select
 
 from app.auth import CurrentUser
 from app.db import Session
+from app.dependencies import OwnEvent, find_own_event
 from app.models import Event, Template, TemplateKind
 from app.schemas.events import EventRead, EventWrite
 
@@ -15,18 +16,6 @@ TEMPLATE_FIELDS = {
     "invitation_template_id": TemplateKind.INVITATION,
     "envelope_template_id": TemplateKind.ENVELOPE,
 }
-
-
-async def own_event(
-    session: Session, event_id: int, owner_uid: str, *, deleted: bool | None = False
-) -> Event:
-    """The user's event, active by default; deleted=True for deleted ones, None for either."""
-    event = await session.get(Event, event_id)
-    if event is None or event.owner_uid != owner_uid:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Event not found")
-    if deleted is not None and (event.deleted_at is not None) != deleted:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Event not found")
-    return event
 
 
 async def _check_templates(session: Session, payload: EventWrite, owner_uid: str) -> None:
@@ -91,19 +80,18 @@ async def list_events(
 
 
 @router.get("/{event_id}")
-async def get_event(event_id: int, session: Session, user: CurrentUser) -> EventRead:
-    return EventRead.model_validate(await own_event(session, event_id, user.uid))
+async def get_event(event: OwnEvent) -> EventRead:
+    return EventRead.model_validate(event)
 
 
 @router.put("/{event_id}")
 async def replace_event(
-    event_id: int, payload: EventWrite, session: Session, user: CurrentUser
+    event: OwnEvent, payload: EventWrite, session: Session, user: CurrentUser
 ) -> EventRead:
-    async with session.begin():
-        event = await own_event(session, event_id, user.uid)
-        await _check_templates(session, payload, user.uid)
-        for field, value in payload.model_dump().items():
-            setattr(event, field, value)
+    await _check_templates(session, payload, user.uid)
+    for field, value in payload.model_dump().items():
+        setattr(event, field, value)
+    await session.commit()
     await session.refresh(event)
     return EventRead.model_validate(event)
 
@@ -115,16 +103,16 @@ async def delete_event(
     """Move the event to the deleted list, or with permanent=true remove it for good."""
     async with session.begin():
         if permanent:
-            await session.delete(await own_event(session, event_id, user.uid, deleted=None))
+            await session.delete(await find_own_event(session, event_id, user.uid, deleted=None))
         else:
-            event = await own_event(session, event_id, user.uid)
+            event = await find_own_event(session, event_id, user.uid)
             event.deleted_at = datetime.now(UTC)
 
 
 @router.post("/{event_id}/restore")
 async def restore_event(event_id: int, session: Session, user: CurrentUser) -> EventRead:
     async with session.begin():
-        event = await own_event(session, event_id, user.uid, deleted=True)
+        event = await find_own_event(session, event_id, user.uid, deleted=True)
         event.deleted_at = None
     await session.refresh(event)
     return EventRead.model_validate(event)
