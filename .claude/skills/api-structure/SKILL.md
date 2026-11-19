@@ -1,9 +1,9 @@
 ---
 name: api-structure
-description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, and how deleting user data works (soft delete with restore by default)."
+description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, how deleting user data works (soft delete with restore by default), and how routers share lookups such as the user's own event or 404 (dependencies in app/dependencies.py, never imports between routers)."
 license: MIT
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -16,6 +16,7 @@ src/<name>/app/
   settings.py         Settings (pydantic-settings), get_settings()
   db.py               engine, sessionmaker, Session dependency
   auth.py             current-user dependency (if the API has users)
+  dependencies.py     lookups several routers share, as dependencies (OwnEvent)
   models/
     __init__.py       imports and re-exports EVERY model (see below)
     base.py           Base, NAMING_CONVENTION, TextLimit, shared column helpers (e.g. str_enum)
@@ -28,6 +29,7 @@ src/<name>/app/
   routers/
     __init__.py       empty
     events.py         APIRouter(prefix="/events")
+    event_guests.py   APIRouter(prefix="/events/{event_id}/guests"), a nested resource
   services/           only once logic outgrows the endpoints (see below)
     __init__.py       empty
     events.py
@@ -51,6 +53,38 @@ Start with this layout even for a single model: moving from `models.py` to `mode
 - Text lengths are defined once, in `TextLimit` in `models/base.py`: the column (`String(TextLimit.SHORT)`) and the schema type (`TextField.OptionalShort`, built with `Field(max_length=TextLimit.SHORT)`) both read it. Changing a limit changes the model, so `alembic check` then asks for a migration.
 - Schemas never live in a router module; models never live in a schema module.
 - Logic longer than a few lines in an endpoint, or shared by several routers, goes to `services/<resource>.py`. Create the package when the first such function appears; endpoints stay thin (parse, call, return).
+- **Routers never import from each other.** A nested resource gets its own router module (`event_guests.py` for `/events/{event_id}/guests`), and what both need goes one level down (see below).
+
+## Shared lookups are dependencies
+
+Loading "the user's own X from the path, or 404" is written once. While only one router uses it, it is a private helper there (`_own_guest`). As soon as a second router needs it, it moves to `app/dependencies.py` as a FastAPI dependency, so endpoints receive the loaded object instead of calling a helper:
+
+```python
+# app/dependencies.py
+async def find_own_event(session: Session, event_id: int, owner_uid: str, *, deleted: bool | None = False) -> Event:
+    event = await session.get(Event, event_id)
+    if event is None or event.owner_uid != owner_uid:  # someone else's looks like a missing one
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Event not found")
+    if deleted is not None and (event.deleted_at is not None) != deleted:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Event not found")
+    return event
+
+async def _active_own_event(event_id: int, session: Session, user: CurrentUser) -> Event:
+    return await find_own_event(session, event_id, user.uid)
+
+OwnEvent = Annotated[Event, Depends(_active_own_event)]
+
+# app/routers/event_guests.py
+@router.patch("/{guest_id}")
+async def update_event_guest(event: OwnEvent, guest_id: int, payload: EventGuestUpdate, session: Session) -> EventGuestRead:
+    ...
+    await session.commit()
+```
+
+- Name the alias `Own<Model>` for the active object; keep the plain function (`find_own_<model>`) public next to it for the variants a dependency does not cover (deleted objects in restore and permanent delete).
+- The dependency gets `event_id` from the path by name, and shares the request's `Session` (FastAPI caches dependencies per request), so the object belongs to the endpoint's session.
+- **Transactions:** the lookup already started the session's transaction (autobegin), so an endpoint that takes `Own<Model>` ends its writes with `await session.commit()`; `async with session.begin()` would fail with "a transaction is already begun". If the endpoint raises before committing, closing the session rolls everything back.
+- Services stay free of HTTP: they never raise `HTTPException`; the 404 lives in the dependency.
 
 ## models/__init__.py is mandatory
 
