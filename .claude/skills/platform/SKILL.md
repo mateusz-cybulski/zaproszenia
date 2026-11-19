@@ -3,7 +3,7 @@ name: platform
 description: "Use whenever you add, rename, remove or configure a component under src/, write a Dockerfile, compose.yml, service.json or lefthook.yml for one, read another service's URL, set environment variables or GCP permissions for a service, or wonder how code gets deployed. Describes this repo's platform: each src/<name> with a Dockerfile is a Cloud Run service on its own subdomain, deployed by Terraform from GitHub Actions; local dev runs through docker compose and mise."
 license: MIT
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Platform: how components become services
@@ -109,7 +109,7 @@ services:
 ## 8. Checks
 
 - `src/<name>/lefthook.yml` declares the component's hooks; the root `.config/lefthook.yml` picks them up with `extends: src/*/lefthook.yml`. Use `root: src/<name>/` and prefix job names with the component name.
-- Hooks run only where lefthook is installed, only on staged files, and `git commit --no-verify` skips them. So the components' checks also run in `.github/workflows/checks.yml` on every pull request and on `main`: one job per component, each running the **whole-project** versions of its hooks (ESLint, tsc, Steiger and Prettier over everything; ruff, mypy and pytest, whose PostgreSQL testcontainers starts on the runner's Docker). Tool versions come from the component's `mise.toml`. Adding a component means adding its job there.
+- Hooks run only where lefthook is installed, only on staged files, and `git commit --no-verify` skips them. So the components' checks also run in `.github/workflows/checks.yml` on every push to any branch (not on `pull_request` too: a pull request shows its head commit's run, and both triggers would run everything twice; a newer push to the same branch cancels the older run): one job per component, each running the **whole-project** versions of its hooks (ESLint, tsc, Steiger and Prettier over everything; ruff, mypy and pytest, whose PostgreSQL testcontainers starts on the runner's Docker). Tool versions come from the component's `mise.toml`. Adding a component means adding its job there.
 - Make the checks required for merging: in GitHub, a branch ruleset on `main` requiring the "Checks" jobs to pass. `terraform.yml` still deploys on every push to `main`, so a red check that is not required does not stop a deploy.
 - GitHub Actions also runs Terraform (fmt, validate, plan on PR, apply on `main`). A broken production image is first noticed on deploy: build it locally before pushing (`docker build src/<name>`, amd64 by default here).
 

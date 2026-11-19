@@ -174,7 +174,7 @@ pre-push:
 ```
 
 
-The same checks run in `.github/workflows/checks.yml` on every pull request (see `platform`): `uv sync --frozen`, ruff check and format, mypy and pytest over the whole component, with Python and uv versions read from the component's `mise.toml`.
+The same checks run in `.github/workflows/checks.yml` on every push (see `platform`): `uv sync --frozen`, ruff check and format, mypy and pytest over the whole component, with Python and uv versions read from the component's `mise.toml`.
 
 ## 8. Docker
 

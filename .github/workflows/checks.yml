@@ -1,13 +1,12 @@
 name: Checks
 
-# The same checks as the lefthook hooks, on every pull request and on main: hooks run only on the
-# machine that has them installed, and only on the staged files.
+# The same checks as the lefthook hooks, on every push to any branch: hooks run only on the
+# machine that has them installed, and only on the staged files. A pull request shows the result
+# of its head commit's run, so there is no separate pull_request trigger to run everything twice.
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches: ["**"]
   workflow_dispatch:
 
 permissions:
