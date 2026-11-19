@@ -1,7 +1,7 @@
 "use client";
 
 import { Upload } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type SubmitEvent, useState } from "react";
 
 import { TEMPLATE_KIND_LABELS, TEMPLATE_KINDS } from "@/entities/template";
 import { useAction } from "@/shared/lib/action-call";
@@ -24,7 +24,7 @@ export function UploadTemplateForm({ onUploaded, onCancel }: UploadTemplateFormP
   });
 
   // Not a form action: React would reset the form after an error and drop the chosen file.
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const file = formData.get("file");

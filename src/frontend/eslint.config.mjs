@@ -17,5 +17,13 @@ export default defineConfig([
       },
     },
   },
+  {
+    // Deprecated APIs are flagged in the editor only; this makes them fail the lint.
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
+    rules: { "@typescript-eslint/no-deprecated": "error" },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);

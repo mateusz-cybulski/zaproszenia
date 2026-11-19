@@ -40,6 +40,8 @@ extend-select = ["I", "UP", "B", "SIM", "C4", "PTH", "RUF", "ASYNC", "S", "N"]
 strict = true
 plugins = ["pydantic.mypy"]
 warn_unreachable = true
+# Deprecated APIs fail the check instead of only showing in the editor.
+enable_error_code = ["deprecated"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

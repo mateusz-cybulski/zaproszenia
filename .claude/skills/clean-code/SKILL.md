@@ -1,9 +1,9 @@
 ---
 name: clean-code
-description: "Use whenever you write or change code in this repo, in any language: how to name variables, functions, types and constants so the name says what the thing is (full words, no abbreviations, no names made of a bare number like Text300), when a literal number or string must become a named constant, how to group related constants (limits, sizes, timeouts) and related field types in one typed namespace (a @final class such as TextLimit or TextField) instead of a dictionary with string keys or copies in several layers, and the naming convention that keeps those namespaces from clashing with variables. Applies to Python, TypeScript and the rest; code-reviewer checks the same rules in reviews."
+description: "Use whenever you write or change code in this repo, in any language: how to name variables, functions, types and constants so the name says what the thing is (full words, no abbreviations, no names made of a bare number like Text300), that deprecated APIs are never used (the lint and mypy fail on them), when a literal number or string must become a named constant, how to group related constants (limits, sizes, timeouts) and related field types in one typed namespace (a @final class such as TextLimit or TextField) instead of a dictionary with string keys or copies in several layers, and the naming convention that keeps those namespaces from clashing with variables. Applies to Python, TypeScript and the rest; code-reviewer checks the same rules in reviews."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Clean code: names and constants
@@ -26,7 +26,11 @@ Code is read far more often than it is written. A reader should understand what 
 - **Units in the name** when a number has one and the type does not carry it: `timeout_seconds`, `size_mm`, `max_bytes`.
 - **If a name needs a comment to be understood, rename it** (see `remove-comments`).
 
-## 2. No magic values
+## 2. No deprecated APIs
+
+Code never calls or types against something its library marks deprecated. Use the replacement the deprecation message names. The checks enforce it: `@typescript-eslint/no-deprecated` in TypeScript (`nextjs-best-practices`), mypy's `deprecated` error code in Python (`python-tooling`). A deprecation found later is fixed, not suppressed.
+
+## 3. No magic values
 
 A literal that encodes a rule (a limit, a size, a timeout, a status, a role, a path segment) gets a name, **once**, and every place that applies the rule reads it from there.
 
@@ -34,7 +38,7 @@ A literal that encodes a rule (a limit, a size, a timeout, a status, a role, a p
 - Not every literal is magic: `0`, `1`, `""`, `100` in a percentage, an index in a two-element tuple, values in a test that state the example are fine as they are.
 - Copy the user sees (labels, messages) is not a constant to share; it belongs to the screen or response that shows it.
 
-## 3. Related constants and types live together, in a typed namespace
+## 4. Related constants and types live together, in a typed namespace
 
 Constants that describe one concept (text limits, paper sizes, retry settings), and field types built on them, are grouped in one object: the reader finds all of them in one place, one import brings the whole group, member names stay short (`TextField.OptionalShort`, not `OptionalShortText`), and the type checker checks every use.
 
@@ -98,10 +102,11 @@ The convention keeps a namespace from ever clashing with a variable of the same 
 - Put the group in the lowest layer that every user can import (in a FastAPI component: `app/models/base.py`, see `api-structure`; in a frontend: the slice's `config` segment, or `shared/config` when several slices need it, see `feature-sliced-design`).
 - A frontend and an API in different languages cannot share the object. The API is the source of truth for its own limits; the frontend repeats only what it needs for immediate feedback, and the API still validates.
 
-## 4. Checklist
+## 5. Checklist
 
 1. Every new name is full words and says what the thing is, not what value or shape it has.
-2. No rule-carrying literal appears twice; each has one named home.
-3. Related constants and field types are members of one typed namespace (a `@final` class, an `as const` object, or an enum for choices), not a string-keyed dictionary or a lowercase module.
-4. Namespaces follow the naming table, never a bare word a variable could use: in Python a `PascalCase` class with `UPPER_SNAKE` members, in TS/JS an `UPPER_SNAKE` constant with `camelCase` keys.
-5. The namespace sits in a layer every user can import without breaking the import rules.
+2. No deprecated API is used; the lint and mypy fail on one.
+3. No rule-carrying literal appears twice; each has one named home.
+4. Related constants and field types are members of one typed namespace (a `@final` class, an `as const` object, or an enum for choices), not a string-keyed dictionary or a lowercase module.
+5. Namespaces follow the naming table, never a bare word a variable could use: in Python a `PascalCase` class with `UPPER_SNAKE` members, in TS/JS an `UPPER_SNAKE` constant with `camelCase` keys.
+6. The namespace sits in a layer every user can import without breaking the import rules.

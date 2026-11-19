@@ -2,7 +2,13 @@
 
 import { type DefaultValue, getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
-import { type FormEvent, startTransition, useActionState, useEffect, useEffectEvent } from "react";
+import {
+  type SubmitEvent,
+  startTransition,
+  useActionState,
+  useEffect,
+  useEffectEvent,
+} from "react";
 import type { z } from "zod";
 
 import type { FormAction } from "@/shared/lib/forms";
@@ -43,14 +49,13 @@ export function useServerForm<
   // React 19 resets a form after its `action` runs, back to the values it rendered with, so a form
   // that stays on screen would lose what was just saved. Submitting from onSubmit avoids that reset;
   // `action` remains for a browser without JavaScript.
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     conformProps.onSubmit(event);
     if (event.defaultPrevented) {
       return;
     }
     event.preventDefault();
-    const submitter = event.nativeEvent instanceof SubmitEvent ? event.nativeEvent.submitter : null;
-    const formData = new FormData(event.currentTarget, submitter);
+    const formData = new FormData(event.currentTarget, event.nativeEvent.submitter);
     startTransition(() => formAction(formData));
   }
 

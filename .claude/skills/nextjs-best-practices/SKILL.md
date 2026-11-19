@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.8.0"
+  version: "1.9.0"
   next: "16"
 ---
 
@@ -139,6 +139,17 @@ const copy = useAction(() => copyTemplateAction(template.id));
 
 - Code must pass the component's lefthook checks (`src/<name>/lefthook.yml`): `eslint --max-warnings=0` (`eslint-config-next` core-web-vitals + typescript) and a whole-project `tsc --noEmit`. Run them before finishing: `cd src/<name> && npx --no-install eslint --max-warnings=0 . && npx --no-install tsc --noEmit`.
 - `next lint` no longer exists; `next build` does not lint. Use ESLint directly.
+- **No deprecated APIs.** `eslint.config.mjs` turns on `@typescript-eslint/no-deprecated` with typed linting, so a deprecated type or function fails the lint instead of only showing struck through:
+
+```js
+{
+  files: ["**/*.{ts,tsx}"],
+  languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+  rules: { "@typescript-eslint/no-deprecated": "error" },
+}
+```
+
+  Use the replacement the deprecation names. In React 19.2+ types, for example, `FormEvent` is deprecated: an `onSubmit` handler takes `SubmitEvent<HTMLFormElement>` (its `nativeEvent.submitter` is typed), an `onChange` handler `ChangeEvent`. When unsure of a type's current name, read it in `node_modules/@types/react/index.d.ts` rather than writing it from memory.
 - No `any`. Type exported `metadata` as `Metadata`. Prefer `import type` for type-only imports.
 - `typescript` is aliased to TS 6 for typescript-eslint; `@typescript/native` is TS 7. Do not "fix" the aliases in `package.json`.
 
