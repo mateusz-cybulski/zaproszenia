@@ -7,7 +7,7 @@ import type { Event, EventGuest } from "@/entities/event";
 import type { Page } from "@/shared/api";
 import { routes, withQuery } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
-import { Pagination } from "@/shared/ui/pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
 import { EVENT_GUESTS_COPY } from "../config/messages";
@@ -59,7 +59,7 @@ export function EventGuestsSection({ event, eventGuests }: EventGuestsSectionPro
           </Table>
         </div>
       )}
-      <Pagination
+      <ListPagination
         page={eventGuests.page}
         pageSize={eventGuests.pageSize}
         total={eventGuests.total}

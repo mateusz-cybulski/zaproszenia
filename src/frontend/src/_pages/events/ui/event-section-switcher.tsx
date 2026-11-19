@@ -1,14 +1,9 @@
 "use client";
 
-import { SegmentedControl } from "@/shared/ui/segmented-control";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/toggle-group";
 
 import { EVENT_SECTION_COPY } from "../config/messages";
 import { EVENT_SECTIONS, type EventSection } from "../model/event-section";
-
-const SECTION_OPTIONS = EVENT_SECTIONS.map((section) => ({
-  value: section,
-  label: EVENT_SECTION_COPY[section],
-}));
 
 type EventSectionSwitcherProps = {
   section: EventSection;
@@ -17,12 +12,23 @@ type EventSectionSwitcherProps = {
 
 export function EventSectionSwitcher({ section, onChange }: EventSectionSwitcherProps) {
   return (
-    <SegmentedControl
-      label={EVENT_SECTION_COPY.label}
-      name="event-section"
-      options={SECTION_OPTIONS}
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      aria-label={EVENT_SECTION_COPY.label}
       value={section}
-      onChange={onChange}
-    />
+      onValueChange={(value) => {
+        const next = EVENT_SECTIONS.find((option) => option === value);
+        if (next) {
+          onChange(next);
+        }
+      }}
+    >
+      {EVENT_SECTIONS.map((option) => (
+        <ToggleGroupItem key={option} value={option}>
+          {EVENT_SECTION_COPY[option]}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }

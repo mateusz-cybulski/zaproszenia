@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { Pagination } from "@/shared/ui/pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 
 import { DeletedEventRow } from "./deleted-event-row";
 
@@ -42,7 +42,7 @@ export function DeletedEventsDialog({ events, dismissal }: DeletedEventsDialogPr
               Nie ma usuniętych wydarzeń.
             </p>
           )}
-          <Pagination
+          <ListPagination
             page={events.page}
             pageSize={events.pageSize}
             total={events.total}

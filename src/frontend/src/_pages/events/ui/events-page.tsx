@@ -10,7 +10,7 @@ import { parsePage } from "@/shared/lib/pagination";
 import { routes, type SearchParams, withQuery } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Page } from "@/shared/ui/page";
-import { Pagination } from "@/shared/ui/pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 
 import { EventRowActions } from "./event-row-actions";
 
@@ -59,7 +59,7 @@ export async function EventsPage({ searchParams }: { searchParams: SearchParams 
           renderActions={(event) => <EventRowActions event={event} />}
         />
       </div>
-      <Pagination
+      <ListPagination
         page={events.page}
         pageSize={events.pageSize}
         total={events.total}
