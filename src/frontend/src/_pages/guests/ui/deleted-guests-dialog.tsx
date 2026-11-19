@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import { Pagination } from "@/shared/ui/pagination";
+import { ListPagination } from "@/shared/ui/list-pagination";
 
 import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
 import { routes, withQuery } from "@/shared/routes";
@@ -39,7 +39,7 @@ export function DeletedGuestsDialog({ guests, dismissal }: DeletedGuestsDialogPr
         ) : (
           <p className="py-6 text-center text-sm text-muted-foreground">Nie ma usuniętych gości.</p>
         )}
-        <Pagination
+        <ListPagination
           page={guests.page}
           pageSize={guests.pageSize}
           total={guests.total}

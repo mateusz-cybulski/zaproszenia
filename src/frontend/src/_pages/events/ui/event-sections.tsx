@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { Event, EventGuest } from "@/entities/event";
 import type { Template } from "@/entities/template";
 import type { Page } from "@/shared/api";
-import { SegmentedControl } from "@/shared/ui/segmented-control";
+import { ToggleGroup, ToggleGroupItem } from "@/shared/ui/toggle-group";
 
 import { EVENT_SECTION_COPY } from "../config/messages";
 import { EVENT_SECTIONS, type EventSection } from "../model/event-section";
@@ -20,11 +20,6 @@ type EventSectionsProps = {
   initialSection: EventSection;
   onSaved: () => void;
 };
-
-const SECTION_OPTIONS = EVENT_SECTIONS.map((section) => ({
-  value: section,
-  label: EVENT_SECTION_COPY[section],
-}));
 
 export function EventSections({
   event,
@@ -46,13 +41,24 @@ export function EventSections({
 
   return (
     <>
-      <SegmentedControl
-        label={EVENT_SECTION_COPY.label}
-        name="event-section"
-        options={SECTION_OPTIONS}
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        aria-label={EVENT_SECTION_COPY.label}
         value={section}
-        onChange={changeSection}
-      />
+        onValueChange={(value) => {
+          const next = EVENT_SECTIONS.find((option) => option === value);
+          if (next) {
+            changeSection(next);
+          }
+        }}
+      >
+        {EVENT_SECTIONS.map((option) => (
+          <ToggleGroupItem key={option} value={option}>
+            {EVENT_SECTION_COPY[option]}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
       {opened.has("details") && (
         <div hidden={section !== "details"}>
           <EventForm event={event} onSaved={onSaved} />

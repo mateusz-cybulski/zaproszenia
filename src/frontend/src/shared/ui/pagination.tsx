@@ -1,94 +1,114 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import * as React from "react";
+import { cn } from "@/shared/lib/css";
 
-import { pageItems } from "@/shared/lib/pagination";
 import { Button } from "@/shared/ui/button";
+import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
 
-type PaginationProps = {
-  page: number;
-  pageSize: number;
-  total: number;
-  // The URL of a page; the first page is expected without a page parameter.
-  hrefForPage: (page: number) => string;
-};
-
-export function Pagination({ page, pageSize, total, hrefForPage }: PaginationProps) {
-  if (total === 0) {
-    return null;
-  }
-  const pageCount = Math.ceil(total / pageSize);
-  // A page past the end (an old link, or its last items just removed) is shown as empty.
-  const beyondEnd = page > pageCount;
-  const current = Math.min(page, pageCount);
-  const first = (page - 1) * pageSize + 1;
-  const last = Math.min(page * pageSize, total);
-  const summary = beyondEnd
-    ? `Ta strona jest pusta. Wszystkich: ${total}.`
-    : `${first}–${last} z ${total}`;
-
+function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
-    <nav aria-label="Strony" className="flex items-center justify-between gap-4 text-sm">
-      <p className="text-muted-foreground">{summary}</p>
-      {(pageCount > 1 || beyondEnd) && (
-        <ul className="flex items-center gap-1">
-          <li>
-            <PageLink
-              href={page > 1 ? hrefForPage(Math.min(page - 1, pageCount)) : null}
-              label="Poprzednia strona"
-            >
-              <ChevronLeft />
-            </PageLink>
-          </li>
-          {pageItems(current, pageCount).map((item, index) => (
-            <li key={item === "gap" ? `gap-${index}` : item}>
-              {item === "gap" ? (
-                <span className="px-1.5 text-muted-foreground" aria-hidden>
-                  …
-                </span>
-              ) : (
-                <Button
-                  asChild
-                  variant={item === page ? "outline" : "ghost"}
-                  size="icon-sm"
-                  aria-current={item === page ? "page" : undefined}
-                >
-                  <Link href={hrefForPage(item)} scroll={false} aria-label={`Strona ${item}`}>
-                    {item}
-                  </Link>
-                </Button>
-              )}
-            </li>
-          ))}
-          <li>
-            <PageLink
-              href={page < pageCount ? hrefForPage(page + 1) : null}
-              label="Następna strona"
-            >
-              <ChevronRight />
-            </PageLink>
-          </li>
-        </ul>
-      )}
-    </nav>
+    <nav
+      role="navigation"
+      aria-label="pagination"
+      data-slot="pagination"
+      className={cn("mx-auto flex w-full justify-center", className)}
+      {...props}
+    />
   );
 }
 
-type PageLinkProps = { href: string | null; label: string; children: ReactNode };
-
-function PageLink({ href, label, children }: PageLinkProps) {
-  if (href === null) {
-    return (
-      <Button variant="ghost" size="icon-sm" disabled aria-label={label}>
-        {children}
-      </Button>
-    );
-  }
+function PaginationContent({ className, ...props }: React.ComponentProps<"ul">) {
   return (
-    <Button asChild variant="ghost" size="icon-sm">
-      <Link href={href} scroll={false} aria-label={label}>
-        {children}
-      </Link>
+    <ul
+      data-slot="pagination-content"
+      className={cn("flex items-center gap-0.5", className)}
+      {...props}
+    />
+  );
+}
+
+function PaginationItem({ ...props }: React.ComponentProps<"li">) {
+  return <li data-slot="pagination-item" {...props} />;
+}
+
+type PaginationLinkProps = {
+  isActive?: boolean;
+} & Pick<React.ComponentProps<typeof Button>, "size"> &
+  React.ComponentProps<typeof Link>;
+
+function PaginationLink({ className, isActive, size = "icon", ...props }: PaginationLinkProps) {
+  return (
+    <Button asChild variant={isActive ? "outline" : "ghost"} size={size} className={cn(className)}>
+      {/* Next's Link, not <a>: changing the page is a client navigation, not a reload. */}
+      <Link
+        aria-current={isActive ? "page" : undefined}
+        data-slot="pagination-link"
+        data-active={isActive}
+        {...props}
+      />
     </Button>
   );
 }
+
+function PaginationPrevious({
+  className,
+  text = "Previous",
+  ...props
+}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  return (
+    <PaginationLink
+      aria-label="Go to previous page"
+      size="default"
+      className={cn("pl-1.5!", className)}
+      {...props}
+    >
+      <ChevronLeftIcon data-icon="inline-start" />
+      <span className="hidden sm:block">{text}</span>
+    </PaginationLink>
+  );
+}
+
+function PaginationNext({
+  className,
+  text = "Next",
+  ...props
+}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  return (
+    <PaginationLink
+      aria-label="Go to next page"
+      size="default"
+      className={cn("pr-1.5!", className)}
+      {...props}
+    >
+      <span className="hidden sm:block">{text}</span>
+      <ChevronRightIcon data-icon="inline-end" />
+    </PaginationLink>
+  );
+}
+
+function PaginationEllipsis({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      aria-hidden
+      data-slot="pagination-ellipsis"
+      className={cn(
+        "flex size-8 items-center justify-center [&_svg:not([class*='size-'])]:size-4",
+        className,
+      )}
+      {...props}
+    >
+      <MoreHorizontalIcon />
+      <span className="sr-only">Więcej stron</span>
+    </span>
+  );
+}
+
+export {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+};
