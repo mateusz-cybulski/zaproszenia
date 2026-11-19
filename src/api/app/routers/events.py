@@ -17,7 +17,7 @@ TEMPLATE_FIELDS = {
 }
 
 
-async def _own_event(
+async def own_event(
     session: Session, event_id: int, owner_uid: str, *, deleted: bool | None = False
 ) -> Event:
     """The user's event, active by default; deleted=True for deleted ones, None for either."""
@@ -92,7 +92,7 @@ async def list_events(
 
 @router.get("/{event_id}")
 async def get_event(event_id: int, session: Session, user: CurrentUser) -> EventRead:
-    return EventRead.model_validate(await _own_event(session, event_id, user.uid))
+    return EventRead.model_validate(await own_event(session, event_id, user.uid))
 
 
 @router.put("/{event_id}")
@@ -100,7 +100,7 @@ async def replace_event(
     event_id: int, payload: EventWrite, session: Session, user: CurrentUser
 ) -> EventRead:
     async with session.begin():
-        event = await _own_event(session, event_id, user.uid)
+        event = await own_event(session, event_id, user.uid)
         await _check_templates(session, payload, user.uid)
         for field, value in payload.model_dump().items():
             setattr(event, field, value)
@@ -115,16 +115,16 @@ async def delete_event(
     """Move the event to the deleted list, or with permanent=true remove it for good."""
     async with session.begin():
         if permanent:
-            await session.delete(await _own_event(session, event_id, user.uid, deleted=None))
+            await session.delete(await own_event(session, event_id, user.uid, deleted=None))
         else:
-            event = await _own_event(session, event_id, user.uid)
+            event = await own_event(session, event_id, user.uid)
             event.deleted_at = datetime.now(UTC)
 
 
 @router.post("/{event_id}/restore")
 async def restore_event(event_id: int, session: Session, user: CurrentUser) -> EventRead:
     async with session.begin():
-        event = await _own_event(session, event_id, user.uid, deleted=True)
+        event = await own_event(session, event_id, user.uid, deleted=True)
         event.deleted_at = None
     await session.refresh(event)
     return EventRead.model_validate(event)
