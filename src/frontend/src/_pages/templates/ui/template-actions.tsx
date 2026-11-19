@@ -1,6 +1,7 @@
 "use client";
 
-import { Copy, Eye } from "lucide-react";
+import { Copy, Eye, PencilLine } from "lucide-react";
+import Link from "next/link";
 
 import type { Template } from "@/entities/template";
 import { useAction } from "@/shared/lib/action-call";
@@ -15,6 +16,11 @@ export function TemplateActions({ template }: { template: Template }) {
 
   return (
     <>
+      <Button variant="outline" size="sm" asChild>
+        <Link href={routes.template(template.id)} scroll={false}>
+          <PencilLine /> {template.isSystem ? "Pola" : "Edytuj"}
+        </Link>
+      </Button>
       <Button variant="outline" size="sm" asChild>
         <a href={routes.templatePreview(template.id)} target="_blank" rel="noreferrer">
           <Eye /> Podgląd

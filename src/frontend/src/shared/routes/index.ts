@@ -13,6 +13,7 @@ export const routes = {
   guestsDeleted: () => "/guests/deleted",
   guestEdit: (id: number) => `/guests/${id}`,
   templates: () => "/templates",
+  template: (id: number) => `/templates/${id}`,
   templatePageImage: (id: number) => `/api/templates/${id}/page.png`,
   templatePreview: (id: number) => `/api/templates/${id}/preview`,
   templatePreviewImage: (id: number) => `/api/templates/${id}/preview.png`,
