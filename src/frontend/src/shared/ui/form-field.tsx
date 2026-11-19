@@ -1,6 +1,7 @@
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { NativeSelect } from "@/shared/ui/native-select";
+import { Textarea } from "@/shared/ui/textarea";
 
 export type FormFieldConfig<Name extends string = string> = {
   name: Name;
@@ -9,7 +10,8 @@ export type FormFieldConfig<Name extends string = string> = {
   // Default "off": most forms here hold other people's data, where autofill offers the user's own.
   autoComplete?: string;
 } & (
-  | { maxLength: number }
+  | { maxLength: number; multiline?: false }
+  | { maxLength: number; multiline: true; rows: number }
   | { inputType: "datetime-local" }
   | { options: readonly { value: string; label: string }[] }
 );
@@ -52,6 +54,14 @@ export function FormField({ field, meta }: FormFieldProps) {
             </option>
           ))}
         </NativeSelect>
+      ) : "multiline" in field && field.multiline ? (
+        <Textarea
+          key={meta.key}
+          {...inputProps}
+          rows={field.rows}
+          autoComplete={field.autoComplete ?? "off"}
+          maxLength={field.maxLength}
+        />
       ) : (
         <Input
           key={meta.key}

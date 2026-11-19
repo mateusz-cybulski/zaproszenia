@@ -3,7 +3,7 @@ import { z } from "zod";
 import { templateIdSchema } from "@/entities/template/@x/event";
 import { apiTimestamp } from "@/shared/api";
 
-import type { EventDraft } from "../model/event";
+import type { EventInput } from "../model/event";
 import { eventIdSchema } from "../model/event-id";
 
 export const eventDtoSchema = z
@@ -44,6 +44,16 @@ export const eventDtoSchema = z
 
 export const eventListSchema = z.array(eventDtoSchema);
 
-export function toEventDraftBody(draft: EventDraft) {
-  return { name: draft.name, starts_at: draft.startsAtLocal };
+export function toEventBody(input: EventInput) {
+  return {
+    name: input.name,
+    starts_at: input.startsAtLocal,
+    timezone: input.timeZone,
+    venue_name: input.venueName,
+    invitation_text: input.invitationText,
+    street: input.street,
+    postal_code: input.postalCode,
+    city: input.city,
+    country: input.country,
+  };
 }

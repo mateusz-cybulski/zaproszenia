@@ -1,15 +1,16 @@
-import { ArchiveRestore, CalendarDays, Plus } from "lucide-react";
+import { ArchiveRestore, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 
+import { EventTable } from "@/entities/event";
 import { getEvents } from "@/entities/event/index.server";
 import { requireViewer } from "@/entities/viewer/index.server";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Page } from "@/shared/ui/page";
 
-import { EventGrid } from "./event-grid";
+import { EventRowActions } from "./event-row-actions";
 
 export const metadata: Metadata = { title: "Wydarzenia · Zaproszenia" };
 
@@ -36,20 +37,20 @@ export async function EventsPage() {
           </Button>
           <Button asChild>
             <Link href={routes.eventAdd()} scroll={false}>
-              <Plus /> Nowe wydarzenie
+              <Plus /> Dodaj wydarzenie
             </Link>
           </Button>
         </>
       }
     >
-      {events.length > 0 ? (
-        <EventGrid events={events} now={now} />
-      ) : (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <CalendarDays className="size-4" aria-hidden /> Utwórz wydarzenie, dodaj gości i wygeneruj
-          zaproszenia.
-        </p>
-      )}
+      <div className="rounded-lg border">
+        <EventTable
+          events={events}
+          now={now}
+          emptyMessage="Nie dodano jeszcze żadnych wydarzeń."
+          renderActions={(event) => <EventRowActions event={event} />}
+        />
+      </div>
     </Page>
   );
 }

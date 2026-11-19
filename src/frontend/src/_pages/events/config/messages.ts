@@ -1,8 +1,18 @@
 import type { SaveEventFailure } from "@/entities/event/index.server";
 
 export const EVENT_DIALOG_COPY = {
-  title: "Nowe wydarzenie",
-  description: "Miejsce, treść zaproszenia i szablony uzupełnisz w szczegółach wydarzenia.",
+  add: {
+    title: "Nowe wydarzenie",
+    description: "Termin, miejsce i treść zaproszenia. Nowe wydarzenie dostaje szablony systemowe.",
+  },
+  edit: {
+    title: "Edytuj wydarzenie",
+    description: "Zmiany trafią na zaproszenia wygenerowane od teraz.",
+  },
+} as const;
+
+export const EVENT_FORM_COPY = {
+  place: "Miejsce",
 } as const;
 
 export const FAILURE_MESSAGES: Record<SaveEventFailure["reason"], string> = {

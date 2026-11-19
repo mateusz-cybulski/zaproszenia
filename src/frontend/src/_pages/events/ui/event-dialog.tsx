@@ -1,5 +1,6 @@
 "use client";
 
+import type { Event } from "@/entities/event";
 import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
 import {
@@ -13,17 +14,20 @@ import {
 import { EVENT_DIALOG_COPY } from "../config/messages";
 import { EventForm } from "./event-form";
 
-export function EventDialog({ dismissal }: { dismissal: Dismissal }) {
+type EventDialogProps = { event?: Event; dismissal: Dismissal };
+
+export function EventDialog({ event, dismissal }: EventDialogProps) {
   const dismiss = useDismiss(dismissal, routes.events());
+  const copy = event ? EVENT_DIALOG_COPY.edit : EVENT_DIALOG_COPY.add;
 
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader className="pr-8">
-          <DialogTitle>{EVENT_DIALOG_COPY.title}</DialogTitle>
-          <DialogDescription>{EVENT_DIALOG_COPY.description}</DialogDescription>
+          <DialogTitle>{copy.title}</DialogTitle>
+          <DialogDescription>{copy.description}</DialogDescription>
         </DialogHeader>
-        <EventForm onSaved={dismiss} />
+        <EventForm event={event} onSaved={dismiss} />
       </DialogContent>
     </Dialog>
   );

@@ -5,6 +5,7 @@ export const routes = {
   events: () => "/events",
   eventAdd: () => "/events/add",
   eventsDeleted: () => "/events/deleted",
+  event: (id: number) => `/events/${id}`,
   guests: () => "/guests",
   guestAdd: () => "/guests/add",
   guestsDeleted: () => "/guests/deleted",

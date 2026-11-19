@@ -13,8 +13,8 @@ export function DeleteEventDialog({ event }: { event: Event }) {
   return (
     <DeleteChoiceDialog
       trigger={
-        <Button variant="destructive" size="sm" className="ml-auto">
-          <Trash /> Usuń<span className="sr-only"> {event.name}</span>
+        <Button variant="ghost" size="icon-sm" aria-label={`Usuń: ${event.name}`}>
+          <Trash />
         </Button>
       }
       title={`Usunąć wydarzenie „${event.name}”?`}

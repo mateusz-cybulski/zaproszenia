@@ -4,6 +4,7 @@ import type { SubmissionResult } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { revalidatePath } from "next/cache";
 
+import { DEFAULT_TIME_ZONE } from "@/entities/event";
 import { createEvent } from "@/entities/event/index.server";
 import { routes } from "@/shared/routes";
 
@@ -18,7 +19,7 @@ export async function createEventAction(
   if (submission.status !== "success") {
     return submission.reply();
   }
-  const result = await createEvent(submission.value);
+  const result = await createEvent({ ...submission.value, timeZone: DEFAULT_TIME_ZONE });
   if (!result.ok) {
     return submission.reply({ formErrors: [FAILURE_MESSAGES[result.reason]] });
   }
