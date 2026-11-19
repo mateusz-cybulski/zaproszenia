@@ -21,6 +21,7 @@ def _blank_to_none(value: str | None) -> str | None:
 
 
 Text300 = Annotated[str | None, Field(max_length=300), AfterValidator(_blank_to_none)]
+Text5000 = Annotated[str | None, Field(max_length=5000), AfterValidator(_blank_to_none)]
 Text200 = Annotated[str | None, Field(max_length=200), AfterValidator(_blank_to_none)]
 PostalCode = Annotated[str | None, Field(max_length=20), AfterValidator(_blank_to_none)]
 Country = Annotated[str, Field(pattern=r"^[A-Za-z]{2}$"), AfterValidator(str.upper)]
