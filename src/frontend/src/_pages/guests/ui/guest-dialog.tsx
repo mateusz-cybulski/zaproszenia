@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import type { Guest } from "@/entities/guest";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -29,15 +30,17 @@ export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProp
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
       <DialogContent className="max-w-2xl">
-        <div className="flex items-start gap-4 pr-8">
-          <DialogHeader className="flex-1">
+        <DialogHeader className="flex items-start gap-4">
+          <div className="grid flex-1 gap-1.5">
             <DialogTitle>{copy.title}</DialogTitle>
             <DialogDescription>{copy.description}</DialogDescription>
-          </DialogHeader>
+          </div>
           {/* The 20px badge sits 2px higher to share the 16px title's centre line. */}
           {headerActions && <div className="-mt-0.5">{headerActions}</div>}
-        </div>
-        <GuestForm guest={guest} onSaved={dismiss} />
+        </DialogHeader>
+        <DialogBody>
+          <GuestForm guest={guest} onSaved={dismiss} />
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

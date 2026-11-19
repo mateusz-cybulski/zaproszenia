@@ -8,6 +8,7 @@ import { useAction } from "@/shared/lib/action-call";
 import { ChoiceButton } from "@/shared/ui/choice-button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -58,28 +59,30 @@ export function DeleteChoiceDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3">
-          <ChoiceButton
-            icon={Archive}
-            title={soft.title}
-            description={soft.description}
-            pending={pending && pendingChoice === "soft"}
-            disabled={pending}
-            onClick={() => choose(false)}
-          />
-          <ChoiceButton
-            icon={Trash}
-            title={permanent.title}
-            description={permanent.description}
-            tone="destructive"
-            pending={pending && pendingChoice === "permanent"}
-            disabled={pending}
-            onClick={() => choose(true)}
-          />
-        </div>
-        <p role="alert" className="text-sm text-destructive empty:hidden">
-          {error}
-        </p>
+        <DialogBody>
+          <div className="grid gap-3">
+            <ChoiceButton
+              icon={Archive}
+              title={soft.title}
+              description={soft.description}
+              pending={pending && pendingChoice === "soft"}
+              disabled={pending}
+              onClick={() => choose(false)}
+            />
+            <ChoiceButton
+              icon={Trash}
+              title={permanent.title}
+              description={permanent.description}
+              tone="destructive"
+              pending={pending && pendingChoice === "permanent"}
+              disabled={pending}
+              onClick={() => choose(true)}
+            />
+          </div>
+          <p role="alert" className="text-sm text-destructive empty:hidden">
+            {error}
+          </p>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

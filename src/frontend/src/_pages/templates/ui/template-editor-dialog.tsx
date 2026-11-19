@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -28,7 +29,7 @@ export function TemplateEditorDialog({ template, options, dismissal }: TemplateE
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
       <DialogContent className="max-w-6xl">
-        <DialogHeader className="pr-8">
+        <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {template.name}
             <Badge variant="outline">{TEMPLATE_KIND_LABELS[template.kind]}</Badge>
@@ -38,13 +39,15 @@ export function TemplateEditorDialog({ template, options, dismissal }: TemplateE
             Pola z danymi gości i wydarzenia, ułożone na stronach szablonu.
           </DialogDescription>
         </DialogHeader>
-        {template.isSystem && (
-          <Alert>
-            <AlertTitle>{EDITOR_COPY.readOnly}</AlertTitle>
-            <AlertDescription>{EDITOR_COPY.readOnlyDescription}</AlertDescription>
-          </Alert>
-        )}
-        <TemplateEditor template={template} options={options} />
+        <DialogBody>
+          {template.isSystem && (
+            <Alert>
+              <AlertTitle>{EDITOR_COPY.readOnly}</AlertTitle>
+              <AlertDescription>{EDITOR_COPY.readOnlyDescription}</AlertDescription>
+            </Alert>
+          )}
+          <TemplateEditor template={template} options={options} />
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

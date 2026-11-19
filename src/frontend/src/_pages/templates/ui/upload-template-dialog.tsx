@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -34,7 +35,9 @@ export function UploadTemplateDialog() {
             imieniem, zwrotem i adresem ułożysz na nim później.
           </DialogDescription>
         </DialogHeader>
-        <UploadTemplateForm onUploaded={close} onCancel={close} />
+        <DialogBody>
+          <UploadTemplateForm onUploaded={close} onCancel={close} />
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

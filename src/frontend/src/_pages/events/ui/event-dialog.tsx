@@ -7,6 +7,7 @@ import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -37,7 +38,7 @@ export function EventDialog(props: EventDialogProps) {
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
       <DialogContent className={props.event ? "max-w-3xl" : "max-w-2xl"}>
-        <DialogHeader className="pr-8">
+        <DialogHeader>
           <DialogTitle>{props.event ? props.event.name : copy.title}</DialogTitle>
           <DialogDescription>{copy.description}</DialogDescription>
         </DialogHeader>
@@ -50,7 +51,9 @@ export function EventDialog(props: EventDialogProps) {
             onSaved={dismiss}
           />
         ) : (
-          <EventForm onSaved={dismiss} />
+          <DialogBody>
+            <EventForm onSaved={dismiss} />
+          </DialogBody>
         )}
       </DialogContent>
     </Dialog>
