@@ -1,6 +1,7 @@
 "use client";
 
-import type { Event } from "@/entities/event";
+import type { Event, EventGuest } from "@/entities/event";
+import type { Guest } from "@/entities/guest";
 import type { Template } from "@/entities/template";
 import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
@@ -19,7 +20,16 @@ import { EventSections } from "./event-sections";
 
 type EventDialogProps = {
   dismissal: Dismissal;
-} & ({ event?: undefined } | { event: Event; templates: Template[]; initialSection: EventSection });
+} & (
+  | { event?: undefined }
+  | {
+      event: Event;
+      templates: Template[];
+      eventGuests: EventGuest[];
+      guests: Guest[];
+      initialSection: EventSection;
+    }
+);
 
 export function EventDialog(props: EventDialogProps) {
   const dismiss = useDismiss(props.dismissal, routes.events());
@@ -36,6 +46,8 @@ export function EventDialog(props: EventDialogProps) {
           <EventSections
             event={props.event}
             templates={props.templates}
+            eventGuests={props.eventGuests}
+            guests={props.guests}
             initialSection={props.initialSection}
             onSaved={dismiss}
           />

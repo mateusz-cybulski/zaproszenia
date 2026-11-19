@@ -3,7 +3,8 @@ import type { SaveEventFailure } from "@/entities/event/index.server";
 export const EVENT_DIALOG_COPY = {
   add: {
     title: "Nowe wydarzenie",
-    description: "Termin, miejsce i treść zaproszenia. Nowe wydarzenie dostaje szablony systemowe.",
+    description:
+      "Termin, miejsce i treść zaproszenia. Po utworzeniu wybierzesz szablony i dodasz gości.",
   },
   edit: {
     title: "Edytuj wydarzenie",
@@ -20,7 +21,22 @@ export const EVENT_SECTION_COPY = {
     "Podgląd pokazuje to wydarzenie, Twoje dane nadawcy i przykładowego gościa. Zmiana szablonu od razu odświeża podgląd; zapisz, aby ją zachować.",
   templatesSaved: "Zapisano szablony.",
   noTemplate: "Bez szablonu nie wydrukujesz tego dokumentu.",
-  guestsSoon: "Lista gości wydarzenia pojawi się w następnym kroku.",
+} as const;
+
+export const EVENT_GUESTS_COPY = {
+  count: (count: number) => `Gości na liście: ${count}`,
+  add: "Dodaj gości",
+  addSelected: (count: number) => `Dodaj (${count})`,
+  cancel: "Anuluj",
+  search: "Szukaj gości",
+  selectAll: (count: number) => `Zaznacz widocznych (${count})`,
+  noCandidates: "Wszyscy goście z bazy są już na liście albo nikt nie pasuje do wyszukiwania.",
+  empty: "Nikt nie jest jeszcze na liście. Dodaj gości z bazy.",
+  status: "Status zaproszenia",
+  remove: (name: string) => `Zdejmij z listy: ${name}`,
+  addFailed: "Nie udało się dodać gości. Spróbuj ponownie.",
+  statusFailed: "Nie udało się zmienić statusu. Spróbuj ponownie.",
+  removeFailed: "Nie udało się zdjąć gościa z listy. Spróbuj ponownie.",
 } as const;
 
 export const EVENT_FORM_COPY = {

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { parseEventId } from "@/entities/event";
-import { getEvent } from "@/entities/event/index.server";
+import { getEvent, getEventGuests } from "@/entities/event/index.server";
+import { getGuests } from "@/entities/guest/index.server";
 import { getTemplates } from "@/entities/template/index.server";
 import { requireViewer } from "@/entities/viewer/index.server";
 import type { Dismissal } from "@/shared/lib/dialogs";
@@ -14,17 +15,25 @@ type EventEditDialogProps = { id: string; section: EventSection; dismissal: Dism
 export async function EventEditDialog({ id, section, dismissal }: EventEditDialogProps) {
   await requireViewer();
   const eventId = parseEventId(id);
-  const [event, templates] = await Promise.all([
-    eventId === null ? null : getEvent(eventId),
-    getTemplates(),
-  ]);
+  if (eventId === null) {
+    notFound();
+  }
+  const event = await getEvent(eventId);
   if (!event) {
     notFound();
   }
+  // Only for an event that exists: its guest list would answer 404 otherwise.
+  const [templates, eventGuests, guests] = await Promise.all([
+    getTemplates(),
+    getEventGuests(event.id),
+    getGuests(),
+  ]);
   return (
     <EventDialog
       event={event}
       templates={templates}
+      eventGuests={eventGuests}
+      guests={guests}
       initialSection={section}
       dismissal={dismissal}
     />

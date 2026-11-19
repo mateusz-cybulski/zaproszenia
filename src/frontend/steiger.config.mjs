@@ -8,9 +8,4 @@ export default defineConfig([
     files: ["./src/_app/**", "./src/_pages/**"],
     rules: { "fsd/typo-in-layer-name": "off" },
   },
-  {
-    // Event guest lists will use both; drop each entry once a second slice imports it.
-    files: ["./src/entities/guest/**", "./src/entities/event/**"],
-    rules: { "fsd/insignificant-slice": "off" },
-  },
 ]);
