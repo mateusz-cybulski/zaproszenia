@@ -1,9 +1,9 @@
 ---
 name: nextjs-best-practices
-description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions, proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
+description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
   next: "16"
 ---
 
@@ -48,6 +48,23 @@ export function FilterBar() { /* useState, onChange ... */ }
 - Use Route Handlers (`app/**/route.ts`) for external callers: webhooks, other services, public APIs.
 - A Server Action is a public endpoint. Validate input on the server (e.g. with a schema) and check authorization inside every action.
 - After a mutation, invalidate with the APIs from section 2 or `redirect()`. Do not rely on client-side refetching.
+
+### Calling actions from buttons and dialogs
+
+Forms with fields use `<form action>` + `useActionState` (above). Everything else that calls a Server Action from a click (delete, restore, copy, confirm) goes through **one shared hook and one shared dialog**, never a hand-written `useTransition` + `useState` pair per component:
+
+- Every such action returns `ActionResult` = `{ error?: string }` (in this repo: `@/shared/lib/actions`): a message the user can read, or nothing on success. Failures are returned, not thrown.
+- `useAction(action, { onSuccess })` (same module) returns `{ run, pending, error, setError }`: `run(...args)` clears the error, runs the action in a transition, then shows `error` or calls `onSuccess`.
+
+```tsx
+const copy = useAction(() => copyTemplateAction(template.id));
+<Button onClick={() => copy.run()} disabled={copy.pending}>{copy.pending ? "Kopiowanie…" : "Kopiuj"}</Button>
+<p role="alert" className="empty:hidden">{copy.error}</p>
+```
+
+- "Open, confirm, run; success closes, an error stays in the dialog" is `ConfirmActionDialog` (`@/shared/ui/confirm-action-dialog`): `trigger`, `title`, `description`, `confirmLabel`/`pendingLabel`, `action`, `tone`, optional `children` and `confirmDisabled` (e.g. "type DELETE to confirm"). Several choices in one dialog (soft or permanent delete) build on `useAction` the same way (`DeleteChoiceDialog`).
+- Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the `useAction`. Two actions in one row are two hooks; show `first.error ?? second.error`.
+- A raw `startTransition` is fine only where no `ActionResult` comes back: router navigation (search as you type), or client SDK flows such as sign-in.
 
 ## 4. Routing files
 
