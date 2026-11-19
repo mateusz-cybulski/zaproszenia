@@ -1,7 +1,10 @@
+from datetime import UTC, datetime
 from typing import Any
 
 from httpx import AsyncClient
 
+from app.models import Event, Profile
+from app.services.placeholders import event_preview_values
 from tests.conftest import OTHER_SESSION_COOKIE
 
 GALA = {
@@ -196,3 +199,94 @@ async def test_permanent_delete_removes_active_and_deleted_events(client: AsyncC
 
 async def test_events_require_sign_in(anonymous_client: AsyncClient) -> None:
     assert (await anonymous_client.get("/events")).status_code == 401
+
+
+async def test_set_templates_only(client: AsyncClient) -> None:
+    event = await _create(client)
+    envelope = await _system_template_id(client, "envelope")
+
+    response = await client.put(
+        f"/events/{event['id']}/templates",
+        json={"invitation_template_id": None, "envelope_template_id": envelope},
+    )
+    wrong_kind = await client.put(
+        f"/events/{event['id']}/templates", json={"invitation_template_id": envelope}
+    )
+
+    assert response.status_code == 200
+    saved = response.json()
+    assert (saved["invitation_template_id"], saved["envelope_template_id"]) == (None, envelope)
+    assert saved["name"] == event["name"]
+    assert wrong_kind.status_code == 422
+    client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
+    foreign = await client.put(f"/events/{event['id']}/templates", json={})
+    assert foreign.status_code == 404
+
+
+async def test_preview_renders_a_template_page_for_the_event(client: AsyncClient) -> None:
+    event = await _create(client)
+    invitation = await _system_template_id(client, "invitation")
+
+    response = await client.get(
+        f"/events/{event['id']}/preview.png", params={"template_id": invitation}
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.content.startswith(b"\x89PNG")
+
+
+async def test_preview_follows_event_and_template_access(client: AsyncClient) -> None:
+    event = await _create(client)
+    invitation = await _system_template_id(client, "invitation")
+    path = f"/events/{event['id']}/preview.png"
+
+    missing_page = await client.get(path, params={"template_id": invitation, "page": 3})
+    missing_template = await client.get(path, params={"template_id": 999})
+    client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
+    foreign_event = await client.get(path, params={"template_id": invitation})
+
+    assert missing_page.status_code == 404
+    assert missing_template.status_code == 404
+    assert foreign_event.status_code == 404
+
+
+def test_preview_values_use_the_event_its_zone_and_the_sender() -> None:
+    event = Event(
+        name="Koncert",
+        starts_at=datetime(2026, 12, 12, 18, 30, tzinfo=UTC),
+        timezone="Europe/Warsaw",
+        venue_name="Filharmonia",
+        street="ul. Jasna 5",
+        postal_code="00-013",
+        city="Warszawa",
+        country="PL",
+        invitation_text="Zapraszamy.",
+    )
+    profile = Profile(sender_name="Fundacja", street="ul. Długa 5", city="Kraków", country="PL")
+
+    values = event_preview_values(event, profile)
+
+    assert values["event_name"] == "Koncert"
+    assert values["event_time"] == "19:30"
+    assert values["event_weekday"] == "sobota"
+    assert values["venue"] == "Filharmonia"
+    assert values["event_address"] == "ul. Jasna 5\n00-013 Warszawa"
+    assert values["invitation_text"] == "Zapraszamy."
+    assert values["sender_name"] == "Fundacja"
+    assert values["sender_address"] == "ul. Długa 5\nKraków"
+    assert values["recipient"]
+
+
+def test_preview_values_without_a_sender_leave_it_empty() -> None:
+    event = Event(
+        name="Koncert",
+        starts_at=datetime(2026, 12, 12, 18, 30, tzinfo=UTC),
+        timezone="Europe/Warsaw",
+        country="PL",
+    )
+
+    values = event_preview_values(event, None)
+
+    assert (values["sender_name"], values["sender_address"]) == ("", "")
+    assert values["venue"] == ""

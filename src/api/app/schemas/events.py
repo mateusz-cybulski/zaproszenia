@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated, Self
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import AfterValidator, Field, model_validator
+from pydantic import AfterValidator, BaseModel, Field, model_validator
 
 from app.models import DEFAULT_TIMEZONE, TextLimit
 from app.schemas.common import AddressRead, AddressWrite, TextField
@@ -19,16 +19,19 @@ def _known_timezone(value: str) -> str:
 Timezone = Annotated[str, Field(max_length=TextLimit.TIMEZONE), AfterValidator(_known_timezone)]
 
 
-class EventWrite(AddressWrite):
+class EventTemplates(BaseModel):
+    # Left out on create: the system template of that kind.
+    invitation_template_id: int | None = None
+    envelope_template_id: int | None = None
+
+
+class EventWrite(AddressWrite, EventTemplates):
     name: TextField.Short
     # A time without an offset is the event's local time, as typed in a date-time input.
     starts_at: datetime
     timezone: Timezone = DEFAULT_TIMEZONE
     venue_name: TextField.OptionalShort = None
     invitation_text: TextField.OptionalLong = None
-    # Left out on create: the system template of that kind.
-    invitation_template_id: int | None = None
-    envelope_template_id: int | None = None
 
     @model_validator(mode="after")
     def _localise_start(self) -> Self:

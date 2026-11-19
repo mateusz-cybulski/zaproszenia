@@ -1,5 +1,6 @@
 import type { z } from "zod";
 
+import type { TemplateId } from "@/entities/template/@x/event";
 import { type Address, formatAddress } from "@/shared/lib/address";
 
 import type { eventDtoSchema } from "../api/event-dto";
@@ -16,6 +17,11 @@ export type EventInput = Address & {
   timeZone: string;
   venueName: string | null;
   invitationText: string | null;
+};
+
+export type EventTemplateChoice = {
+  invitationTemplateId: TemplateId | null;
+  envelopeTemplateId: TemplateId | null;
 };
 
 export function formatVenue(event: Event): string {

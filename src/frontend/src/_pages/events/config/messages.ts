@@ -11,6 +11,18 @@ export const EVENT_DIALOG_COPY = {
   },
 } as const;
 
+export const EVENT_SECTION_COPY = {
+  label: "Sekcja wydarzenia",
+  details: "Szczegóły",
+  templates: "Szablony",
+  guests: "Goście",
+  templatesDescription:
+    "Podgląd pokazuje to wydarzenie, Twoje dane nadawcy i przykładowego gościa. Zmiana szablonu od razu odświeża podgląd; zapisz, aby ją zachować.",
+  templatesSaved: "Zapisano szablony.",
+  noTemplate: "Bez szablonu nie wydrukujesz tego dokumentu.",
+  guestsSoon: "Lista gości wydarzenia pojawi się w następnym kroku.",
+} as const;
+
 export const EVENT_FORM_COPY = {
   place: "Miejsce",
 } as const;

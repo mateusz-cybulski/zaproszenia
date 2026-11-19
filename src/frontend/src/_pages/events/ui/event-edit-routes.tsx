@@ -1,19 +1,23 @@
+import { parseEventSection } from "../model/event-section";
 import { EventEditDialog } from "./event-edit-dialog";
 import { EventsPage } from "./events-page";
 
-type EventRouteParams = { params: Promise<{ id: string }> };
+type EventRouteProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export async function EventEditModal({ params }: EventRouteParams) {
-  const { id } = await params;
-  return <EventEditDialog id={id} dismissal="back" />;
+export async function EventEditModal({ params, searchParams }: EventRouteProps) {
+  const [{ id }, { section }] = await Promise.all([params, searchParams]);
+  return <EventEditDialog id={id} section={parseEventSection(section)} dismissal="back" />;
 }
 
-export async function EventsEditPage({ params }: EventRouteParams) {
-  const { id } = await params;
+export async function EventsEditPage({ params, searchParams }: EventRouteProps) {
+  const [{ id }, { section }] = await Promise.all([params, searchParams]);
   return (
     <>
       <EventsPage />
-      <EventEditDialog id={id} dismissal="to-list" />
+      <EventEditDialog id={id} section={parseEventSection(section)} dismissal="to-list" />
     </>
   );
 }

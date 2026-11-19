@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status
 
 from app.auth import CurrentUser
 from app.db import Session
-from app.models import Event
+from app.models import Event, Template
 
 
 async def find_own_event(
@@ -18,6 +18,14 @@ async def find_own_event(
     if deleted is not None and (event.deleted_at is not None) != deleted:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Event not found")
     return event
+
+
+async def find_visible_template(session: Session, template_id: int, owner_uid: str) -> Template:
+    """A system template or the user's own; anything else looks missing."""
+    template = await session.get(Template, template_id)
+    if template is None or template.owner_uid not in (None, owner_uid):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Template not found")
+    return template
 
 
 async def _active_own_event(event_id: int, session: Session, user: CurrentUser) -> Event:
