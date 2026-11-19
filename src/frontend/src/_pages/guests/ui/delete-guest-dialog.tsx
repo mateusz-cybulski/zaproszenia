@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { DeleteChoiceDialog } from "@/shared/ui/delete-choice-dialog";
 
 import { deleteGuestAction } from "../api/delete-guest-action";
-import { deleteCopy } from "../config/delete-copy";
+import { DELETE_COPY } from "../config/delete-copy";
 
 export function DeleteGuestDialog({ guest }: { guest: Guest }) {
   const name = recipientName(guest);
@@ -21,8 +21,11 @@ export function DeleteGuestDialog({ guest }: { guest: Guest }) {
       }
       title={`Usunąć gościa „${name}”?`}
       description="Wybierz, czy gość ma trafić do usuniętych, czy zniknąć na stałe."
-      soft={{ title: deleteCopy.softTitle, description: deleteCopy.softDescription }}
-      permanent={{ title: deleteCopy.permanentTitle, description: deleteCopy.permanentDescription }}
+      soft={{ title: DELETE_COPY.softTitle, description: DELETE_COPY.softDescription }}
+      permanent={{
+        title: DELETE_COPY.permanentTitle,
+        description: DELETE_COPY.permanentDescription,
+      }}
       remove={(permanent) => deleteGuestAction(guest.id, permanent)}
     />
   );

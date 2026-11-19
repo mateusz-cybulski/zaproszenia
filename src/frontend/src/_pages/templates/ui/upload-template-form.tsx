@@ -1,9 +1,10 @@
 "use client";
 
 import { Upload } from "lucide-react";
-import { type FormEvent, useState, useTransition } from "react";
+import { type FormEvent, useState } from "react";
 
-import { templateKindLabels, templateKinds } from "@/entities/template";
+import { TEMPLATE_KIND_LABELS, TEMPLATE_KINDS } from "@/entities/template";
+import { useAction } from "@/shared/lib/action-call";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -18,8 +19,9 @@ type UploadTemplateFormProps = { onUploaded: () => void; onCancel: () => void };
 
 export function UploadTemplateForm({ onUploaded, onCancel }: UploadTemplateFormProps) {
   const [fileName, setFileName] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { run, pending, error, setError } = useAction(uploadTemplateAction, {
+    onSuccess: onUploaded,
+  });
 
   // Not a form action: React would reset the form after an error and drop the chosen file.
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -30,15 +32,7 @@ export function UploadTemplateForm({ onUploaded, onCancel }: UploadTemplateFormP
       setError(FILE_TOO_LARGE);
       return;
     }
-    setError(null);
-    startTransition(async () => {
-      const result = await uploadTemplateAction(formData);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        onUploaded();
-      }
-    });
+    run(formData);
   }
 
   return (
@@ -71,9 +65,9 @@ export function UploadTemplateForm({ onUploaded, onCancel }: UploadTemplateFormP
         <div className="grid gap-2">
           <Label htmlFor="template-kind">Rodzaj</Label>
           <NativeSelect id="template-kind" name="kind" defaultValue="invitation">
-            {templateKinds.map((kind) => (
+            {TEMPLATE_KINDS.map((kind) => (
               <option key={kind} value={kind}>
-                {templateKindLabels[kind]}
+                {TEMPLATE_KIND_LABELS[kind]}
               </option>
             ))}
           </NativeSelect>

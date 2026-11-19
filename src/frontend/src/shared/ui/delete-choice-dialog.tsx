@@ -1,8 +1,10 @@
 "use client";
 
 import { Archive, Trash } from "lucide-react";
-import { type ReactNode, useState, useTransition } from "react";
+import { type ReactNode, useState } from "react";
 
+import type { ActionResult } from "@/shared/lib/actions";
+import { useAction } from "@/shared/lib/action-call";
 import { ChoiceButton } from "@/shared/ui/choice-button";
 import {
   Dialog,
@@ -21,7 +23,7 @@ type DeleteChoiceDialogProps = {
   description: string;
   soft: Choice;
   permanent: Choice;
-  remove: (permanent: boolean) => Promise<{ error?: string }>;
+  remove: (permanent: boolean) => Promise<ActionResult>;
 };
 
 export function DeleteChoiceDialog({
@@ -33,9 +35,10 @@ export function DeleteChoiceDialog({
   remove,
 }: DeleteChoiceDialogProps) {
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [pendingChoice, setPendingChoice] = useState<"soft" | "permanent" | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { run, pending, error, setError } = useAction(remove, {
+    onSuccess: () => changeOpen(false),
+  });
 
   function changeOpen(nextOpen: boolean) {
     setOpen(nextOpen);
@@ -44,14 +47,7 @@ export function DeleteChoiceDialog({
 
   function choose(isPermanent: boolean) {
     setPendingChoice(isPermanent ? "permanent" : "soft");
-    startTransition(async () => {
-      const result = await remove(isPermanent);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        changeOpen(false);
-      }
-    });
+    run(isPermanent);
   }
 
   return (

@@ -1,25 +1,30 @@
-import type { Event, EventDraft } from "../model/event";
+import { z } from "zod";
 
-export type EventDto = {
-  id: number;
-  name: string;
-  starts_at: string;
-  timezone: string;
-  venue_name: string | null;
-  invitation_text: string | null;
-  invitation_template_id: number | null;
-  envelope_template_id: number | null;
-  street: string | null;
-  postal_code: string | null;
-  city: string | null;
-  country: string;
-  deleted_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
+import { templateIdSchema } from "@/entities/template/@x/event";
+import { apiTimestamp } from "@/shared/api";
 
-export function toEvent(dto: EventDto): Event {
-  return {
+import type { EventDraft } from "../model/event";
+import { eventIdSchema } from "../model/event-id";
+
+export const eventDtoSchema = z
+  .object({
+    id: eventIdSchema,
+    name: z.string(),
+    starts_at: apiTimestamp,
+    timezone: z.string(),
+    venue_name: z.string().nullable(),
+    invitation_text: z.string().nullable(),
+    invitation_template_id: templateIdSchema.nullable(),
+    envelope_template_id: templateIdSchema.nullable(),
+    street: z.string().nullable(),
+    postal_code: z.string().nullable(),
+    city: z.string().nullable(),
+    country: z.string(),
+    deleted_at: apiTimestamp.nullable(),
+    created_at: apiTimestamp,
+    updated_at: apiTimestamp,
+  })
+  .transform((dto) => ({
     id: dto.id,
     name: dto.name,
     startsAt: dto.starts_at,
@@ -35,8 +40,9 @@ export function toEvent(dto: EventDto): Event {
     deletedAt: dto.deleted_at,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
-  };
-}
+  }));
+
+export const eventListSchema = z.array(eventDtoSchema);
 
 export function toEventDraftBody(draft: EventDraft) {
   return { name: draft.name, starts_at: draft.startsAtLocal };

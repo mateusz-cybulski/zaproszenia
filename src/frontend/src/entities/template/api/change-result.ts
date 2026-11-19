@@ -1,5 +1,6 @@
-import type { Template } from "../model/template";
-import { type TemplateDto, toTemplate } from "./template-dto";
+import { z } from "zod";
+
+const errorDetailSchema = z.object({ detail: z.string() });
 
 export type TemplateChangeFailure = {
   ok: false;
@@ -7,16 +8,16 @@ export type TemplateChangeFailure = {
   detail?: string;
 };
 
-export type TemplateChangeResult = { ok: true; template: Template } | TemplateChangeFailure;
+export type TemplateChangeResult = { ok: true } | TemplateChangeFailure;
 
 async function apiDetail(response: Response): Promise<string | undefined> {
-  const body = (await response.json().catch(() => null)) as { detail?: unknown } | null;
-  return typeof body?.detail === "string" ? body.detail : undefined;
+  const body = errorDetailSchema.safeParse(await response.json().catch(() => null));
+  return body.success ? body.data.detail : undefined;
 }
 
 export async function toChangeResult(response: Response | null): Promise<TemplateChangeResult> {
   if (response?.ok) {
-    return { ok: true, template: toTemplate((await response.json()) as TemplateDto) };
+    return { ok: true };
   }
   switch (response?.status) {
     case 404:

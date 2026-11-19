@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 
+import { parseGuestId } from "@/entities/guest";
 import { getGuest } from "@/entities/guest/index.server";
 import { requireViewer } from "@/entities/viewer/index.server";
 import type { Dismissal } from "@/shared/lib/dialogs";
+
 import { GuestDialog } from "./guest-dialog";
 import { VerificationMenu } from "./verification-menu";
-
-import { parseGuestId } from "../model/guest-id";
 
 type GuestEditDialogProps = { id: string; dismissal: Dismissal };
 

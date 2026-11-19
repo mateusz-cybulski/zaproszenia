@@ -1,11 +1,11 @@
-import { TextLimit } from "@/shared/config";
+import { TEXT_LIMIT } from "@/shared/config";
 
 import { countryCode } from "./country-code";
 import { optionalText } from "./optional-text";
 
 export const addressSchemaShape = {
-  street: optionalText(TextLimit.short),
-  postalCode: optionalText(TextLimit.postalCode),
-  city: optionalText(TextLimit.city),
+  street: optionalText(TEXT_LIMIT.short),
+  postalCode: optionalText(TEXT_LIMIT.postalCode),
+  city: optionalText(TEXT_LIMIT.city),
   country: countryCode,
 };

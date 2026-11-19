@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/lib/css";
-import { setThemePreference, themeOptions, useThemePreference } from "@/shared/lib/theme";
+import { setThemePreference, THEME_OPTIONS, useThemePreference } from "@/shared/lib/theme";
 
 export function ThemeSwitcher({ className }: { className?: string }) {
   const preference = useThemePreference();
@@ -9,7 +9,7 @@ export function ThemeSwitcher({ className }: { className?: string }) {
   return (
     <fieldset className={cn("flex gap-0.5 rounded-lg border border-border p-0.5", className)}>
       <legend className="sr-only">Motyw</legend>
-      {themeOptions.map(({ value, label, icon: Icon }) => (
+      {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
         <label
           key={value}
           title={label}

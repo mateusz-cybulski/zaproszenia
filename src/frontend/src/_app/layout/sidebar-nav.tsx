@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { navItems } from "./nav-items";
+import { NAV_ITEMS } from "./nav-items";
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -11,7 +11,7 @@ export function SidebarNav() {
   return (
     <nav aria-label="Menu główne">
       <ul className="grid gap-1">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <li key={href}>

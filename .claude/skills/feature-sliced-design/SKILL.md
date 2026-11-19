@@ -3,7 +3,7 @@ name: feature-sliced-design
 description: "Use when creating, moving or reviewing code in a frontend component that uses Tailwind CSS (e.g. src/frontend with tailwindcss in package.json): where a file goes, how to name layers, slices and segments, which imports are allowed, public APIs (index.ts), and how Tailwind styles, tokens and the cn() helper fit in. Feature-Sliced Design v2.1 on Next.js App Router. Also use when the user mentions FSD, layers, slices, widgets, features or entities."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
   fsd: "2.1"
 ---
 
@@ -115,6 +115,23 @@ From top (most specific) to bottom (most reusable):
   Helpers shared by several operations get their own file in the segment (`api/validate-product-form.ts`, marked `import "server-only"`, since a `"use server"` file may export only async actions). A helper shared across slices goes to `shared` (e.g. `shared/api`). The public API (`index.ts`, `index.server.ts`) re-exports each piece by name.
 - `shared/lib` is not a dump: one folder per topic (`shared/lib/css`, `shared/lib/dates`), each with its own `index.ts`.
 - `shared/db` (custom segment) for database queries if the frontend talks to a database directly. Route handler and server-only code: `index.server.ts` as a separate public API, so client components cannot import it by accident. Add `import "server-only"` in it.
+
+### Entity ids are branded
+
+Every entity has its own id type, so the compiler rejects a guest id where an event id is expected. They live in `entities/<name>/model/<name>-id.ts`:
+
+```ts
+// entities/guest/model/guest-id.ts
+export const guestIdSchema = recordIdSchema.brand<"GuestId">(); // recordIdSchema from @/shared/lib/record-id
+export type GuestId = z.output<typeof guestIdSchema>;
+export function isGuestId(value: unknown): value is GuestId { /* guestIdSchema.safeParse */ }
+export function parseGuestId(param: string): GuestId | null { /* recordIdParamSchema.pipe(guestIdSchema) */ }
+```
+
+- The entity's DTO schema uses `guestIdSchema` for `id`, so every record parsed from the API carries a branded id; the slice's `index.ts` exports `GuestId`, `isGuestId` and `parseGuestId`.
+- A brand comes only from parsing or a guard, never from `as GuestId`.
+- An id of another entity (an event's `invitation_template_id`) comes through that entity's cross-import API: `entities/template/@x/event.ts` exports `templateIdSchema` and `TemplateId`.
+- Ids from a URL segment go through `parse<Name>Id`, not `Number()`.
 
 ## 5. Public API
 

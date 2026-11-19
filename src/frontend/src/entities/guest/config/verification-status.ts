@@ -9,7 +9,7 @@ import {
 
 import type { VerificationStatus } from "../model/guest";
 
-export const verificationStatusLabels: Record<VerificationStatus, string> = {
+export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
   pending: "Do weryfikacji",
   verified_ai: "Zweryfikowany (AI)",
   verified_manual: "Zweryfikowany",
@@ -17,7 +17,7 @@ export const verificationStatusLabels: Record<VerificationStatus, string> = {
   failed: "Błąd weryfikacji",
 };
 
-export const verificationStatusStyles: Record<
+export const VERIFICATION_STATUS_STYLES: Record<
   VerificationStatus,
   { className: string; icon: LucideIcon }
 > = {

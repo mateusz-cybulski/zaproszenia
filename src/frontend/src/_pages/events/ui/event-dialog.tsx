@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 
-import { eventDialogCopy } from "../config/messages";
+import { EVENT_DIALOG_COPY } from "../config/messages";
 import { EventForm } from "./event-form";
 
 export function EventDialog({ dismissal }: { dismissal: Dismissal }) {
@@ -20,8 +20,8 @@ export function EventDialog({ dismissal }: { dismissal: Dismissal }) {
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
       <DialogContent className="max-w-lg">
         <DialogHeader className="pr-8">
-          <DialogTitle>{eventDialogCopy.title}</DialogTitle>
-          <DialogDescription>{eventDialogCopy.description}</DialogDescription>
+          <DialogTitle>{EVENT_DIALOG_COPY.title}</DialogTitle>
+          <DialogDescription>{EVENT_DIALOG_COPY.description}</DialogDescription>
         </DialogHeader>
         <EventForm onSaved={dismiss} />
       </DialogContent>

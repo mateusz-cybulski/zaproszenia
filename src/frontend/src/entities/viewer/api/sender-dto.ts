@@ -1,17 +1,18 @@
-import type { Sender, SenderInput } from "../model/sender";
+import { z } from "zod";
 
-export type SenderDto = {
-  email: string | null;
-  sender_name: string | null;
-  street: string | null;
-  postal_code: string | null;
-  city: string | null;
-  country: string;
-  sender_complete: boolean;
-};
+import type { SenderInput } from "../model/sender";
 
-export function toSender(dto: SenderDto): Sender {
-  return {
+export const senderDtoSchema = z
+  .object({
+    email: z.string().nullable(),
+    sender_name: z.string().nullable(),
+    street: z.string().nullable(),
+    postal_code: z.string().nullable(),
+    city: z.string().nullable(),
+    country: z.string(),
+    sender_complete: z.boolean(),
+  })
+  .transform((dto) => ({
     email: dto.email,
     senderName: dto.sender_name,
     street: dto.street,
@@ -19,8 +20,7 @@ export function toSender(dto: SenderDto): Sender {
     city: dto.city,
     country: dto.country,
     complete: dto.sender_complete,
-  };
-}
+  }));
 
 export function toSenderBody(input: SenderInput) {
   return {

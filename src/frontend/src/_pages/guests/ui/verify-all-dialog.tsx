@@ -1,8 +1,9 @@
 "use client";
 
 import { ShieldCheck, Sparkles, UserCheck } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
+import { useAction } from "@/shared/lib/action-call";
 import { Button } from "@/shared/ui/button";
 import { ChoiceButton } from "@/shared/ui/choice-button";
 import {
@@ -18,23 +19,13 @@ import { verifyAllGuestsManuallyAction } from "../api/verify-all-guests-manually
 
 export function VerifyAllDialog() {
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const { run, pending, error, setError } = useAction(verifyAllGuestsManuallyAction, {
+    onSuccess: () => changeOpen(false),
+  });
 
   function changeOpen(nextOpen: boolean) {
     setOpen(nextOpen);
     setError(null);
-  }
-
-  function verifyManually() {
-    startTransition(async () => {
-      const result = await verifyAllGuestsManuallyAction();
-      if (result.error) {
-        setError(result.error);
-      } else {
-        changeOpen(false);
-      }
-    });
   }
 
   return (
@@ -64,7 +55,7 @@ export function VerifyAllDialog() {
             description="Dane są poprawne: sprawdziłeś je sam i nie potrzebujesz AI."
             pending={pending}
             disabled={pending}
-            onClick={verifyManually}
+            onClick={() => run()}
           />
           {error && (
             <p role="alert" className="text-sm text-destructive">

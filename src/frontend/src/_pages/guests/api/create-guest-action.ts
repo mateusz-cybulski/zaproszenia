@@ -1,25 +1,27 @@
 "use server";
 
+import type { SubmissionResult } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod/v4";
 import { revalidatePath } from "next/cache";
 
 import { createGuest } from "@/entities/guest/index.server";
 import { routes } from "@/shared/routes";
 
-import type { GuestFormState } from "../model/guest-form";
-import { saveFailureState, validateGuestForm } from "./validate-guest-form";
+import { FAILURE_MESSAGES } from "../config/guest-form-messages";
+import { guestFormSchema } from "../model/guest-form";
 
 export async function createGuestAction(
-  _previous: GuestFormState,
+  _previous: SubmissionResult | undefined,
   formData: FormData,
-): Promise<GuestFormState> {
-  const validated = validateGuestForm(formData);
-  if (!validated.ok) {
-    return validated.state;
+): Promise<SubmissionResult> {
+  const submission = parseWithZod(formData, { schema: guestFormSchema });
+  if (submission.status !== "success") {
+    return submission.reply();
   }
-  const result = await createGuest(validated.input);
+  const result = await createGuest(submission.value);
   if (!result.ok) {
-    return saveFailureState(result, formData);
+    return submission.reply({ formErrors: [FAILURE_MESSAGES[result.reason]] });
   }
   revalidatePath(routes.guests(), "layout");
-  return { status: "success" };
+  return submission.reply();
 }

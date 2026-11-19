@@ -1,14 +1,15 @@
 "use server";
 
 import { redirect, unstable_rethrow } from "next/navigation";
+import { z } from "zod";
 
-import { apiFetch, writeSessionCookie } from "@/shared/api/index.server";
+import { apiFetch, parseResponse, writeSessionCookie } from "@/shared/api/index.server";
 import { firebaseClientConfig } from "@/shared/config";
 import { routes } from "@/shared/routes";
 
 export type StartSessionResult = { error: string };
 
-type SessionDto = { session_cookie: string; expires_in: number };
+const sessionDtoSchema = z.object({ session_cookie: z.string(), expires_in: z.int() });
 
 // Server Actions check the request origin, so another site cannot sign a visitor into an
 // attacker's account.
@@ -41,7 +42,7 @@ export async function startSessionAction(idToken: string): Promise<StartSessionR
     return { error: "Usługa logowania jest chwilowo niedostępna. Spróbuj ponownie." };
   }
 
-  const session = (await response.json()) as SessionDto;
+  const session = await parseResponse(response, sessionDtoSchema);
   await writeSessionCookie(session.session_cookie, session.expires_in);
   redirect(routes.guests());
 }
