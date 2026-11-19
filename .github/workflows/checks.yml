@@ -1,0 +1,84 @@
+name: Checks
+
+# The same checks as the lefthook hooks, on every pull request and on main: hooks run only on the
+# machine that has them installed, and only on the staged files.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read Node version from mise.toml
+        id: versions
+        run: echo "node=$(sed -n 's/^node *= *"\(.*\)"/\1/p' mise.toml)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.versions.outputs.node }}
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: ESLint (whole project, with type information)
+        run: npx --no-install eslint --max-warnings=0 .
+
+      - name: TypeScript
+        run: npx --no-install tsc --noEmit
+
+      - name: Steiger (Feature-Sliced Design)
+        run: npx --no-install steiger ./src
+
+      - name: Prettier
+        run: npx --no-install prettier --check .
+
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read Python and uv versions from mise.toml
+        id: versions
+        run: |
+          echo "python=$(sed -n 's/^python *= *"\(.*\)"/\1/p' mise.toml)" >> "$GITHUB_OUTPUT"
+          echo "uv=$(sed -n 's/^uv *= *"\(.*\)"/\1/p' mise.toml)" >> "$GITHUB_OUTPUT"
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ steps.versions.outputs.uv }}
+          python-version: ${{ steps.versions.outputs.python }}
+          enable-cache: true
+          cache-dependency-glob: src/api/uv.lock
+
+      - run: uv sync --frozen
+
+      - name: Ruff
+        run: uv run --frozen ruff check . && uv run --frozen ruff format --check .
+
+      - name: mypy
+        run: uv run --frozen mypy .
+
+      # Tests start PostgreSQL through testcontainers; the runner's Docker provides it.
+      - name: pytest
+        run: uv run --frozen pytest -q
