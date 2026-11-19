@@ -1,15 +1,28 @@
 import "server-only";
 
+import { type Page, pageSchema } from "@/shared/api";
 import { apiFetch, parseResponse } from "@/shared/api/index.server";
+import { withQuery } from "@/shared/routes";
 
 import type { Guest } from "../model/guest";
-import { guestListSchema } from "./guest-dto";
+import { guestDtoSchema } from "./guest-dto";
 
-export async function getGuests({ search }: { search?: string } = {}): Promise<Guest[]> {
-  const query = search ? `?${new URLSearchParams({ q: search })}` : "";
-  const response = await apiFetch(`/guests${query}`);
+type GuestQuery = { search?: string; page?: number; deleted?: boolean; notOnEvent?: number };
+
+const guestPageSchema = pageSchema(guestDtoSchema);
+
+export async function getGuests({ search, page, deleted, notOnEvent }: GuestQuery = {}): Promise<
+  Page<Guest>
+> {
+  const path = withQuery("/guests", {
+    q: search,
+    page,
+    deleted: deleted ? "true" : undefined,
+    not_on_event: notOnEvent,
+  });
+  const response = await apiFetch(path);
   if (!response.ok) {
-    throw new Error(`GET /guests failed with ${response.status}`);
+    throw new Error(`GET ${path} failed with ${response.status}`);
   }
-  return parseResponse(response, guestListSchema);
+  return parseResponse(response, guestPageSchema);
 }

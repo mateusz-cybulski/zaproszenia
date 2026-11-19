@@ -4,9 +4,8 @@ import { Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
+import { SEARCH_DELAY_MS, SEARCH_MAX_LENGTH } from "@/shared/config";
 import { Input } from "@/shared/ui/input";
-
-import { SEARCH_DELAY_MS, SEARCH_MAX_LENGTH } from "../config/search";
 
 export function GuestSearch({ initialSearch }: { initialSearch: string }) {
   const router = useRouter();

@@ -18,5 +18,3 @@ export const eventGuestDtoSchema = z
     addedAt: dto.added_at,
     generatedAt: dto.generated_at,
   }));
-
-export const eventGuestListSchema = z.array(eventGuestDtoSchema);

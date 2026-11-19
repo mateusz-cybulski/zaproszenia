@@ -39,8 +39,6 @@ export const guestDtoSchema = z
     updatedAt: dto.updated_at,
   }));
 
-export const guestListSchema = z.array(guestDtoSchema);
-
 export function toGuestBody(input: GuestInput) {
   return {
     full_name: input.fullName,

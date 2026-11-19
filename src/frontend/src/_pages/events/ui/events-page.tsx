@@ -6,9 +6,11 @@ import { connection } from "next/server";
 import { EventTable } from "@/entities/event";
 import { getEvents } from "@/entities/event/index.server";
 import { requireViewer } from "@/entities/viewer/index.server";
-import { routes } from "@/shared/routes";
+import { parsePage } from "@/shared/lib/pagination";
+import { routes, type SearchParams, withQuery } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Page } from "@/shared/ui/page";
+import { Pagination } from "@/shared/ui/pagination";
 
 import { EventRowActions } from "./event-row-actions";
 
@@ -19,10 +21,16 @@ async function requestTime(): Promise<number> {
   return Date.now();
 }
 
-export async function EventsPage() {
+export async function EventsPage({ searchParams }: { searchParams: SearchParams }) {
   // The layout's session check does not run on link navigation.
   await requireViewer();
-  const [events, now] = await Promise.all([getEvents(), requestTime()]);
+  const { page: pageParam } = await searchParams;
+  const [events, now] = await Promise.all([
+    getEvents({ page: parsePage(pageParam) }),
+    requestTime(),
+  ]);
+  const hrefForPage = (page: number) =>
+    withQuery(routes.events(), { page: page > 1 ? page : undefined });
 
   return (
     <Page
@@ -45,12 +53,18 @@ export async function EventsPage() {
     >
       <div className="rounded-lg border">
         <EventTable
-          events={events}
+          events={events.items}
           now={now}
           emptyMessage="Nie dodano jeszcze żadnych wydarzeń."
           renderActions={(event) => <EventRowActions event={event} />}
         />
       </div>
+      <Pagination
+        page={events.page}
+        pageSize={events.pageSize}
+        total={events.total}
+        hrefForPage={hrefForPage}
+      />
     </Page>
   );
 }

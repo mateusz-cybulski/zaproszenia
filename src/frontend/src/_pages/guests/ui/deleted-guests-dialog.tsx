@@ -1,6 +1,7 @@
 "use client";
 
 import type { Guest } from "@/entities/guest";
+import type { Page } from "@/shared/api";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
+import { Pagination } from "@/shared/ui/pagination";
 
 import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
-import { routes } from "@/shared/routes";
+import { routes, withQuery } from "@/shared/routes";
 import { DeletedGuestRow } from "./deleted-guest-row";
 
-type DeletedGuestsDialogProps = { guests: Guest[]; dismissal: Dismissal };
+type DeletedGuestsDialogProps = { guests: Page<Guest>; dismissal: Dismissal };
 
 export function DeletedGuestsDialog({ guests, dismissal }: DeletedGuestsDialogProps) {
   const dismiss = useDismiss(dismissal, routes.guests());
@@ -28,15 +30,23 @@ export function DeletedGuestsDialog({ guests, dismissal }: DeletedGuestsDialogPr
             cofnąć.
           </DialogDescription>
         </DialogHeader>
-        {guests.length > 0 ? (
+        {guests.items.length > 0 ? (
           <ul className="divide-y">
-            {guests.map((guest) => (
+            {guests.items.map((guest) => (
               <DeletedGuestRow key={guest.id} guest={guest} />
             ))}
           </ul>
         ) : (
           <p className="py-6 text-center text-sm text-muted-foreground">Nie ma usuniętych gości.</p>
         )}
+        <Pagination
+          page={guests.page}
+          pageSize={guests.pageSize}
+          total={guests.total}
+          hrefForPage={(page) =>
+            withQuery(routes.guestsDeleted(), { deleted_page: page > 1 ? page : undefined })
+          }
+        />
       </DialogContent>
     </Dialog>
   );

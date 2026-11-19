@@ -4,26 +4,26 @@ import { UserPlus } from "lucide-react";
 import { useState } from "react";
 
 import type { Event, EventGuest } from "@/entities/event";
-import type { Guest } from "@/entities/guest";
+import type { Page } from "@/shared/api";
+import { routes, withQuery } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
+import { Pagination } from "@/shared/ui/pagination";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
 import { EVENT_GUESTS_COPY } from "../config/messages";
 import { AddGuestsPicker } from "./add-guests-picker";
 import { EventGuestRow } from "./event-guest-row";
 
-type EventGuestsSectionProps = { event: Event; eventGuests: EventGuest[]; guests: Guest[] };
+type EventGuestsSectionProps = { event: Event; eventGuests: Page<EventGuest> };
 
-export function EventGuestsSection({ event, eventGuests, guests }: EventGuestsSectionProps) {
+export function EventGuestsSection({ event, eventGuests }: EventGuestsSectionProps) {
   const [adding, setAdding] = useState(false);
-  const onList = new Set(eventGuests.map((eventGuest) => eventGuest.guest.id));
-  const candidates = guests.filter((guest) => !onList.has(guest.id));
 
   return (
     <div className="grid gap-4">
       <div className="flex items-center gap-3">
         <p className="flex-1 text-sm text-muted-foreground">
-          {EVENT_GUESTS_COPY.count(eventGuests.length)}
+          {EVENT_GUESTS_COPY.count(eventGuests.total)}
         </p>
         {!adding && (
           <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
@@ -31,14 +31,8 @@ export function EventGuestsSection({ event, eventGuests, guests }: EventGuestsSe
           </Button>
         )}
       </div>
-      {adding && (
-        <AddGuestsPicker
-          eventId={event.id}
-          candidates={candidates}
-          onDone={() => setAdding(false)}
-        />
-      )}
-      {eventGuests.length === 0 ? (
+      {adding && <AddGuestsPicker eventId={event.id} onDone={() => setAdding(false)} />}
+      {eventGuests.items.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">{EVENT_GUESTS_COPY.empty}</p>
       ) : (
         <div className="rounded-lg border">
@@ -54,7 +48,7 @@ export function EventGuestsSection({ event, eventGuests, guests }: EventGuestsSe
               </TableRow>
             </TableHeader>
             <TableBody>
-              {eventGuests.map((eventGuest) => (
+              {eventGuests.items.map((eventGuest) => (
                 <EventGuestRow
                   key={eventGuest.guest.id}
                   eventId={event.id}
@@ -65,6 +59,17 @@ export function EventGuestsSection({ event, eventGuests, guests }: EventGuestsSe
           </Table>
         </div>
       )}
+      <Pagination
+        page={eventGuests.page}
+        pageSize={eventGuests.pageSize}
+        total={eventGuests.total}
+        hrefForPage={(page) =>
+          withQuery(routes.event(event.id), {
+            section: "guests",
+            guests_page: page > 1 ? page : undefined,
+          })
+        }
+      />
     </div>
   );
 }
