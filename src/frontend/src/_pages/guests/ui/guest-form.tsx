@@ -1,7 +1,5 @@
 "use client";
 
-import { getFormProps } from "@conform-to/react";
-
 import type { Guest } from "@/entities/guest";
 import { ADDRESS_FIELDS } from "@/shared/config";
 import { useServerForm } from "@/shared/lib/server-form";
@@ -20,7 +18,7 @@ type GuestFormProps = {
 };
 
 export function GuestForm({ guest, onSaved }: GuestFormProps) {
-  const { form, fields, formAction, pending, lastResult } = useServerForm({
+  const { fields, formProps, pending, lastResult } = useServerForm({
     schema: guestFormSchema,
     action: guest ? updateGuestAction.bind(null, guest.id) : createGuestAction,
     defaultValue: guestFormDefaults(guest),
@@ -32,7 +30,7 @@ export function GuestForm({ guest, onSaved }: GuestFormProps) {
   );
 
   return (
-    <form {...getFormProps(form)} action={formAction} className="grid gap-6">
+    <form {...formProps} className="grid gap-6">
       <div className="grid grid-cols-2 gap-4">{RECIPIENT_FIELDS.map(renderField)}</div>
 
       <fieldset className="grid gap-4">

@@ -1,7 +1,5 @@
 "use client";
 
-import { getFormProps } from "@conform-to/react";
-
 import type { Sender } from "@/entities/viewer";
 import { useServerForm } from "@/shared/lib/server-form";
 import { Button } from "@/shared/ui/button";
@@ -14,7 +12,7 @@ import { SENDER_ADDRESS_FIELDS, SENDER_NAME_FIELD } from "../config/sender-field
 import { type SenderField, senderFormDefaults, senderFormSchema } from "../model/sender-form";
 
 export function SenderForm({ sender }: { sender: Sender }) {
-  const { form, fields, formAction, pending, lastResult } = useServerForm({
+  const { fields, formProps, pending, lastResult } = useServerForm({
     schema: senderFormSchema,
     action: updateSenderAction,
     defaultValue: senderFormDefaults(sender),
@@ -25,7 +23,7 @@ export function SenderForm({ sender }: { sender: Sender }) {
   );
 
   return (
-    <form {...getFormProps(form)} action={formAction} className="grid gap-6">
+    <form {...formProps} className="grid gap-6">
       {renderField(SENDER_NAME_FIELD)}
       <fieldset className="grid gap-4">
         <legend className="mb-4 text-sm font-medium">Adres zwrotny</legend>

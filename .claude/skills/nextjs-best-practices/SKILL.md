@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.6.0"
+  version: "1.7.0"
   next: "16"
 ---
 
@@ -80,6 +80,7 @@ return submission.reply();
 
 - **Validate on submit, re-validate on input** (`shouldValidate: "onSubmit"`, `shouldRevalidate: "onInput"`). Not on blur: pressing a dialog's close button blurs the field, the error grows the vertically centred dialog and moves the button before the click lands, so the dialog needs a second click.
 - **Reply to success with a plain `submission.reply()`.** `reply({ resetForm: true })` returns only `{ initialValue: null }`, without `status: "success"`, so `onSuccess` (closing the dialog) never runs. A form that closes on success needs no reset; one that stays on screen resets on the client in `onSuccess` (`form.reset()` or a new `key`).
+- **A form that stays on screen keeps what was saved.** React 19 resets a `<form action>` after the action, back to the values it rendered with, so a settings form would show empty or stale fields after a successful save. `useServerForm` returns `formProps` that submit from `onSubmit` (Conform validates, then the action runs in `startTransition`), which React does not reset; `action` stays for a browser without JavaScript. Spread `formProps` on the form, never `action={formAction}` alone.
 - Fields render through `FormField` with Conform's field metadata; `FormStatus` announces the form error or success message.
 
 ### Calling actions from buttons and dialogs
