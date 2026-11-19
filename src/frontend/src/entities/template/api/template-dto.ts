@@ -4,6 +4,7 @@ import { apiTimestamp } from "@/shared/api";
 
 import { TEMPLATE_KINDS } from "../model/template";
 import { templateIdSchema } from "../model/template-id";
+import { templateFieldDtoSchema } from "./template-field-dto";
 
 export const templateDtoSchema = z
   .object({
@@ -28,3 +29,10 @@ export const templateDtoSchema = z
   }));
 
 export const templateListSchema = z.array(templateDtoSchema);
+
+// One template with its fields, for the editor; the list carries only the field count.
+export const templateDetailDtoSchema = templateDtoSchema.and(
+  z
+    .object({ fields: z.array(templateFieldDtoSchema) })
+    .transform((dto) => ({ fields: dto.fields })),
+);

@@ -15,6 +15,7 @@ export const routes = {
   templates: () => "/templates",
   templatePageImage: (id: number) => `/api/templates/${id}/page.png`,
   templatePreview: (id: number) => `/api/templates/${id}/preview`,
+  templatePreviewImage: (id: number) => `/api/templates/${id}/preview.png`,
   settings: () => "/settings",
 } as const;
 export { withQuery } from "./with-query";
