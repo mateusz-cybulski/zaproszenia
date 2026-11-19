@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
   next: "16"
 ---
 
@@ -61,6 +61,7 @@ return { form, fields };
 - Use Server Actions (`"use server"`) for forms and mutations from your own UI. Use `<form action={action}>`, `useActionState` for results and errors, `useFormStatus` for pending state.
 - Use Route Handlers (`app/**/route.ts`) for external callers: webhooks, other services, public APIs.
 - A Server Action is a public endpoint. Validate input on the server (e.g. with a schema) and check authorization inside every action.
+- An id argument is typed with the entity's branded id (`id: GuestId`) so our own callers cannot pass the wrong one, **and** checked in the first line (`if (!isGuestId(id)) return { error: … }`), because a caller outside our code can send anything. The check is the boundary: keep it even though the type already says `GuestId`.
 - After a mutation, invalidate with the APIs from section 2 or `redirect()`. Do not rely on client-side refetching.
 
 ### Calling actions from buttons and dialogs

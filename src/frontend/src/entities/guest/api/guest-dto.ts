@@ -3,10 +3,11 @@ import { z } from "zod";
 import { apiTimestamp } from "@/shared/api";
 
 import { type GuestInput, VERIFICATION_STATUSES } from "../model/guest";
+import { guestIdSchema } from "../model/guest-id";
 
 export const guestDtoSchema = z
   .object({
-    id: z.int(),
+    id: guestIdSchema,
     full_name: z.string().nullable(),
     position: z.string().nullable(),
     institution: z.string().nullable(),

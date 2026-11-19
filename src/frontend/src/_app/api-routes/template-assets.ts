@@ -1,3 +1,4 @@
+import { parseTemplateId } from "@/entities/template";
 import { type TemplateAsset, fetchTemplateAsset } from "@/entities/template/index.server";
 
 type TemplateAssetContext = { params: Promise<{ id: string }> };
@@ -9,11 +10,11 @@ const CACHE_CONTROL: Record<TemplateAsset, string> = {
 };
 
 async function proxyAsset(asset: TemplateAsset, { params }: TemplateAssetContext) {
-  const { id } = await params;
-  if (!/^\d+$/.test(id)) {
+  const templateId = parseTemplateId((await params).id);
+  if (templateId === null) {
     return new Response(null, { status: 404 });
   }
-  const response = await fetchTemplateAsset(Number(id), asset);
+  const response = await fetchTemplateAsset(templateId, asset);
   if (!response.ok) {
     return new Response(null, { status: response.status });
   }

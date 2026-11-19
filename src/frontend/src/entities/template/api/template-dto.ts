@@ -3,10 +3,11 @@ import { z } from "zod";
 import { apiTimestamp } from "@/shared/api";
 
 import { TEMPLATE_KINDS } from "../model/template";
+import { templateIdSchema } from "../model/template-id";
 
 export const templateDtoSchema = z
   .object({
-    id: z.int(),
+    id: templateIdSchema,
     kind: z.enum(TEMPLATE_KINDS),
     name: z.string(),
     is_system: z.boolean(),

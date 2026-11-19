@@ -1,19 +1,21 @@
 import { z } from "zod";
 
+import { templateIdSchema } from "@/entities/template/@x/event";
 import { apiTimestamp } from "@/shared/api";
 
 import type { EventDraft } from "../model/event";
+import { eventIdSchema } from "../model/event-id";
 
 export const eventDtoSchema = z
   .object({
-    id: z.int(),
+    id: eventIdSchema,
     name: z.string(),
     starts_at: apiTimestamp,
     timezone: z.string(),
     venue_name: z.string().nullable(),
     invitation_text: z.string().nullable(),
-    invitation_template_id: z.int().nullable(),
-    envelope_template_id: z.int().nullable(),
+    invitation_template_id: templateIdSchema.nullable(),
+    envelope_template_id: templateIdSchema.nullable(),
     street: z.string().nullable(),
     postal_code: z.string().nullable(),
     city: z.string().nullable(),
