@@ -3,7 +3,7 @@ name: feature-sliced-design
 description: "Use when creating, moving or reviewing code in a frontend component that uses Tailwind CSS (e.g. src/frontend with tailwindcss in package.json): where a file goes, how to name layers, slices and segments, which imports are allowed, public APIs (index.ts), and how Tailwind styles, tokens and the cn() helper fit in. Feature-Sliced Design v2.1 on Next.js App Router. Also use when the user mentions FSD, layers, slices, widgets, features or entities."
 license: MIT
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   fsd: "2.1"
 ---
 
@@ -157,7 +157,7 @@ How to write the classes themselves is in `tailwind-best-practices`. This sectio
 |---|---|
 | Tailwind entry CSS (`@import "tailwindcss"`, `@theme` tokens, `@custom-variant`, `@utility`) | `src/_app/styles/globals.css`, imported once from the root layout |
 | `cn()` helper | `src/shared/lib/css/`, imported as `@/shared/lib/css` |
-| Business-agnostic UI kit with variants (`button`, `input`, `dialog`) | `src/shared/ui/<component>/` |
+| Business-agnostic UI kit with variants (`button`, `input`, `dialog`), added with `npx shadcn add` when the component has `components.json` (see `tailwind-best-practices`) | `src/shared/ui/<component>` |
 | A slice's classes | the `ui` segment of the slice that renders them |
 | Variant choice driven by business state | `model` returns the state (`status: "overdue"`); `ui` maps it to classes |
 
