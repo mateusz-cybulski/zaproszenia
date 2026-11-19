@@ -3,7 +3,7 @@ name: platform
 description: "Use whenever you add, rename, remove or configure a component under src/, write a Dockerfile, compose.yml, service.json or lefthook.yml for one, read another service's URL, set environment variables or GCP permissions for a service, or wonder how code gets deployed. Describes this repo's platform: each src/<name> with a Dockerfile is a Cloud Run service on its own subdomain, deployed by Terraform from GitHub Actions; local dev runs through docker compose and mise."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Platform: how components become services
@@ -109,7 +109,9 @@ services:
 ## 8. Checks
 
 - `src/<name>/lefthook.yml` declares the component's hooks; the root `.config/lefthook.yml` picks them up with `extends: src/*/lefthook.yml`. Use `root: src/<name>/` and prefix job names with the component name.
-- Hooks run locally only; GitHub Actions runs Terraform (fmt, validate, plan on PR, apply on `main`), not the components' lint or tests. A broken production image is first noticed on deploy: build it locally before pushing (`docker build src/<name>`, amd64 by default here).
+- Hooks run only where lefthook is installed, only on staged files, and `git commit --no-verify` skips them. So the components' checks also run in `.github/workflows/checks.yml` on every pull request and on `main`: one job per component, each running the **whole-project** versions of its hooks (ESLint, tsc, Steiger and Prettier over everything; ruff, mypy and pytest, whose PostgreSQL testcontainers starts on the runner's Docker). Tool versions come from the component's `mise.toml`. Adding a component means adding its job there.
+- Make the checks required for merging: in GitHub, a branch ruleset on `main` requiring the "Checks" jobs to pass. `terraform.yml` still deploys on every push to `main`, so a red check that is not required does not stop a deploy.
+- GitHub Actions also runs Terraform (fmt, validate, plan on PR, apply on `main`). A broken production image is first noticed on deploy: build it locally before pushing (`docker build src/<name>`, amd64 by default here).
 
 ## 9. Checklist: new or changed component
 
@@ -118,5 +120,5 @@ services:
 3. `service.json` only if defaults do not fit; no secrets in it; minimal `roles`.
 4. Other services addressed through `<NAME>_URL`, read at runtime.
 5. `compose.yml` + `Dockerfile.dev` work with `mise run dev`; compose file listed in `.config/docker-compose.yml`.
-6. `lefthook.yml` jobs pass; `mise run agents` run for the new stack.
+6. `lefthook.yml` jobs pass, and the component has a job in `.github/workflows/checks.yml`; `mise run agents` run for the new stack.
 7. New GCP APIs or resources added to Terraform before code depends on them.

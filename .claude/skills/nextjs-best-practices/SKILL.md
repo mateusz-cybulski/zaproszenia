@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.9.0"
+  version: "1.10.0"
   next: "16"
 ---
 
@@ -137,15 +137,17 @@ const copy = useAction(() => copyTemplateAction(template.id));
 
 ## 7. TypeScript and lint
 
-- Code must pass the component's lefthook checks (`src/<name>/lefthook.yml`): `eslint --max-warnings=0` (`eslint-config-next` core-web-vitals + typescript) and a whole-project `tsc --noEmit`. Run them before finishing: `cd src/<name> && npx --no-install eslint --max-warnings=0 . && npx --no-install tsc --noEmit`.
+- Code must pass the component's lefthook checks (`src/<name>/lefthook.yml`), which `.github/workflows/checks.yml` runs again over the whole project on every pull request (see `platform`): `eslint --max-warnings=0` (`eslint-config-next` core-web-vitals + typescript) and a whole-project `tsc --noEmit`. Run them before finishing: `cd src/<name> && npx --no-install eslint --max-warnings=0 . && npx --no-install tsc --noEmit`.
 - `next lint` no longer exists; `next build` does not lint. Use ESLint directly.
-- **No deprecated APIs.** `eslint.config.mjs` turns on `@typescript-eslint/no-deprecated` with typed linting, so a deprecated type or function fails the lint instead of only showing struck through:
+- `tsconfig.json` has `strict` and `noUncheckedIndexedAccess`: `items[0]` and `record[key]` are `T | undefined`, so a missing element is handled, not assumed away. Destructured array items (`const [first] = items`) too.
+- **Typed lint rules.** `tsc` accepts code that these catch, so `eslint.config.mjs` turns them on with typed linting (below): `no-floating-promises`, `no-misused-promises` and `await-thenable` (a promise nobody waits for, an `async` function where a plain one is expected), the `no-unsafe-*` family (an `any` flowing on unchecked; type a JSON body as `unknown` and parse it), `no-unnecessary-condition` (a check the types say can never fail, i.e. dead code or a type that lies), `switch-exhaustiveness-check` (a `default` counts), and `no-deprecated`. Fix the finding; do not disable the rule on the line. A Server Action that redirects returns `Promise<Result | undefined>`, since the caller receives undefined after the redirect.
+- **No deprecated APIs.** `@typescript-eslint/no-deprecated` makes a deprecated type or function fail the lint instead of only showing struck through:
 
 ```js
 {
   files: ["**/*.{ts,tsx}"],
   languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
-  rules: { "@typescript-eslint/no-deprecated": "error" },
+  rules: { "@typescript-eslint/no-deprecated": "error", "@typescript-eslint/no-floating-promises": "error", /* ... */ },
 }
 ```
 
