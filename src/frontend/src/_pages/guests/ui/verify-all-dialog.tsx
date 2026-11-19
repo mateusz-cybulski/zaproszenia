@@ -8,6 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { ChoiceButton } from "@/shared/ui/choice-button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -42,27 +43,29 @@ export function VerifyAllDialog() {
             Wszyscy goście, którzy nie są jeszcze zweryfikowani.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3">
-          <ChoiceButton
-            icon={Sparkles}
-            title="Sprawdź z AI"
-            description="AI sprawdzi tytuły, nazwy instytucji i adres oraz zaproponuje zwrot grzecznościowy. Dostępne wkrótce."
-            disabled
-          />
-          <ChoiceButton
-            icon={UserCheck}
-            title="Zatwierdź ręcznie"
-            description="Dane są poprawne: sprawdziłeś je sam i nie potrzebujesz AI."
-            pending={pending}
-            disabled={pending}
-            onClick={() => run()}
-          />
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
-        </div>
+        <DialogBody>
+          <div className="grid gap-3">
+            <ChoiceButton
+              icon={Sparkles}
+              title="Sprawdź z AI"
+              description="AI sprawdzi tytuły, nazwy instytucji i adres oraz zaproponuje zwrot grzecznościowy. Dostępne wkrótce."
+              disabled
+            />
+            <ChoiceButton
+              icon={UserCheck}
+              title="Zatwierdź ręcznie"
+              description="Dane są poprawne: sprawdziłeś je sam i nie potrzebujesz AI."
+              pending={pending}
+              disabled={pending}
+              onClick={() => run()}
+            />
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+          </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

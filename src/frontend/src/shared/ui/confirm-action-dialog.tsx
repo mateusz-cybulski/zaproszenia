@@ -8,6 +8,7 @@ import { useAction } from "@/shared/lib/action-call";
 import { Button } from "@/shared/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -60,22 +61,24 @@ export function ConfirmActionDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        {children}
-        <p role="alert" className="text-sm text-destructive empty:hidden">
-          {error}
-        </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => changeOpen(false)}>
-            Anuluj
-          </Button>
-          <Button
-            variant={tone === "destructive" ? "destructive" : "default"}
-            onClick={() => run()}
-            disabled={pending || confirmDisabled}
-          >
-            {pending ? pendingLabel : confirmLabel}
-          </Button>
-        </div>
+        <DialogBody>
+          {children}
+          <p role="alert" className="text-sm text-destructive empty:hidden">
+            {error}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => changeOpen(false)}>
+              Anuluj
+            </Button>
+            <Button
+              variant={tone === "destructive" ? "destructive" : "default"}
+              onClick={() => run()}
+              disabled={pending || confirmDisabled}
+            >
+              {pending ? pendingLabel : confirmLabel}
+            </Button>
+          </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );
