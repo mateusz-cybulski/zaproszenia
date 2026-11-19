@@ -5,16 +5,14 @@ import { useRef, useState, useTransition } from "react";
 
 import { Button } from "@/shared/ui/button";
 
-import { deleteGuestAction } from "../api/delete-guest-action";
-
-type PurgeGuestButtonProps = {
-  guestId: number;
+type PurgeButtonProps = {
   name: string;
+  purge: () => Promise<{ error?: string }>;
   disabled?: boolean;
   onError: (error: string | null) => void;
 };
 
-export function PurgeGuestButton({ guestId, name, disabled, onError }: PurgeGuestButtonProps) {
+export function PurgeButton({ name, purge, disabled, onError }: PurgeButtonProps) {
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
   const purgeButton = useRef<HTMLButtonElement>(null);
@@ -25,10 +23,10 @@ export function PurgeGuestButton({ guestId, name, disabled, onError }: PurgeGues
     requestAnimationFrame(() => purgeButton.current?.focus());
   }
 
-  function purge() {
+  function run() {
     onError(null);
     startTransition(async () => {
-      const result = await deleteGuestAction(guestId, true);
+      const result = await purge();
       onError(result.error ?? null);
       setConfirming(false);
     });
@@ -57,7 +55,7 @@ export function PurgeGuestButton({ guestId, name, disabled, onError }: PurgeGues
       <Button
         variant="destructive"
         size="sm"
-        onClick={purge}
+        onClick={run}
         disabled={pending}
         aria-label={`Potwierdź usunięcie na stałe: ${name}`}
         autoFocus

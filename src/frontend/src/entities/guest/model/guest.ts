@@ -1,14 +1,7 @@
-import { countryName } from "@/shared/config";
+import type { Address } from "@/shared/lib/address";
 
 export type VerificationStatus =
   "pending" | "verified_ai" | "verified_manual" | "needs_review" | "failed";
-
-export type Address = {
-  street: string | null;
-  postalCode: string | null;
-  city: string | null;
-  country: string;
-};
 
 export type Guest = Address & {
   id: number;
@@ -32,10 +25,4 @@ export type GuestInput = Address & {
 
 export function recipientName(guest: Pick<Guest, "fullName" | "institution">): string {
   return guest.fullName ?? guest.institution ?? "";
-}
-
-export function formatAddress(address: Address): string {
-  const place = [address.postalCode, address.city].filter(Boolean).join(" ");
-  const country = address.country === "PL" ? null : countryName(address.country);
-  return [address.street, place, country].filter(Boolean).join(", ");
 }

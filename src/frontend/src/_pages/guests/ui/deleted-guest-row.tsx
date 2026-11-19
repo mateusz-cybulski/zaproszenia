@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 
-import { formatAddress, type Guest, recipientName } from "@/entities/guest";
+import { type Guest, recipientName } from "@/entities/guest";
+import { formatAddress } from "@/shared/lib/address";
 import { formatDateTime } from "@/shared/lib/dates";
+import { PurgeButton } from "@/shared/ui/purge-button";
+import { RestoreButton } from "@/shared/ui/restore-button";
 
-import { PurgeGuestButton } from "./purge-guest-button";
-import { RestoreGuestButton } from "./restore-guest-button";
+import { deleteGuestAction } from "../api/delete-guest-action";
+import { restoreGuestAction } from "../api/restore-guest-action";
 
 export function DeletedGuestRow({ guest }: { guest: Guest }) {
   const name = recipientName(guest);
@@ -29,8 +32,16 @@ export function DeletedGuestRow({ guest }: { guest: Guest }) {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <RestoreGuestButton guestId={guest.id} name={name} onError={setError} />
-        <PurgeGuestButton guestId={guest.id} name={name} onError={setError} />
+        <RestoreButton
+          name={name}
+          restore={() => restoreGuestAction(guest.id)}
+          onError={setError}
+        />
+        <PurgeButton
+          name={name}
+          purge={() => deleteGuestAction(guest.id, true)}
+          onError={setError}
+        />
       </div>
     </li>
   );

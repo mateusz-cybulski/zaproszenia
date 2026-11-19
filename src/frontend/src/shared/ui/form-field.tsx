@@ -8,7 +8,11 @@ export type FormFieldConfig<Name extends string = string> = {
   hint?: string;
   // Default "off": most forms here hold other people's data, where autofill offers the user's own.
   autoComplete?: string;
-} & ({ maxLength: number } | { options: readonly { value: string; label: string }[] });
+} & (
+  | { maxLength: number }
+  | { inputType: "datetime-local" }
+  | { options: readonly { value: string; label: string }[] }
+);
 
 type FormFieldProps = {
   id: string;
@@ -43,9 +47,10 @@ export function FormField({ id, field, defaultValue, error }: FormFieldProps) {
         <Input
           id={id}
           name={field.name}
+          type={"inputType" in field ? field.inputType : "text"}
           defaultValue={defaultValue}
           autoComplete={field.autoComplete ?? "off"}
-          maxLength={field.maxLength}
+          maxLength={"maxLength" in field ? field.maxLength : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
         />

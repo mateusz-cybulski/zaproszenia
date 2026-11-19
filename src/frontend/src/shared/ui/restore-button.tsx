@@ -5,22 +5,20 @@ import { useTransition } from "react";
 
 import { Button } from "@/shared/ui/button";
 
-import { restoreGuestAction } from "../api/restore-guest-action";
-
-type RestoreGuestButtonProps = {
-  guestId: number;
+type RestoreButtonProps = {
   name: string;
+  restore: () => Promise<{ error?: string }>;
   disabled?: boolean;
   onError: (error: string | null) => void;
 };
 
-export function RestoreGuestButton({ guestId, name, disabled, onError }: RestoreGuestButtonProps) {
+export function RestoreButton({ name, restore, disabled, onError }: RestoreButtonProps) {
   const [pending, startTransition] = useTransition();
 
-  function restore() {
+  function run() {
     onError(null);
     startTransition(async () => {
-      const result = await restoreGuestAction(guestId);
+      const result = await restore();
       onError(result.error ?? null);
     });
   }
@@ -29,7 +27,7 @@ export function RestoreGuestButton({ guestId, name, disabled, onError }: Restore
     <Button
       variant="outline"
       size="sm"
-      onClick={restore}
+      onClick={run}
       disabled={disabled || pending}
       aria-label={`Przywróć: ${name}`}
     >

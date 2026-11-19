@@ -1,4 +1,4 @@
-import { type AddressField, addressFields } from "@/shared/config";
+import { type AddressField, addressFields, TextLimit } from "@/shared/config";
 import type { FormFieldConfig } from "@/shared/ui/form-field";
 
 import type { SenderField } from "../model/sender-form";
@@ -14,7 +14,7 @@ const autoComplete: Record<AddressField, string> = {
 export const senderNameField: FormFieldConfig<SenderField> = {
   name: "senderName",
   label: "Nazwa nadawcy",
-  maxLength: 300,
+  maxLength: TextLimit.short,
   hint: "Osoba lub organizacja, np. „Fundacja Przykładowa”.",
   autoComplete: "organization",
 };

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { Guest } from "@/entities/guest";
+import { TextLimit } from "@/shared/config";
 import { addressSchemaShape, optionalText } from "@/shared/lib/forms";
 
 export const RECIPIENT_REQUIRED =
@@ -20,10 +21,10 @@ export type GuestField = (typeof guestFields)[number];
 
 export const guestFormSchema = z
   .object({
-    fullName: optionalText(300),
-    position: optionalText(300),
-    institution: optionalText(300),
-    salutation: optionalText(300),
+    fullName: optionalText(TextLimit.short),
+    position: optionalText(TextLimit.short),
+    institution: optionalText(TextLimit.short),
+    salutation: optionalText(TextLimit.short),
     ...addressSchemaShape,
   })
   .refine((guest) => guest.fullName !== null || guest.institution !== null, {

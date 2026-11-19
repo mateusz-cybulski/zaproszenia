@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getGuest } from "@/entities/guest/index.server";
 import { requireViewer } from "@/entities/viewer/index.server";
-import type { Dismissal } from "../model/dismissal";
+import type { Dismissal } from "@/shared/lib/dialogs";
 import { GuestDialog } from "./guest-dialog";
 import { VerificationMenu } from "./verification-menu";
 

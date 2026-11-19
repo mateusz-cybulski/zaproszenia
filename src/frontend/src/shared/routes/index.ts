@@ -3,6 +3,8 @@ export const routes = {
   homeVerified: () => "/?verified=1",
   register: () => "/register",
   events: () => "/events",
+  eventAdd: () => "/events/add",
+  eventsDeleted: () => "/events/deleted",
   guests: () => "/guests",
   guestAdd: () => "/guests/add",
   guestsDeleted: () => "/guests/deleted",

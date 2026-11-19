@@ -9,8 +9,8 @@ export default defineConfig([
     rules: { "fsd/typo-in-layer-name": "off" },
   },
   {
-    // Events and invitation generation will use guests; drop this once a second slice imports it.
-    files: ["./src/entities/guest/**"],
+    // The event page will use both entities; drop each entry once a second slice imports it.
+    files: ["./src/entities/guest/**", "./src/entities/event/**"],
     rules: { "fsd/insignificant-slice": "off" },
   },
 ]);

@@ -4,6 +4,7 @@ import { ShieldCheck, Sparkles, UserCheck } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/shared/ui/button";
+import { ChoiceButton } from "@/shared/ui/choice-button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,6 @@ import {
 } from "@/shared/ui/dialog";
 
 import { verifyAllGuestsManuallyAction } from "../api/verify-all-guests-manually-action";
-import { ChoiceButton } from "./choice-button";
 
 export function VerifyAllDialog() {
   const [open, setOpen] = useState(false);

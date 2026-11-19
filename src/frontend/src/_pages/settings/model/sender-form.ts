@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { Sender } from "@/entities/viewer";
+import { TextLimit } from "@/shared/config";
 import { addressSchemaShape, optionalText } from "@/shared/lib/forms";
 
 export const senderFields = ["senderName", "street", "postalCode", "city", "country"] as const;
@@ -8,7 +9,7 @@ export type SenderField = (typeof senderFields)[number];
 export type SenderFormValues = Record<SenderField, string>;
 
 export const senderFormSchema = z.object({
-  senderName: optionalText(300),
+  senderName: optionalText(TextLimit.short),
   ...addressSchemaShape,
 });
 
