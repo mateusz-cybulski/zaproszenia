@@ -1,9 +1,9 @@
 ---
 name: nextjs-best-practices
-description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
+description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), dialog layout (pinned header, variant switch, scrolling body), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.10.0"
+  version: "1.11.0"
   next: "16"
 ---
 
@@ -100,6 +100,26 @@ const copy = useAction(() => copyTemplateAction(template.id));
 - Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the `useAction`. Two actions in one row are two hooks; show `first.error ?? second.error`.
 - Client hooks live in their own `shared/lib` topic (`action-call`, `server-form`), never in an index that `"use server"` files import: a Server Action module must not pull a `"use client"` module through a shared barrel.
 - A raw `startTransition` is fine only where no `ActionResult` comes back: router navigation (search as you type), or client SDK flows such as sign-in.
+
+### Dialog layout
+
+Every dialog (`@/shared/ui/dialog`) has the same three parts, so the title and the close button never scroll away:
+
+```tsx
+<DialogContent className="max-w-2xl">
+  <DialogHeader>
+    <DialogTitle>…</DialogTitle>
+    <DialogDescription>…</DialogDescription>
+  </DialogHeader>
+  <DialogToolbar>{/* only for variants: the section switch */}</DialogToolbar>
+  <DialogBody>{/* form, list, buttons */}</DialogBody>
+</DialogContent>
+```
+
+- `DialogContent` does not scroll; `DialogHeader` stays at the top with a line under it; **only `DialogBody` scrolls**. Never put content straight into `DialogContent` or give it its own padding or `overflow`.
+- Header actions (e.g. a status badge next to the title) go inside `DialogHeader`, not in a wrapper around it.
+- A dialog with variants (the event's Szczegóły / Szablony / Goście) puts the `ToggleGroup` in `DialogToolbar`, under the header line and outside the scrolling body. Switching the variant scrolls the body back to the top (a ref on `DialogBody`).
+- Something that must stay in view while a long body scrolls (the template editor's page preview) is `sticky top-0` inside `DialogBody`.
 
 ### Paged lists
 
