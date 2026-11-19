@@ -3,7 +3,7 @@ name: api-structure
 description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, and how deleting user data works (soft delete with restore by default)."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -18,12 +18,12 @@ src/<name>/app/
   auth.py             current-user dependency (if the API has users)
   models/
     __init__.py       imports and re-exports EVERY model (see below)
-    base.py           Base, NAMING_CONVENTION, shared column helpers (e.g. str_enum)
+    base.py           Base, NAMING_CONVENTION, TextLimit, shared column helpers (e.g. str_enum)
     event.py          Event + the enums and constants that belong to it
     event_guest.py    association model, in its own module
   schemas/
     __init__.py       empty
-    common.py         field types shared by several resources (Text300, PostalCode, ...)
+    common.py         field types shared by several resources (TextField, Country, ...)
     events.py         EventWrite, EventRead, ...
   routers/
     __init__.py       empty
@@ -47,7 +47,8 @@ Start with this layout even for a single model: moving from `models.py` to `mode
 
 - An association table or a model that only exists for another one gets its own module, named after itself (`event_guest.py`).
 - An enum used by several models lives in the model module that owns it; others import it from `app.models`.
-- Field types used by more than one resource go to `schemas/common.py`, never copied between schema modules.
+- Field types used by more than one resource go to `schemas/common.py`, never copied between schema modules. Name them by what they hold, never by their limit (`Text300`); the text types that differ only by limit and optionality are members of `TextField` (`TextField.OptionalShort`), see `clean-code`.
+- Text lengths are defined once, in `TextLimit` in `models/base.py`: the column (`String(TextLimit.SHORT)`) and the schema type (`TextField.OptionalShort`, built with `Field(max_length=TextLimit.SHORT)`) both read it. Changing a limit changes the model, so `alembic check` then asks for a migration.
 - Schemas never live in a router module; models never live in a schema module.
 - Logic longer than a few lines in an endpoint, or shared by several routers, goes to `services/<resource>.py`. Create the package when the first such function appears; endpoints stay thin (parse, call, return).
 
