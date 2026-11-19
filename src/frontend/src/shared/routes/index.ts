@@ -14,9 +14,9 @@ export const routes = {
   guestEdit: (id: number) => `/guests/${id}`,
   templates: () => "/templates",
   template: (id: number) => `/templates/${id}`,
-  templatePageImage: (id: number) => `/api/templates/${id}/page.png`,
-  templatePreview: (id: number) => `/api/templates/${id}/preview`,
   templatePreviewImage: (id: number) => `/api/templates/${id}/preview.png`,
+  savedTemplatePreviewImage: (id: number, updatedAt: string) =>
+    `/api/templates/${id}/preview.png?${new URLSearchParams({ version: updatedAt })}`,
   settings: () => "/settings",
 } as const;
 export { withQuery } from "./with-query";

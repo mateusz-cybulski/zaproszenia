@@ -23,7 +23,7 @@ export function TemplateCard({ template, actions }: TemplateCardProps) {
       <div className="flex h-48 items-center justify-center border-b bg-muted p-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={routes.templatePageImage(template.id)}
+          src={routes.savedTemplatePreviewImage(template.id, template.updatedAt)}
           alt=""
           loading="lazy"
           className="max-h-full max-w-full bg-white shadow-sm"

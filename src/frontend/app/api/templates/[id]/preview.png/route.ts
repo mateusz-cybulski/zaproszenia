@@ -1,1 +1,4 @@
-export { postTemplatePreviewImage as POST } from "@/_app/api-routes";
+export {
+  getSavedTemplatePreviewImage as GET,
+  postTemplatePreviewImage as POST,
+} from "@/_app/api-routes";
