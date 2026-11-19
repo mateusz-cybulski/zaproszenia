@@ -28,10 +28,8 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 export function authErrorMessage(error: unknown): string {
-  if (error instanceof FirebaseError && error.code in ERROR_MESSAGES) {
-    return ERROR_MESSAGES[error.code];
-  }
-  return "Coś poszło nie tak. Spróbuj ponownie.";
+  const message = error instanceof FirebaseError ? ERROR_MESSAGES[error.code] : undefined;
+  return message ?? "Coś poszło nie tak. Spróbuj ponownie.";
 }
 
 export function continueUrl(path: string): { url: string } {

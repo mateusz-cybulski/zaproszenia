@@ -43,9 +43,7 @@ export function useLogin(config: FirebaseClientConfig) {
         setError(authErrorMessage(signInError));
         return;
       }
-      // On success the action redirects to the guest list and returns nothing.
-      const result: Awaited<ReturnType<typeof startSessionAction>> | undefined =
-        await startSessionAction(idToken);
+      const result = await startSessionAction(idToken);
       setError(result?.error ?? null);
     });
   }
