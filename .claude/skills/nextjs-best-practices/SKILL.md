@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.7.0"
+  version: "1.8.0"
   next: "16"
 ---
 
@@ -100,6 +100,14 @@ const copy = useAction(() => copyTemplateAction(template.id));
 - Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the `useAction`. Two actions in one row are two hooks; show `first.error ?? second.error`.
 - Client hooks live in their own `shared/lib` topic (`action-call`, `server-form`), never in an index that `"use server"` files import: a Server Action module must not pull a `"use client"` module through a shared barrel.
 - A raw `startTransition` is fine only where no `ActionResult` comes back: router navigation (search as you type), or client SDK flows such as sign-in.
+
+### Paged lists
+
+- The page is in the URL (`/guests?page=2&q=kow`), read on the server with `parsePage()` (`@/shared/lib/pagination`; anything odd is page 1), and fetched by the entity's list function, which parses the API's envelope with `pageSchema(itemSchema)` (`@/shared/api`) into `Page<Item>`.
+- `Pagination` (`@/shared/ui/pagination`) renders "51–100 z 137", previous and next, and `1 … 4 5 6 … 12`, as links from `hrefForPage(page)`; build them with `withQuery(path, params)` (`@/shared/routes`), leaving page 1 and empty values out. A page past the end says it is empty and links back.
+- **A dialog over a list has its own page parameter** (`deleted_page`, `guests_page`), so the list behind keeps its page when the dialog is opened by URL.
+- Changing the search starts again at page 1 (the search URL carries only `q`).
+- A picker inside a dialog searches on the server and appends with "Show more"; "add all matching" calls an API endpoint with the same search instead of collecting ids in the browser.
 
 ## 4. Routing files
 

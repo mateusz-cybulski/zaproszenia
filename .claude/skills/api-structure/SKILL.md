@@ -1,9 +1,9 @@
 ---
 name: api-structure
-description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, how deleting user data works (soft delete with restore by default), and how routers share lookups such as the user's own event or 404 (dependencies in app/dependencies.py, never imports between routers)."
+description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, how deleting user data works (soft delete with restore by default), how routers share lookups such as the user's own event or 404 (dependencies in app/dependencies.py, never imports between routers), and how list endpoints are paged (Pagination, Page, paginate)."
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -54,6 +54,24 @@ Start with this layout even for a single model: moving from `models.py` to `mode
 - Schemas never live in a router module; models never live in a schema module.
 - Logic longer than a few lines in an endpoint, or shared by several routers, goes to `services/<resource>.py`. Create the package when the first such function appears; endpoints stay thin (parse, call, return).
 - **Routers never import from each other.** A nested resource gets its own router module (`event_guests.py` for `/events/{event_id}/guests`), and what both need goes one level down (see below).
+
+## Lists are paged from the start
+
+Every endpoint that returns a list of user data is paged, even while the lists are short:
+
+```python
+@router.get("")
+async def list_guests(session: Session, user: CurrentUser, pagination: Pagination, ...) -> Page[GuestRead]:
+    statement = select(Guest).where(...).order_by(Guest.id)
+    guests, total = await paginate(session, statement, pagination)
+    return Page[GuestRead](items=[...], total=total, page=pagination.page, page_size=pagination.page_size)
+```
+
+- `Pagination` (`app/dependencies.py`) reads `?page=` (from 1) and `?page_size=` (default 100, at most 500); `Page[Item]` (`schemas/pagination.py`) is `{items, total, page, page_size}`; `paginate()` (`services/pagination.py`) counts the filtered statement and fetches one page with limit and offset.
+- **The ordering ends on a unique column** (`..., Guest.id`), or rows move between pages.
+- A page past the end returns empty `items` with the real `total`, not 404.
+- Filters that a picker needs run on the server (`?q=`, `?not_on_event=`), and "select all matching" is its own endpoint (`POST /events/{id}/guests/matching` with the same search) doing one `INSERT ... SELECT`, never ids gathered page by page in the browser.
+- Small reference lists the app ships (templates) stay unpaged.
 
 ## Shared lookups are dependencies
 
