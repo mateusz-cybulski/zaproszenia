@@ -8,6 +8,7 @@ import { type GuestId, recipientName, VerificationBadge } from "@/entities/guest
 import { SEARCH_MAX_LENGTH } from "@/shared/config";
 import { useAction } from "@/shared/lib/action-call";
 import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { Input } from "@/shared/ui/input";
 
 import { addEventGuestsAction } from "../api/add-event-guests-action";
@@ -65,13 +66,11 @@ export function AddGuestsPicker({ eventId, onDone }: AddGuestsPickerProps) {
         <ul className="grid max-h-64 divide-y overflow-y-auto rounded-md border">
           <li>
             <label className="flex cursor-pointer items-center gap-3 bg-muted/50 px-3 py-2 text-sm font-medium">
-              <input
-                type="checkbox"
-                className="size-4 accent-primary"
+              <Checkbox
                 checked={guests.every((guest) => selected.has(guest.id))}
-                onChange={(event) =>
+                onCheckedChange={(checked) =>
                   setSelected(
-                    event.target.checked ? new Set(guests.map((guest) => guest.id)) : new Set(),
+                    checked === true ? new Set(guests.map((guest) => guest.id)) : new Set(),
                   )
                 }
               />
@@ -81,11 +80,9 @@ export function AddGuestsPicker({ eventId, onDone }: AddGuestsPickerProps) {
           {guests.map((guest) => (
             <li key={guest.id}>
               <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-muted/50">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-primary"
+                <Checkbox
                   checked={selected.has(guest.id)}
-                  onChange={(event) => toggle(guest.id, event.target.checked)}
+                  onCheckedChange={(checked) => toggle(guest.id, checked === true)}
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{recipientName(guest)}</span>
