@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), dialog layout (pinned header, title bar with the edited name, switches and main action, scrolling body), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.12.0"
+  version: "1.13.0"
   next: "16"
 ---
 
@@ -135,7 +135,7 @@ Every dialog (`@/shared/ui/dialog`) has a header and a body, so the header and t
 - `DialogNameField` (`@/shared/ui/dialog-name-field`) is the name input, centred, with a screen-reader-only `DialogTitle` (`title`) and its error under it. `aria-describedby={undefined}` on `DialogContent` says there is no description.
 - The name and the submit button sit outside the `<form>`: they join it with `form={form.id}`. So the dialog owns the form state: a `use<Thing>Form` hook in the slice's `model` wraps `useServerForm`, the dialog calls it and passes it to the form component, which renders only the body fields.
 - Variants (the event's Szczegóły / Szablony / Goście) switch in `start`, not under the header. Switching scrolls the body back to the top (a ref on `DialogBody`). The form that owns the name stays mounted (hidden) in every variant.
-- The side columns are equal so the name stays centred; if `start` or `end` does not fit next to the name, widen the dialog or shorten the labels (the action's label does not repeat the name: "Utwórz", not "Utwórz wydarzenie").
+- The side columns are equal so the name stays centred; when the dialog is too narrow (200% zoom) they keep their content and the name narrows, up to 18rem wide otherwise. If `start` or `end` still does not fit, shorten the labels (the action's label does not repeat the name: "Utwórz", not "Utwórz wydarzenie").
 - Other dialogs (confirmations, the trash, uploads) keep `DialogHeader` with a title and a description.
 
 ### Paged lists
