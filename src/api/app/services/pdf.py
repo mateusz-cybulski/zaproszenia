@@ -106,11 +106,32 @@ def blank_pdf(pages: list[dict[str, float]]) -> bytes:
     return output.getvalue()
 
 
+def _fitting_pieces(word: str, font: str, size: float, width: float) -> list[str]:
+    """A word wider than the field (an e-mail, a URL) split into pieces that each fit."""
+    if pdfmetrics.stringWidth(word, font, size) <= width:
+        return [word]
+    pieces: list[str] = []
+    current = ""
+    for character in word:
+        if current and pdfmetrics.stringWidth(current + character, font, size) > width:
+            pieces.append(current)
+            current = character
+        else:
+            current += character
+    pieces.append(current)
+    return pieces
+
+
 def _wrap(text: str, font: str, size: float, width: float) -> list[str]:
     lines: list[str] = []
     for paragraph in text.split("\n"):
         current = ""
-        for word in paragraph.split(" "):
+        words = (
+            piece
+            for word in paragraph.split(" ")
+            for piece in _fitting_pieces(word, font, size, width)
+        )
+        for word in words:
             candidate = f"{current} {word}" if current else word
             if current and pdfmetrics.stringWidth(candidate, font, size) > width:
                 lines.append(current)

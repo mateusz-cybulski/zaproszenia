@@ -5,9 +5,17 @@ import pytest
 from httpx import AsyncClient
 from PIL import Image
 from pypdf import PdfReader, PdfWriter
+from reportlab.pdfbase import pdfmetrics
 
 from app.main import app
-from app.services.pdf import POINTS_PER_MM, PREVIEW_MAX_PIXELS, blank_pdf, render, render_png
+from app.services.pdf import (
+    POINTS_PER_MM,
+    PREVIEW_MAX_PIXELS,
+    _wrap,
+    blank_pdf,
+    render,
+    render_png,
+)
 from app.services.placeholders import fill, guest_values, sample_values, to_storage
 from app.services.templates import ensure_system_templates
 from app.storage import LocalStorage
@@ -257,6 +265,17 @@ def test_preview_of_a_tall_page_stays_within_the_pixel_limit() -> None:
     # PDFium rounds each side of the bitmap up.
     assert width * height <= PREVIEW_MAX_PIXELS * 1.01
     assert height > width
+
+
+def test_a_word_wider_than_the_field_is_broken_to_fit() -> None:
+    font, size, width = "ZaproszeniaSans", 11.0, 40 * POINTS_PER_MM
+    address = "sekretariat.dyrektora.generalnego@muzeum-narodowe.example.pl"
+
+    lines = _wrap(f"Kontakt: {address}", font, size, width)
+
+    assert len(lines) > 2
+    assert all(pdfmetrics.stringWidth(line, font, size) <= width for line in lines)
+    assert "".join(lines[1:]) == address
 
 
 async def test_too_large_upload_is_rejected(client: AsyncClient) -> None:
