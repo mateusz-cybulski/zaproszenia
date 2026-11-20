@@ -29,6 +29,10 @@ gum = "2.0.2"
 description = "Run all services from .config/docker-compose.yml locally; code changes reload, dependency and migration changes rebuild (compose watch)"
 run = "docker compose up --build --watch"
 
+[tasks.clean]
+description = "Remove the stack's containers (with caches such as Next's .next) and unused Docker build cache; data volumes stay (--all: also the stack's images and all build cache)"
+run = ".config/scripts/clean.sh"
+
 [tasks.agents]
 description = "Pick Claude skills/agents from the agents branch; the stack is detected or given, e.g. `mise run agents nextjs tailwind` (--yes: no picker, --list: show stacks)"
 run = ".config/scripts/sync-agents.sh"
