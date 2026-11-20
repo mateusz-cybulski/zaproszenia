@@ -1,9 +1,9 @@
 ---
 name: nextjs-best-practices
-description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), dialog layout (pinned header, variant switch, scrolling body), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
+description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), dialog layout (pinned header, title bar with the edited name, switches and main action, scrolling body), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.11.0"
+  version: "1.12.0"
   next: "16"
 ---
 
@@ -103,7 +103,7 @@ const copy = useAction(() => copyTemplateAction(template.id));
 
 ### Dialog layout
 
-Every dialog (`@/shared/ui/dialog`) has the same three parts, so the title and the close button never scroll away:
+Every dialog (`@/shared/ui/dialog`) has a header and a body, so the header and the close button never scroll away:
 
 ```tsx
 <DialogContent className="max-w-2xl">
@@ -111,15 +111,32 @@ Every dialog (`@/shared/ui/dialog`) has the same three parts, so the title and t
     <DialogTitle>…</DialogTitle>
     <DialogDescription>…</DialogDescription>
   </DialogHeader>
-  <DialogToolbar>{/* only for variants: the section switch */}</DialogToolbar>
   <DialogBody>{/* form, list, buttons */}</DialogBody>
 </DialogContent>
 ```
 
-- `DialogContent` does not scroll; `DialogHeader` stays at the top with a line under it; **only `DialogBody` scrolls**. Never put content straight into `DialogContent` or give it its own padding or `overflow`.
-- Header actions (e.g. a status badge next to the title) go inside `DialogHeader`, not in a wrapper around it.
-- A dialog with variants (the event's Szczegóły / Szablony / Goście) puts the `ToggleGroup` in `DialogToolbar`, under the header line and outside the scrolling body. Switching the variant scrolls the body back to the top (a ref on `DialogBody`).
+- `DialogContent` does not scroll; the header stays at the top with a line under it; **only `DialogBody` scrolls**. Never put content straight into `DialogContent` or give it its own padding or `overflow`.
 - Something that must stay in view while a long body scrolls (the template editor's page preview) is `sticky top-0` inside `DialogBody`.
+
+**A dialog that edits something with a name** (a guest, an event, a template) has no title or description. Its header is `DialogTitleBar`, with the name itself in the middle:
+
+```tsx
+<DialogContent className="max-w-2xl" aria-describedby={undefined}>
+  <DialogTitleBar
+    start={/* switches and status: section switch, verification badge, page picker */}
+    end={/* the main action: <FormStatus /> and the submit button */}
+  >
+    <DialogNameField label="Nazwa wydarzenia" title={event?.name ?? "Nowe wydarzenie"} form={form.id} … />
+  </DialogTitleBar>
+  <DialogBody>…</DialogBody>
+</DialogContent>
+```
+
+- `DialogNameField` (`@/shared/ui/dialog-name-field`) is the name input, centred, with a screen-reader-only `DialogTitle` (`title`) and its error under it. `aria-describedby={undefined}` on `DialogContent` says there is no description.
+- The name and the submit button sit outside the `<form>`: they join it with `form={form.id}`. So the dialog owns the form state: a `use<Thing>Form` hook in the slice's `model` wraps `useServerForm`, the dialog calls it and passes it to the form component, which renders only the body fields.
+- Variants (the event's Szczegóły / Szablony / Goście) switch in `start`, not under the header. Switching scrolls the body back to the top (a ref on `DialogBody`). The form that owns the name stays mounted (hidden) in every variant.
+- The side columns are equal so the name stays centred; if `start` or `end` does not fit next to the name, widen the dialog or shorten the labels (the action's label does not repeat the name: "Utwórz", not "Utwórz wydarzenie").
+- Other dialogs (confirmations, the trash, uploads) keep `DialogHeader` with a title and a description.
 
 ### Paged lists
 
