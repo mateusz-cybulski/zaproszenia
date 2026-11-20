@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import Select, insert, literal, select
+from sqlalchemy import Select, literal, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import contains_eager
 
 from app.auth import CurrentUser
@@ -66,18 +67,20 @@ async def add_event_guests(
             )
         )
     )
-    present = set(
-        await session.scalars(
-            select(EventGuest.guest_id).where(
-                EventGuest.event_id == event.id, EventGuest.guest_id.in_(found)
+    # A guest added meanwhile (e.g. from another tab) counts as already present, not as an error.
+    added: set[int] = set()
+    if found:
+        added = set(
+            await session.scalars(
+                insert(EventGuest)
+                .values([{"event_id": event.id, "guest_id": guest_id} for guest_id in found])
+                .on_conflict_do_nothing()
+                .returning(EventGuest.guest_id)
             )
         )
-    )
-    new_ids = found - present
-    session.add_all(EventGuest(event_id=event.id, guest_id=guest_id) for guest_id in new_ids)
     await session.commit()
     return EventGuestsAddResult(
-        added=len(new_ids), already_present=len(present), not_found=sorted(requested - found)
+        added=len(added), already_present=len(found - added), not_found=sorted(requested - found)
     )
 
 
@@ -97,6 +100,7 @@ async def add_matching_event_guests(
     added = await session.scalars(
         insert(EventGuest)
         .from_select(["event_id", "guest_id"], candidates)
+        .on_conflict_do_nothing()
         .returning(EventGuest.guest_id)
     )
     count = len(added.all())
