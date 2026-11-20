@@ -1,10 +1,22 @@
 import "server-only";
 
+import { z } from "zod";
+
 import { apiFetchOrNull } from "@/shared/api/index.server";
 
-import { type TemplateChangeResult, toChangeResult } from "./change-result";
-import type { TemplateId } from "../model/template-id";
+import { type TemplateId, templateIdSchema } from "../model/template-id";
+import { type TemplateChangeFailure, toChangeResult } from "./change-result";
 
-export async function copyTemplate(id: TemplateId): Promise<TemplateChangeResult> {
-  return toChangeResult(await apiFetchOrNull(`/templates/${id}/copy`, { method: "POST" }));
+const copyDtoSchema = z.object({ id: templateIdSchema });
+
+export type TemplateCopyResult = { ok: true; id: TemplateId } | TemplateChangeFailure;
+
+export async function copyTemplate(id: TemplateId): Promise<TemplateCopyResult> {
+  const response = await apiFetchOrNull(`/templates/${id}/copy`, { method: "POST" });
+  const result = await toChangeResult(response);
+  if (!result.ok) {
+    return result;
+  }
+  const body = copyDtoSchema.safeParse(await response?.json().catch(() => null));
+  return body.success ? { ok: true, id: body.data.id } : { ok: false, reason: "unavailable" };
 }

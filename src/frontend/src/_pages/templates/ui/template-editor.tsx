@@ -2,23 +2,24 @@
 
 import { TriangleAlert } from "lucide-react";
 
-import { type EditorOptions, pageSizeLabel, type TemplateDetail } from "@/entities/template";
+import type { EditorOptions, TemplateDetail } from "@/entities/template";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
-import { Label } from "@/shared/ui/label";
-import { NativeSelect } from "@/shared/ui/native-select";
 
 import { EDITOR_COPY } from "../config/field-presets";
 import { useLivePreview } from "../model/use-live-preview";
-import { useTemplateEditor } from "../model/use-template-editor";
+import type { TemplateEditorState } from "../model/use-template-editor";
 import { FieldCanvas } from "./field-canvas";
 import { FieldInspector } from "./field-inspector";
 import { FieldList } from "./field-list";
 
-type TemplateEditorProps = { template: TemplateDetail; options: EditorOptions };
+type TemplateEditorProps = {
+  template: TemplateDetail;
+  options: EditorOptions;
+  editor: TemplateEditorState;
+};
 
-export function TemplateEditor({ template, options }: TemplateEditorProps) {
+export function TemplateEditor({ template, options, editor }: TemplateEditorProps) {
   const readOnly = template.isSystem;
-  const editor = useTemplateEditor(template, options);
   // An emptied field is flagged in the inspector; the API would reject the whole preview for it.
   const previewFields = editor.fields.filter((field) => field.content.trim() !== "");
   const preview = useLivePreview(template.id, previewFields, editor.pageIndex);
@@ -30,27 +31,6 @@ export function TemplateEditor({ template, options }: TemplateEditorProps) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_22rem] gap-6">
       <div className="sticky top-0 grid content-start gap-3 self-start">
-        <div className="flex items-center gap-3">
-          {template.pages.length > 1 && (
-            <div className="flex items-center gap-2">
-              <Label htmlFor="template-page" className="sr-only">
-                {EDITOR_COPY.pageSelect}
-              </Label>
-              <NativeSelect
-                id="template-page"
-                value={editor.pageIndex}
-                onChange={(event) => editor.showPage(Number(event.target.value))}
-              >
-                {template.pages.map((_page, index) => (
-                  <option key={index} value={index}>
-                    {EDITOR_COPY.page(index)}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-          )}
-          <span className="text-sm text-muted-foreground">{pageSizeLabel(page)}</span>
-        </div>
         {preview.error && (
           <Alert variant="destructive">
             <TriangleAlert />

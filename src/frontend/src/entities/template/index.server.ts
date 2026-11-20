@@ -10,3 +10,4 @@ export { getTemplates } from "./api/get-templates";
 export { updateTemplate } from "./api/update-template";
 export { uploadTemplate } from "./api/upload-template";
 export type { TemplateChangeFailure, TemplateChangeResult } from "./api/change-result";
+export type { TemplateCopyResult } from "./api/copy-template";

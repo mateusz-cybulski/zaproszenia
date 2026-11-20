@@ -20,5 +20,13 @@ export async function TemplateEditDialog({ id, dismissal }: TemplateEditDialogPr
   if (!template) {
     notFound();
   }
-  return <TemplateEditorDialog template={template} options={options} dismissal={dismissal} />;
+  // "Kopiuj i edytuj" opens the copy in this dialog; without the key it would keep the original's state.
+  return (
+    <TemplateEditorDialog
+      key={template.id}
+      template={template}
+      options={options}
+      dismissal={dismissal}
+    />
+  );
 }

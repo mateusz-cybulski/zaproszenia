@@ -32,7 +32,7 @@ export const EDITOR_COPY = {
     "Podgląd pokazuje przykładowego gościa. Ramki to przybliżony obszar pól: przeciągnij ramkę, by ją przesunąć, i złap uchwyt z prawej, by zmienić szerokość. Długi tekst łamie się w szerokości pola.",
   previewFailed: "Nie da się pokazać podglądu",
   readOnly: "Szablon systemowy jest tylko do odczytu",
-  readOnlyDescription: "Skopiuj go, żeby zmienić układ pól.",
+  readOnlyDescription: "„Kopiuj i edytuj” tworzy Twoją kopię, w której zmienisz nazwę i układ pól.",
   fieldLabel: (content: string) => `Pole: ${content}`,
   resize: "Zmień szerokość pola",
 } as const;

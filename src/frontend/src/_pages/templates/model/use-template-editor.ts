@@ -11,15 +11,22 @@ import {
 
 import type { FieldPreset } from "../config/field-presets";
 import { newField } from "./new-field";
+import type { TemplateDraft } from "./save-template";
 
-// The fields being edited, shown with placeholder labels, and which page and field are in view.
+function snapshot(draft: TemplateDraft): string {
+  return JSON.stringify(draft);
+}
+
+// The name and fields being edited, shown with placeholder labels, and which page and field are in view.
 export function useTemplateEditor(template: TemplateDetail, options: EditorOptions) {
+  const [name, setName] = useState(template.name);
   const [fields, setFields] = useState<TemplateField[]>(() =>
     template.fields.map((field) => ({
       ...field,
       content: toDisplay(field.content, options.placeholders),
     })),
   );
+  const [saved, setSaved] = useState(() => snapshot({ name, fields }));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
 
@@ -50,11 +57,17 @@ export function useTemplateEditor(template: TemplateDetail, options: EditorOptio
   }
 
   return {
+    name,
     fields,
+    draft: { name, fields },
+    dirty: snapshot({ name, fields }) !== saved,
+    emptyFieldCount: fields.filter((field) => field.content.trim() === "").length,
     pageFields: fields.filter((field) => field.page === pageIndex),
     selected: fields.find((field) => field.id === selectedId) ?? null,
     selectedId,
     pageIndex,
+    rename: setName,
+    markSaved: (draft: TemplateDraft) => setSaved(snapshot(draft)),
     select: setSelectedId,
     changeField,
     addField,
@@ -62,3 +75,5 @@ export function useTemplateEditor(template: TemplateDetail, options: EditorOptio
     showPage,
   };
 }
+
+export type TemplateEditorState = ReturnType<typeof useTemplateEditor>;

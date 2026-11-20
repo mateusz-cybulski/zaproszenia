@@ -12,6 +12,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 
 import { EDITOR_COPY, FIELD_PRESETS, type FieldPreset } from "../config/field-presets";
+import { SAVE_COPY } from "../config/save-copy";
 
 type FieldListProps = {
   fields: TemplateField[];
@@ -51,7 +52,11 @@ export function FieldList({ fields, readOnly, onSelect, onAdd }: FieldListProps)
                 className="w-full justify-start truncate"
                 onClick={() => onSelect(field.id)}
               >
-                {field.content.replace(/\n/g, " ⏎ ")}
+                {field.content.trim() === "" ? (
+                  <span className="text-destructive">{SAVE_COPY.emptyField}</span>
+                ) : (
+                  field.content.replace(/\n/g, " ⏎ ")
+                )}
               </Button>
             </li>
           ))}
