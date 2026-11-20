@@ -3,7 +3,7 @@ name: tailwind-best-practices
 description: "Use when writing, changing or reviewing styles in a component that uses Tailwind CSS (tailwindcss in package.json): class names in JSX/TSX, the Tailwind entry CSS (@import \"tailwindcss\", @theme, @custom-variant, @utility, @source), design tokens, variants and the cn() helper, dark mode, responsive and container queries, focus and motion accessibility, class sorting and linting, and adding UI kit components with the shadcn/ui CLI. Tailwind CSS v4 (CSS-first configuration). Pair with feature-sliced-design for where the files live."
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
   tailwind: "4"
 ---
 
@@ -112,7 +112,7 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
 | `<Badge className="border-amber-500 text-amber-700">` for a status | a status token (`--color-warning`) mapped in one config, used by every status badge |
 
   When a design genuinely needs a look the kit lacks, add the variant to the kit component (and tokens to `@theme`) first, then use it; never a one-off override in one screen. If unsure whether a look exists, look at the component's variants before writing classes.
-- **A component's job does not change its look.** An input is the kit `Input` at the kit's height, font size, weight and alignment, whether it holds a name in a dialog's title bar, a search query or a form field; its error text is the same as a form field's. Without an explicit request from the user, do not enlarge, embolden, centre or otherwise restyle an element because of where it sits or what it does (the dialog name field once got `h-9 text-base font-medium text-center` and clashed with every other input). Placement is still the parent's: width, position, the column it sits in. When the user does ask for a different look, it becomes a kit variant used everywhere it applies. Accessibility comes first: when the kit's look fails WCAG 2.2 (contrast, target size, visible focus, reflow), fix the kit component itself, for every screen, not the one place that shows it.
+- **A component's job does not change its look.** An input is the kit `Input` at the kit's height, font size, weight and alignment, whether it holds a name in a dialog's header, a search query or a form field; its error text is the same as a form field's. Without an explicit request from the user, do not enlarge, embolden, centre or otherwise restyle an element because of where it sits or what it does. Placement is still the parent's: width, position, the column it sits in. When the user does ask for a different look, it becomes a kit variant used everywhere it applies. Accessibility comes first: when the kit's look fails WCAG 2.2 (contrast, target size, visible focus, reflow), fix the kit component itself, for every screen, not the one place that shows it.
 - No `@apply` to build component classes (`.btn { @apply ... }`): it is a second styling system next to components. `@apply` is acceptable only for styling markup you do not control (CMS HTML, third-party widgets), ideally scoped.
 - Custom utilities with `@utility`, not `@layer utilities`, so variants work: `@utility scrollbar-none { scrollbar-width: none; }` -> `md:scrollbar-none`.
 - Custom variants with `@custom-variant`: `@custom-variant theme-contrast (&:where([data-contrast=more] *));`.
@@ -137,6 +137,10 @@ A component with `components.json` in its root takes its UI kit from shadcn/ui (
 - Keep breakpoint and container tokens in one unit (rem).
 - Layout with `flex`/`grid` and `gap-*`, not margins between siblings. `space-x-*`/`space-y-*` only for simple stacks.
 - Use dynamic viewport units for full-height layouts: `min-h-dvh`, not `h-screen`.
+- **Layouts survive 200% zoom** (`better-accessibility`; a 1440 px screen becomes a 720 px viewport). In Tailwind:
+  - a header or toolbar with a title and actions wraps (`flex flex-wrap gap-x-4 gap-y-3`) and gives the title a minimum width (`min-w-60 flex-1`), instead of `truncate` squeezing the title to nothing under the actions;
+  - a grid or flex item that holds wide content (a table, a long line) may shrink: grid tracks `minmax(0,1fr)` (`grid-cols-[minmax(0,1fr)]`), flex items `min-w-0`, so the wide content scrolls in its own `overflow-x-auto` container instead of the whole page. A plain `grid` track is `auto` and grows to its widest child;
+  - columns that must not overlap keep their content (`minmax(max-content,1fr)`) and the flexible part shrinks (`minmax(0,18rem)`), e.g. a header with a name between switches and actions.
 
 ## 5. States, dark mode, accessibility
 
@@ -150,10 +154,8 @@ A component with `components.json` in its root takes its UI kit from shadcn/ui (
 
   `@theme inline` matters here: the utility then uses `var(--surface)` directly, so the value switches wherever `.dark` is set, not only on `<html>`.
 
-- Focus: `focus-visible:` rings/outlines on every interactive element. Never `outline-none` without a visible replacement.
+- Accessibility rules (focus rings, reduced motion, contrast, target size, screen-reader text) are in `better-accessibility`; in Tailwind they are spelled `focus-visible:`, `motion-safe:` / `motion-reduce:`, `sr-only`.
 - State from ARIA and data attributes instead of extra props: `aria-expanded:rotate-180`, `aria-invalid:border-danger`, `data-[state=open]:block`, `group-hover:`, `peer-checked:`.
-- Motion: animations and transitions behind `motion-safe:`, or remove them with `motion-reduce:`.
-- `sr-only` for text that is only for screen readers; check token color pairs meet WCAG contrast (4.5:1 for body text). Use the `accessibility-scan` skill for UI changes.
 - Cursor: v4 preflight gives buttons the default arrow, not the pointer. Restore it once in the entry CSS, not with `cursor-pointer` on every button:
 
 ```css
@@ -168,7 +170,6 @@ A component with `components.json` in its root takes its UI kit from shadcn/ui (
 ```
 
   Copied UI kits (shadcn/ui) also set `cursor-default` on menu and select items; change those to `cursor-pointer`. Use `cursor-pointer` in markup only for clickable elements that are not buttons (a `<label>` styled as a toggle).
-- Touch targets at least 24x24 CSS px (`size-6` minimum, `size-11` for primary touch actions).
 
 ## 6. Class detection and bundle size
 
@@ -218,5 +219,5 @@ Set this up once per component, then keep it passing:
 
 1. No dynamic class names, no unexplained arbitrary values, no conflicting classes on one element.
 2. Kit components (`shared/ui`) are used as they are or through their variants: no `className` that changes their colour, border, ring, shadow, radius or background, nor their size, font or alignment because of the job they do there (section 3).
-3. Every interactive element has a visible `focus-visible` style; animations respect `motion-reduce`.
+3. The changed markup passes `better-accessibility`'s "Before you finish" table.
 4. Run in `src/<name>`: `npx --no-install eslint --max-warnings=0 .` and `npx --no-install tsc --noEmit` (plus `npx --no-install prettier --check .` if Prettier is set up).
