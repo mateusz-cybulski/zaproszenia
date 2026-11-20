@@ -12,11 +12,15 @@ from google.cloud.storage import Client
 from app.settings import get_settings
 
 
+class StoredFileMissingError(FileNotFoundError):
+    """A key the database points at has no file, e.g. an object removed by hand."""
+
+
 class Storage(Protocol):
     async def put(self, key: str, data: bytes, content_type: str) -> None: ...
 
     async def get(self, key: str) -> bytes:
-        """Raises FileNotFoundError when there is no such file."""
+        """Raises StoredFileMissingError when there is no such file."""
         ...
 
     async def delete(self, key: str) -> None: ...
@@ -44,7 +48,10 @@ class LocalStorage:
         await asyncio.to_thread(write)
 
     async def get(self, key: str) -> bytes:
-        return await asyncio.to_thread(self._path(key).read_bytes)
+        try:
+            return await asyncio.to_thread(self._path(key).read_bytes)
+        except FileNotFoundError as error:
+            raise StoredFileMissingError(key) from error
 
     async def delete(self, key: str) -> None:
         await asyncio.to_thread(self._path(key).unlink, missing_ok=True)
@@ -68,7 +75,7 @@ class GcsStorage:
         try:
             data: bytes = await asyncio.to_thread(self.bucket.blob(key).download_as_bytes)
         except NotFound as error:
-            raise FileNotFoundError(key) from error
+            raise StoredFileMissingError(key) from error
         return data
 
     async def delete(self, key: str) -> None:

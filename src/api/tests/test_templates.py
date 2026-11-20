@@ -276,6 +276,23 @@ async def test_copy_has_its_own_file(client: AsyncClient, storage: LocalStorage)
     assert (await client.get(f"/templates/{copy['id']}/file")).status_code == 200
 
 
+async def test_missing_template_file_is_a_conflict(
+    client: AsyncClient, storage: LocalStorage
+) -> None:
+    template_id = (await _upload(client, _pdf())).json()["id"]
+    for file in storage.root.rglob("*.pdf"):
+        file.unlink()
+
+    responses = [
+        await client.post(f"/templates/{template_id}/copy"),
+        await client.get(f"/templates/{template_id}/file"),
+        await client.get(f"/templates/{template_id}/preview.png"),
+    ]
+
+    assert [response.status_code for response in responses] == [409, 409, 409]
+    assert all("zniknął" in response.json()["detail"] for response in responses)
+
+
 async def test_files_follow_template_access(client: AsyncClient) -> None:
     own = (await _upload(client, _pdf())).json()
     system = await _system_template(client, "invitation")
