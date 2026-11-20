@@ -2,7 +2,6 @@
 
 import type { ComponentProps } from "react";
 
-import { cn } from "@/shared/lib/css";
 import { DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 
@@ -31,7 +30,7 @@ export function DialogNameField({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         autoComplete="off"
-        className={cn("w-72", className)}
+        className={className}
         {...props}
       />
       {error && (

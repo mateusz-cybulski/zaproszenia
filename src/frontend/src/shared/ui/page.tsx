@@ -10,14 +10,16 @@ type PageProps = {
 export function Page({ title, description, actions, children }: PageProps) {
   return (
     <>
-      <header className="sticky top-0 z-10 flex items-center gap-4 border-b bg-background/95 px-8 py-4 backdrop-blur">
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold">{title}</h1>
+      {/* Wraps instead of squeezing the title: at 200% zoom the actions move under it. */}
+      <header className="sticky top-0 z-10 flex flex-wrap items-center gap-x-4 gap-y-3 border-b bg-background/95 px-8 py-4 backdrop-blur">
+        <div className="min-w-60 flex-1">
+          <h1 className="text-lg font-semibold">{title}</h1>
           {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </header>
-      <div className="grid gap-6 p-8">{children}</div>
+      {/* minmax(0, 1fr): a wide table scrolls in its own container, not the whole page. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 p-8">{children}</div>
     </>
   );
 }
