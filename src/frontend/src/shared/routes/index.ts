@@ -13,8 +13,10 @@ export const routes = {
   guestsDeleted: () => "/guests/deleted",
   guestEdit: (id: number) => `/guests/${id}`,
   templates: () => "/templates",
-  templatePageImage: (id: number) => `/api/templates/${id}/page.png`,
-  templatePreview: (id: number) => `/api/templates/${id}/preview`,
+  template: (id: number) => `/templates/${id}`,
+  templatePreviewImage: (id: number) => `/api/templates/${id}/preview.png`,
+  savedTemplatePreviewImage: (id: number, updatedAt: string) =>
+    `/api/templates/${id}/preview.png?${new URLSearchParams({ version: updatedAt })}`,
   settings: () => "/settings",
 } as const;
 export { withQuery } from "./with-query";

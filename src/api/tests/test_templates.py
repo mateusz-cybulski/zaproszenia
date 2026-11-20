@@ -6,8 +6,8 @@ from httpx import AsyncClient
 from pypdf import PdfReader, PdfWriter
 
 from app.main import app
-from app.services.pdf import POINTS_PER_MM
-from app.services.placeholders import fill, guest_values, to_storage
+from app.services.pdf import POINTS_PER_MM, blank_pdf, render
+from app.services.placeholders import fill, guest_values, sample_values, to_storage
 from app.services.templates import ensure_system_templates
 from app.storage import LocalStorage
 from tests.conftest import OTHER_SESSION_COOKIE
@@ -293,21 +293,22 @@ def _text(pdf: bytes) -> str:
     return "\n".join(page.extract_text() for page in PdfReader(io.BytesIO(pdf)).pages)
 
 
-async def test_preview_fills_the_default_layout_with_sample_data(client: AsyncClient) -> None:
+def _sample_text(template: dict[str, Any]) -> str:
+    return _text(render(blank_pdf(template["pages"]), template["fields"], sample_values()))
+
+
+async def test_default_layout_filled_with_sample_data(client: AsyncClient) -> None:
     system = await _system_template(client, "invitation")
 
-    response = await client.get(f"/templates/{system['id']}/preview")
+    text = _sample_text(system)
 
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "application/pdf"
-    text = _text(response.content)
     assert "Szanowny Panie Rektorze," in text
     assert "Gala Jubileuszowa" in text
     assert "czwartek, 15 października 2026 r." in text
     assert "godz. 18:00" in text
 
 
-async def test_preview_uses_field_cases_and_date_format(client: AsyncClient) -> None:
+async def test_saved_fields_use_cases_and_date_format(client: AsyncClient) -> None:
     template = (await _upload(client, _pdf())).json()
     fields = [
         _field(content="Dla {position} {institution}", cases={"position": "dat"}),
@@ -315,7 +316,7 @@ async def test_preview_uses_field_cases_and_date_format(client: AsyncClient) -> 
     ]
     await client.patch(f"/templates/{template['id']}", json={"fields": fields})
 
-    text = _text((await client.get(f"/templates/{template['id']}/preview")).content)
+    text = _sample_text((await client.get(f"/templates/{template['id']}")).json())
 
     assert "Dla Rektorowi Politechnika Warszawska" in text
     assert "15 X 2026 r." in text
@@ -338,14 +339,15 @@ async def test_live_preview_image_does_not_save(client: AsyncClient) -> None:
     assert missing_page.status_code == 422
 
 
-async def test_page_image(client: AsyncClient) -> None:
+async def test_saved_preview_image(client: AsyncClient) -> None:
     template = (await _upload(client, _pdf())).json()
     system = await _system_template(client, "envelope")
 
-    own = await client.get(f"/templates/{template['id']}/page.png")
-    blank = await client.get(f"/templates/{system['id']}/page.png")
-    missing = await client.get(f"/templates/{template['id']}/page.png", params={"page": 1})
+    own = await client.get(f"/templates/{template['id']}/preview.png")
+    blank = await client.get(f"/templates/{system['id']}/preview.png")
+    missing = await client.get(f"/templates/{template['id']}/preview.png", params={"page": 1})
 
+    assert own.headers["content-type"] == "image/png"
     assert own.content.startswith(b"\x89PNG")
     assert blank.content.startswith(b"\x89PNG")
     assert missing.status_code == 404
@@ -356,8 +358,7 @@ async def test_previews_follow_template_access(client: AsyncClient) -> None:
     client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
     url = f"/templates/{template['id']}"
 
-    assert (await client.get(f"{url}/preview")).status_code == 404
-    assert (await client.get(f"{url}/page.png")).status_code == 404
+    assert (await client.get(f"{url}/preview.png")).status_code == 404
     assert (await client.post(f"{url}/preview.png", json={"fields": []})).status_code == 404
 
 

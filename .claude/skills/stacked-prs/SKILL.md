@@ -3,7 +3,7 @@ name: stacked-prs
 description: "Use when the user wants to split a large branch or feature into several smaller pull requests (stacked or dependent PRs), review a branch in parts, or manage a chain of branches where each builds on the previous one: cutting the stack from existing commits without rewriting history, naming, PR descriptions with the stack overview, updating lower branches, and merging in order with merge commits on GitHub. Follows git-workflow-and-versioning for commits, messages and pushes."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   source: "Adapted from bobmatnyc/claude-mpm-skills stacked-prs (MIT)"
 ---
 
@@ -98,7 +98,7 @@ This repo merges pull requests on GitHub **with a merge commit** (no squash), wh
 
 1. Merge `[1/n]` into `main`.
 2. Change `[2/n]`'s base to `main` (GitHub does it by itself when the merged branch is deleted). Its diff now shows only its own step, because step 1's commits are already in `main`: no rebase needed.
-3. Wait for CI on the new base, merge, repeat.
+3. Wait for the runs on `main` that merge started (checks and deploy) to pass, then for `[2/n]`'s own checks on its new base; only then merge it. Repeat. The steps of merging one PR and watching the target branch are in `git-workflow-and-versioning` (Merging pull requests).
 
 Never squash-merge a lower PR: the upper branches still hold the original commits, so their PRs would show step 1 again and conflict.
 
@@ -110,3 +110,4 @@ Never squash-merge a lower PR: the upper branches still hold the original commit
 - [ ] Names are numbered in merge order; PR titles carry `[k/n]`.
 - [ ] Each PR description has the stack overview and the review diff.
 - [ ] No force push or history rewrite happened without the user's consent.
+- [ ] Each merge waited for the target branch's runs of the previous merge to pass.

@@ -144,17 +144,6 @@ async def template_file(
     return Response(await storage.get(template.pdf_key), media_type="application/pdf")
 
 
-@router.get("/{template_id}/preview", response_class=Response, responses=PDF_RESPONSE)
-async def preview_template(
-    template_id: int, session: Session, user: CurrentUser, storage: FileStorage
-) -> Response:
-    """The saved template filled with sample data."""
-    template = await find_visible_template(session, template_id, user.uid)
-    pdf = await base_pdf(template, storage)
-    rendered = await asyncio.to_thread(render, pdf, template.fields, sample_values())
-    return Response(rendered, media_type="application/pdf")
-
-
 @router.post("/{template_id}/preview.png", response_class=Response, responses=PNG_RESPONSE)
 async def preview_image(
     template_id: int,
@@ -177,19 +166,21 @@ async def preview_image(
     return Response(png, media_type="image/png", headers={"Cache-Control": "no-store"})
 
 
-@router.get("/{template_id}/page.png", response_class=Response, responses=PNG_RESPONSE)
-async def page_image(
+@router.get("/{template_id}/preview.png", response_class=Response, responses=PNG_RESPONSE)
+async def saved_preview_image(
     template_id: int,
     session: Session,
     user: CurrentUser,
     storage: FileStorage,
     page: Annotated[int, Query(ge=0, lt=MAX_PAGES)] = 0,
 ) -> Response:
-    """A template page without fields, e.g. a thumbnail in the template list."""
+    """A page of the saved template filled with sample data, e.g. a thumbnail in the list."""
     template = await find_visible_template(session, template_id, user.uid)
     if page >= len(template.pages):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Template has no such page")
-    png = await asyncio.to_thread(render_png, await base_pdf(template, storage), page)
+    pdf = await base_pdf(template, storage)
+    rendered = await asyncio.to_thread(render, pdf, template.fields, sample_values())
+    png = await asyncio.to_thread(render_png, rendered, page)
     return Response(png, media_type="image/png")
 
 
