@@ -2,7 +2,7 @@
 
 import type { Event } from "@/entities/event";
 import type { Page } from "@/shared/api";
-import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
+import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
 import { routes, withQuery } from "@/shared/routes";
 import {
   Dialog,
@@ -20,10 +20,11 @@ type DeletedEventsDialogProps = { events: Page<Event>; dismissal: Dismissal };
 
 export function DeletedEventsDialog({ events, dismissal }: DeletedEventsDialogProps) {
   const dismiss = useDismiss(dismissal, routes.events());
+  const returnFocus = useReturnFocus();
 
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent onCloseAutoFocus={returnFocus} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Usunięte wydarzenia</DialogTitle>
           <DialogDescription>

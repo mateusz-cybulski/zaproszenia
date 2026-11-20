@@ -12,7 +12,7 @@ import {
 } from "@/shared/ui/dialog";
 import { ListPagination } from "@/shared/ui/list-pagination";
 
-import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
+import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
 import { routes, withQuery } from "@/shared/routes";
 import { DeletedGuestRow } from "./deleted-guest-row";
 
@@ -20,10 +20,11 @@ type DeletedGuestsDialogProps = { guests: Page<Guest>; dismissal: Dismissal };
 
 export function DeletedGuestsDialog({ guests, dismissal }: DeletedGuestsDialogProps) {
   const dismiss = useDismiss(dismissal, routes.guests());
+  const returnFocus = useReturnFocus();
 
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent onCloseAutoFocus={returnFocus} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Usunięci goście</DialogTitle>
           <DialogDescription>

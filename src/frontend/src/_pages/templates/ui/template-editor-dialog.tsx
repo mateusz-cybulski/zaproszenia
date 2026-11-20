@@ -4,7 +4,7 @@ import { TriangleAlert } from "lucide-react";
 import { useId, useState } from "react";
 
 import { type EditorOptions, TEMPLATE_KIND_LABELS, type TemplateDetail } from "@/entities/template";
-import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
+import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
@@ -32,6 +32,7 @@ type TemplateEditorDialogProps = {
 
 export function TemplateEditorDialog({ template, options, dismissal }: TemplateEditorDialogProps) {
   const dismiss = useDismiss(dismissal, routes.templates());
+  const returnFocus = useReturnFocus();
   const editor = useTemplateEditor(template, options);
   const saving = useSaveTemplate(template.id, editor.markSaved);
   const copying = useCopyAndEdit(template.id);
@@ -51,7 +52,11 @@ export function TemplateEditorDialog({ template, options, dismissal }: TemplateE
 
   return (
     <Dialog open onOpenChange={(open) => !open && close()}>
-      <DialogContent className="max-w-6xl" aria-describedby={undefined}>
+      <DialogContent
+        onCloseAutoFocus={returnFocus}
+        className="max-w-6xl"
+        aria-describedby={undefined}
+      >
         <DialogTitleBar
           start={
             <>
