@@ -3,10 +3,11 @@ from typing import Any
 
 import pytest
 from httpx import AsyncClient
+from PIL import Image
 from pypdf import PdfReader, PdfWriter
 
 from app.main import app
-from app.services.pdf import POINTS_PER_MM, blank_pdf, render
+from app.services.pdf import POINTS_PER_MM, PREVIEW_MAX_PIXELS, blank_pdf, render, render_png
 from app.services.placeholders import fill, guest_values, sample_values, to_storage
 from app.services.templates import ensure_system_templates
 from app.storage import LocalStorage
@@ -235,6 +236,8 @@ async def test_invalid_uploads_are_rejected(client: AsyncClient, storage: LocalS
     cases = {
         b"to nie jest pdf": "poprawny plik PDF",
         _pdf(pages=5): "najwyżej 4 strony",
+        _pdf(width_mm=0.35, height_mm=5080): "od 20 do 1000 mm",
+        _pdf(width_mm=148, height_mm=1200): "od 20 do 1000 mm",
         encrypted.getvalue(): "hasłem",
     }
     for pdf, message in cases.items():
@@ -245,6 +248,15 @@ async def test_invalid_uploads_are_rejected(client: AsyncClient, storage: LocalS
     assert not storage.root.exists()
     templates = (await client.get("/templates")).json()
     assert all(template["is_system"] for template in templates)
+
+
+def test_preview_of_a_tall_page_stays_within_the_pixel_limit() -> None:
+    image = render_png(blank_pdf([{"width_mm": 20, "height_mm": 1000}]), 0)
+
+    width, height = Image.open(io.BytesIO(image)).size
+    # PDFium rounds each side of the bitmap up.
+    assert width * height <= PREVIEW_MAX_PIXELS * 1.01
+    assert height > width
 
 
 async def test_too_large_upload_is_rejected(client: AsyncClient) -> None:
