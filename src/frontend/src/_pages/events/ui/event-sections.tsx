@@ -1,15 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-
 import type { Event, EventGuest } from "@/entities/event";
 import type { Template } from "@/entities/template";
 import type { Page } from "@/shared/api";
-import { DialogBody, DialogToolbar } from "@/shared/ui/dialog";
-import { SegmentedControl } from "@/shared/ui/segmented-control";
+import { DialogBody } from "@/shared/ui/dialog";
 
-import { EVENT_SECTION_COPY } from "../config/messages";
-import { EVENT_SECTIONS, type EventSection } from "../model/event-section";
+import type { EventFormState } from "../model/use-event-form";
+import type { EventSectionsState } from "../model/use-event-sections";
 import { EventForm } from "./event-form";
 import { EventGuestsSection } from "./event-guests-section";
 import { TemplateChoiceForm } from "./template-choice-form";
@@ -18,63 +15,34 @@ type EventSectionsProps = {
   event: Event;
   templates: Template[];
   eventGuests: Page<EventGuest>;
-  initialSection: EventSection;
-  onSaved: () => void;
+  sections: EventSectionsState;
+  eventForm: EventFormState;
 };
-
-const SECTION_OPTIONS = EVENT_SECTIONS.map((section) => ({
-  value: section,
-  label: EVENT_SECTION_COPY[section],
-}));
 
 export function EventSections({
   event,
   templates,
   eventGuests,
-  initialSection,
-  onSaved,
+  sections,
+  eventForm,
 }: EventSectionsProps) {
-  const [section, setSection] = useState(initialSection);
-  // A section stays mounted once opened, so switching back keeps what the user typed.
-  const [opened, setOpened] = useState<ReadonlySet<EventSection>>(new Set([initialSection]));
-  const bodyRef = useRef<HTMLDivElement>(null);
-
-  function changeSection(next: EventSection) {
-    setSection(next);
-    setOpened((current) => new Set(current).add(next));
-    bodyRef.current?.scrollTo({ top: 0 });
-    const query = next === "details" ? "" : `?section=${next}`;
-    window.history.replaceState(null, "", `${window.location.pathname}${query}`);
-  }
+  const { section, opened, bodyRef } = sections;
 
   return (
-    <>
-      <DialogToolbar>
-        <SegmentedControl
-          label={EVENT_SECTION_COPY.label}
-          name="event-section"
-          options={SECTION_OPTIONS}
-          value={section}
-          onChange={changeSection}
-        />
-      </DialogToolbar>
-      <DialogBody ref={bodyRef}>
-        {opened.has("details") && (
-          <div hidden={section !== "details"}>
-            <EventForm event={event} onSaved={onSaved} />
-          </div>
-        )}
-        {opened.has("templates") && (
-          <div hidden={section !== "templates"}>
-            <TemplateChoiceForm event={event} templates={templates} />
-          </div>
-        )}
-        {opened.has("guests") && (
-          <div hidden={section !== "guests"}>
-            <EventGuestsSection event={event} eventGuests={eventGuests} />
-          </div>
-        )}
-      </DialogBody>
-    </>
+    <DialogBody ref={bodyRef}>
+      <div hidden={section !== "details"}>
+        <EventForm eventForm={eventForm} />
+      </div>
+      {opened.has("templates") && (
+        <div hidden={section !== "templates"}>
+          <TemplateChoiceForm event={event} templates={templates} />
+        </div>
+      )}
+      {opened.has("guests") && (
+        <div hidden={section !== "guests"}>
+          <EventGuestsSection event={event} eventGuests={eventGuests} />
+        </div>
+      )}
+    </DialogBody>
   );
 }

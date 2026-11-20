@@ -1,15 +1,8 @@
 import type { SaveEventFailure } from "@/entities/event/index.server";
 
 export const EVENT_DIALOG_COPY = {
-  add: {
-    title: "Nowe wydarzenie",
-    description:
-      "Termin, miejsce i treść zaproszenia. Po utworzeniu wybierzesz szablony i dodasz gości.",
-  },
-  edit: {
-    title: "Edytuj wydarzenie",
-    description: "Zmiany trafią na zaproszenia wygenerowane od teraz.",
-  },
+  add: { title: "Nowe wydarzenie", submit: "Utwórz", pending: "Tworzenie…" },
+  edit: { title: "Edytuj wydarzenie", submit: "Zapisz", pending: "Zapisywanie…" },
 } as const;
 
 export const EVENT_SECTION_COPY = {

@@ -2,7 +2,7 @@
 
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/shared/lib/css";
 import { Button } from "@/shared/ui/button";
@@ -57,14 +57,25 @@ function DialogHeader({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
-// A switch between a dialog's variants (e.g. its sections), fixed under the header.
-function DialogToolbar({ className, ...props }: ComponentProps<"div">) {
+type DialogTitleBarProps = ComponentProps<"div"> & { start?: ReactNode; end?: ReactNode };
+
+// The header of a dialog whose subject has a name: switches on the left, the name in the middle,
+// the main action on the right. The middle column is as wide as its content; the sides share the rest.
+function DialogTitleBar({ start, end, children, className, ...props }: DialogTitleBarProps) {
   return (
     <div
-      data-slot="dialog-toolbar"
-      className={cn("flex shrink-0 items-center gap-2 border-b px-6 py-3", className)}
+      data-slot="dialog-title-bar"
+      className={cn(
+        "grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-6 py-3.5",
+        className,
+      )}
       {...props}
-    />
+    >
+      <div className="flex min-w-0 items-center gap-3">{start}</div>
+      <div className="min-w-0">{children}</div>
+      {/* Room for the close button inside the column, so both sides stay equal and the name centred. */}
+      <div className="flex min-w-0 items-center justify-end gap-3 pr-8">{end}</div>
+    </div>
   );
 }
 
@@ -108,6 +119,6 @@ export {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogToolbar,
+  DialogTitleBar,
   DialogTrigger,
 };
