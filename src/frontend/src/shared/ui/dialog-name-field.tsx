@@ -31,11 +31,11 @@ export function DialogNameField({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         autoComplete="off"
-        className={cn("h-9 w-72 text-center text-base font-medium md:text-base", className)}
+        className={cn("w-72", className)}
         {...props}
       />
       {error && (
-        <p id={errorId} className="text-xs text-destructive">
+        <p id={errorId} className="text-sm text-destructive">
           {error}
         </p>
       )}

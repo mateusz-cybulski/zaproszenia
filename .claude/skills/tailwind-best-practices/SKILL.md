@@ -3,7 +3,7 @@ name: tailwind-best-practices
 description: "Use when writing, changing or reviewing styles in a component that uses Tailwind CSS (tailwindcss in package.json): class names in JSX/TSX, the Tailwind entry CSS (@import \"tailwindcss\", @theme, @custom-variant, @utility, @source), design tokens, variants and the cn() helper, dark mode, responsive and container queries, focus and motion accessibility, class sorting and linting, and adding UI kit components with the shadcn/ui CLI. Tailwind CSS v4 (CSS-first configuration). Pair with feature-sliced-design for where the files live."
 license: MIT
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   tailwind: "4"
 ---
 
@@ -112,6 +112,7 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
 | `<Badge className="border-amber-500 text-amber-700">` for a status | a status token (`--color-warning`) mapped in one config, used by every status badge |
 
   When a design genuinely needs a look the kit lacks, add the variant to the kit component (and tokens to `@theme`) first, then use it; never a one-off override in one screen. If unsure whether a look exists, look at the component's variants before writing classes.
+- **A component's job does not change its look.** An input is the kit `Input` at the kit's height, font size, weight and alignment, whether it holds a name in a dialog's title bar, a search query or a form field; its error text is the same as a form field's. Without an explicit request from the user, do not enlarge, embolden, centre or otherwise restyle an element because of where it sits or what it does (the dialog name field once got `h-9 text-base font-medium text-center` and clashed with every other input). Placement is still the parent's: width, position, the column it sits in. When the user does ask for a different look, it becomes a kit variant used everywhere it applies. Accessibility comes first: when the kit's look fails WCAG 2.2 (contrast, target size, visible focus, reflow), fix the kit component itself, for every screen, not the one place that shows it.
 - No `@apply` to build component classes (`.btn { @apply ... }`): it is a second styling system next to components. `@apply` is acceptable only for styling markup you do not control (CMS HTML, third-party widgets), ideally scoped.
 - Custom utilities with `@utility`, not `@layer utilities`, so variants work: `@utility scrollbar-none { scrollbar-width: none; }` -> `md:scrollbar-none`.
 - Custom variants with `@custom-variant`: `@custom-variant theme-contrast (&:where([data-contrast=more] *));`.
@@ -216,6 +217,6 @@ Set this up once per component, then keep it passing:
 ## 9. Before finishing
 
 1. No dynamic class names, no unexplained arbitrary values, no conflicting classes on one element.
-2. Kit components (`shared/ui`) are used as they are or through their variants: no `className` that changes their colour, border, ring, shadow, radius or background (section 3).
+2. Kit components (`shared/ui`) are used as they are or through their variants: no `className` that changes their colour, border, ring, shadow, radius or background, nor their size, font or alignment because of the job they do there (section 3).
 3. Every interactive element has a visible `focus-visible` style; animations respect `motion-reduce`.
 4. Run in `src/<name>`: `npx --no-install eslint --max-warnings=0 .` and `npx --no-install tsc --noEmit` (plus `npx --no-install prettier --check .` if Prettier is set up).
