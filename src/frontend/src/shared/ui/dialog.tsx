@@ -66,7 +66,7 @@ function DialogTitleBar({ start, end, children, className, ...props }: DialogTit
     <div
       data-slot="dialog-title-bar"
       className={cn(
-        "grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-6 py-3.5",
+        "grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-6 py-4",
         className,
       )}
       {...props}
