@@ -1,9 +1,9 @@
 ---
 name: nextjs-best-practices
-description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
+description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), dialog layout (pinned header, title bar with the edited name, switches and main action, scrolling body), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.10.0"
+  version: "1.12.0"
   next: "16"
 ---
 
@@ -100,6 +100,43 @@ const copy = useAction(() => copyTemplateAction(template.id));
 - Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the `useAction`. Two actions in one row are two hooks; show `first.error ?? second.error`.
 - Client hooks live in their own `shared/lib` topic (`action-call`, `server-form`), never in an index that `"use server"` files import: a Server Action module must not pull a `"use client"` module through a shared barrel.
 - A raw `startTransition` is fine only where no `ActionResult` comes back: router navigation (search as you type), or client SDK flows such as sign-in.
+
+### Dialog layout
+
+Every dialog (`@/shared/ui/dialog`) has a header and a body, so the header and the close button never scroll away:
+
+```tsx
+<DialogContent className="max-w-2xl">
+  <DialogHeader>
+    <DialogTitle>…</DialogTitle>
+    <DialogDescription>…</DialogDescription>
+  </DialogHeader>
+  <DialogBody>{/* form, list, buttons */}</DialogBody>
+</DialogContent>
+```
+
+- `DialogContent` does not scroll; the header stays at the top with a line under it; **only `DialogBody` scrolls**. Never put content straight into `DialogContent` or give it its own padding or `overflow`.
+- Something that must stay in view while a long body scrolls (the template editor's page preview) is `sticky top-0` inside `DialogBody`.
+
+**A dialog that edits something with a name** (a guest, an event, a template) has no title or description. Its header is `DialogTitleBar`, with the name itself in the middle:
+
+```tsx
+<DialogContent className="max-w-2xl" aria-describedby={undefined}>
+  <DialogTitleBar
+    start={/* switches and status: section switch, verification badge, page picker */}
+    end={/* the main action: <FormStatus /> and the submit button */}
+  >
+    <DialogNameField label="Nazwa wydarzenia" title={event?.name ?? "Nowe wydarzenie"} form={form.id} … />
+  </DialogTitleBar>
+  <DialogBody>…</DialogBody>
+</DialogContent>
+```
+
+- `DialogNameField` (`@/shared/ui/dialog-name-field`) is the name input, centred, with a screen-reader-only `DialogTitle` (`title`) and its error under it. `aria-describedby={undefined}` on `DialogContent` says there is no description.
+- The name and the submit button sit outside the `<form>`: they join it with `form={form.id}`. So the dialog owns the form state: a `use<Thing>Form` hook in the slice's `model` wraps `useServerForm`, the dialog calls it and passes it to the form component, which renders only the body fields.
+- Variants (the event's Szczegóły / Szablony / Goście) switch in `start`, not under the header. Switching scrolls the body back to the top (a ref on `DialogBody`). The form that owns the name stays mounted (hidden) in every variant.
+- The side columns are equal so the name stays centred; if `start` or `end` does not fit next to the name, widen the dialog or shorten the labels (the action's label does not repeat the name: "Utwórz", not "Utwórz wydarzenie").
+- Other dialogs (confirmations, the trash, uploads) keep `DialogHeader` with a title and a description.
 
 ### Paged lists
 

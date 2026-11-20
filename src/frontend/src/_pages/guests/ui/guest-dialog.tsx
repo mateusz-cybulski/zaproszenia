@@ -3,17 +3,16 @@
 import type { ReactNode } from "react";
 
 import type { Guest } from "@/entities/guest";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/dialog";
-
-import { GUEST_DIALOG_COPY } from "../config/guest-dialog-copy";
 import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
+import { Button } from "@/shared/ui/button";
+import { Dialog, DialogBody, DialogContent, DialogTitleBar } from "@/shared/ui/dialog";
+import { DialogNameField } from "@/shared/ui/dialog-name-field";
+import { FormStatus } from "@/shared/ui/form-status";
+
+import { GUEST_DIALOG_COPY } from "../config/guest-dialog-copy";
+import { FULL_NAME_FIELD } from "../config/guest-fields";
+import { useGuestForm } from "../model/use-guest-form";
 import { GuestForm } from "./guest-form";
 
 type GuestDialogProps = {
@@ -25,19 +24,40 @@ type GuestDialogProps = {
 export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProps) {
   const dismiss = useDismiss(dismissal, routes.guests());
   const copy = guest ? GUEST_DIALOG_COPY.edit : GUEST_DIALOG_COPY.add;
+  const guestForm = useGuestForm(guest, dismiss);
+  const nameMeta = guestForm.fields[FULL_NAME_FIELD.name];
 
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
-      <DialogContent className="max-w-2xl">
-        <div className="flex items-start gap-4 pr-8">
-          <DialogHeader className="flex-1">
-            <DialogTitle>{copy.title}</DialogTitle>
-            <DialogDescription>{copy.description}</DialogDescription>
-          </DialogHeader>
-          {/* The 20px badge sits 2px higher to share the 16px title's centre line. */}
-          {headerActions && <div className="-mt-0.5">{headerActions}</div>}
-        </div>
-        <GuestForm guest={guest} onSaved={dismiss} />
+      <DialogContent className="max-w-2xl" aria-describedby={undefined}>
+        <DialogTitleBar
+          start={headerActions}
+          end={
+            <>
+              <FormStatus result={guestForm.lastResult} />
+              <Button type="submit" form={guestForm.form.id} disabled={guestForm.pending}>
+                {guestForm.pending ? copy.pending : copy.submit}
+              </Button>
+            </>
+          }
+        >
+          <DialogNameField
+            key={nameMeta.key}
+            label={FULL_NAME_FIELD.label}
+            title={guest ? (guest.fullName ?? guest.institution ?? copy.title) : copy.title}
+            form={guestForm.form.id}
+            id={nameMeta.id}
+            name={nameMeta.name}
+            defaultValue={nameMeta.defaultValue ?? ""}
+            placeholder={FULL_NAME_FIELD.placeholder}
+            maxLength={FULL_NAME_FIELD.maxLength}
+            error={nameMeta.errors?.[0]}
+            errorId={nameMeta.errorId}
+          />
+        </DialogTitleBar>
+        <DialogBody>
+          <GuestForm guestForm={guestForm} />
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );
