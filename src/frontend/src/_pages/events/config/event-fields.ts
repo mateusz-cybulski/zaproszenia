@@ -3,11 +3,12 @@ import type { FormFieldConfig } from "@/shared/ui/form-field";
 
 import type { EventField } from "../model/event-form";
 
-export const NAME_FIELD: FormFieldConfig<EventField> = {
+// Edited in the dialog's header.
+export const NAME_FIELD = {
   name: "name",
-  label: "Nazwa",
+  label: "Nazwa wydarzenia",
   maxLength: TEXT_LIMIT.short,
-};
+} as const satisfies { name: EventField; label: string; maxLength: number };
 
 export const STARTS_AT_FIELD: FormFieldConfig<EventField> = {
   name: "startsAtLocal",
