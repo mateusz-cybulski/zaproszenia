@@ -3,7 +3,7 @@ name: polish-nlp
 description: "Use when Python code analyses or generates Polish word forms: lemmatisation, morphological tags, inflection (declining names, nouns, adjectives), search normalisation for Polish text, with Morfeusz 2 (the morfeusz2 package) and its bundled SGJP dictionary. Covers installation (wheel platforms, Docker), the analyse/generate API, lemma and tag formats, ambiguity handling, licensing and testing."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   morfeusz2: "1.99.15"
   dictionary: "sgjp-2026.06.01"
 ---
@@ -83,7 +83,13 @@ Pass the lemma without the homonym suffix ("zamek", not "zamek:Sm3~a") to get al
 
 - **Ambiguity is the normal case.** Every common word has several interpretations ("nie" is a particle, conjunction, interjection or a pronoun form). For search and indexing, keep all distinct base lemmas of a token; for anything that needs one interpretation per word you need a tagger (context-aware disambiguation), which Morfeusz is not. Do not pick "the first result".
 - Typical search normalisation: lower-case, analyse with `IGNORE_CASE`, take the set of base lemmas per token (`ign` tokens keep the original word), index and query on those sets.
-- Inflecting names (e.g. "Pan Kowalski" -> "Panu Kowalskiemu"): `generate()` with the lemma, filter by case/number/gender from the tag; surnames not in SGJP return nothing: fall back to the original form and say so.
+- **Declining a person's name** (e.g. for "Dla {Adresat}" in the dative):
+  - Take the gender from the word whose interpretation has `imię` in `names` and `sg:nom` (`m1` or `f`); decline every first name and surname in that gender from the interpretation whose `names` include `imię` or `nazwisko`, and each part of a hyphenated surname separately ("Zielińskiej-Nowak").
+  - Feminine forms of masculine-looking surnames are indeclinable in SGJP (`Nowak:Sf` has all cases in one tag), so "Anny Nowak" comes out right by itself.
+  - Titles stay as written; abbreviations that end with the word's last letter take a period once the word is inflected, only for a man: "dr Jan Nowak" -> "dr. Jana Nowaka", "dr Anny Nowak". Do not test titles by "has a `brev` interpretation": "Jan" is also an abbreviation (Ewangelia świętego Jana); count a word as a title only when it ends with a period, is a known abbreviation, or has nothing but `brev` interpretations.
+  - If any word is not in the dictionary (`ign`), keep the whole name in the nominative instead of half declining it, and log it.
+- **Declining a noun phrase** (a position, an institution): the head is the **last** noun preceded only by adjectives agreeing with it in number and gender ("Polska Akademia Nauk": "Polska" is also a noun); decline the head and the agreeing adjectives around it, and stop at the first word that does not agree, keeping the rest as written: "Urzędowi Miasta Gdańska" ("Miasta" also reads as plural nominative), "Muzeum Narodowego w Krakowie". A position follows the person's gender: read "Dyrektor" as `f` for a woman and it stays undeclined, as in Polish usage.
+- Keep the input's capitalisation: `generate()` returns dictionary forms ("muzeum"), so capitalise the first letter when the input word had it.
 - **One instance per thread.** Thread safety is not documented: create the instance per thread (`threading.local`) or at startup in a single-worker process and call it from async endpoints directly (analysis is fast, pure CPU). Do not share one instance across a thread pool.
 - Creating an instance costs about 0.1 s and tens of MB: do it once at startup (FastAPI `lifespan` or a cached factory), not per request.
 - Wrap it in a small typed module (`app/morphology.py`) returning your own dataclasses (`Interpretation(orth, base, lemma, tag, names)`), so the rest of the code and the tests do not depend on tuples.
@@ -99,4 +105,5 @@ Pass the lemma without the homonym suffix ("zamek", not "zamek:Sm3~a") to get al
 
 - Morfeusz is deterministic for a given dictionary version: unit tests may call it directly (no network), but assert on sets of base lemmas or on the tags you filter by, not on full result lists, which change between dictionary releases.
 - Pin `morfeusz2` in `uv.lock` and upgrade deliberately; check `dict_id()` in a test so a dictionary change is visible in review.
+- On Python 3.14 importing the SWIG binding raises `DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute` (also `SwigPyObject`, `swigvarlink`): filter exactly those in pytest's `filterwarnings`, not all deprecation warnings.
 - Tests run in the amd64 container and natively on macOS (universal2 wheel). Never switch the component to an arm64 image: there is no wheel for it.
