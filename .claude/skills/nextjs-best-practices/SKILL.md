@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.11.0"
+  version: "1.12.0"
   next: "16"
 ---
 
@@ -160,4 +160,4 @@ const copy = useAction(() => copyTemplateAction(template.id));
 
 Writing accessible UI follows `better-accessibility` (WCAG 2.2 AA: semantics, keyboard and focus, names, forms, announcements, alt text, motion, zoom); checking it uses the AccessLint skills (`accessibility-scan` for a changed page, `accessibility-inspect` for keyboard and focus, `accessibility-audit` for the whole app, `accessibility-fix`, `accessibility-diff`). A project that narrows the scope (e.g. desktop only) says so in its own skill. Next and React specifics:
 
-- **No `<script>` element inside a component.** React renders it but never runs it on a client render and warns ("Encountered a script tag…"). A script that must run before paint (a theme) goes into the root layout through `next/script` with `strategy="beforeInteractive"`.
+- **A `<script>` element only in the root layout, never in a client component.** React never runs a `<script>` it renders on the client. A script that must run before the first paint (the theme class) stays an inline `<script dangerouslySetInnerHTML={{ __html: … }} />` in the root layout's `<head>`: the server renders it into the HTML and the browser runs it before painting. Do **not** move it to `next/script` with `strategy="beforeInteractive"`: in the App Router that queues inline code (`self.__next_s.push(…)`) until Next's runtime loads, after the first paint, so a dark page flashes light (measured: light first frame every time). React 19.2 still warns "Encountered a script tag…" in development when it client-renders the root layout (error and not-found pages); that warning is expected there.
