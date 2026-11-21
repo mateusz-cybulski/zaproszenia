@@ -40,7 +40,7 @@ export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProp
           end={
             <>
               <FormStatus result={guestForm.lastResult} />
-              <Button type="submit" form={guestForm.form.id} disabled={guestForm.pending}>
+              <Button type="submit" form={guestForm.form.id} aria-disabled={guestForm.pending}>
                 {guestForm.pending ? copy.pending : copy.submit}
               </Button>
             </>

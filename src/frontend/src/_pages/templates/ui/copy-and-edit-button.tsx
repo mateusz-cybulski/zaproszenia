@@ -10,7 +10,7 @@ type CopyAndEditButtonProps = { pending: boolean; onCopy: () => void };
 
 export function CopyAndEditButton({ pending, onCopy }: CopyAndEditButtonProps) {
   return (
-    <Button size="sm" onClick={onCopy} disabled={pending}>
+    <Button size="sm" onClick={onCopy} aria-disabled={pending}>
       <Copy /> {pending ? SAVE_COPY.copying : SAVE_COPY.copyAndEdit}
     </Button>
   );

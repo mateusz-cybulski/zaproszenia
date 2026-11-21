@@ -66,7 +66,7 @@ export function RegisterForm({ config }: { config: FirebaseClientConfig }) {
         {error}
       </p>
 
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" aria-disabled={pending}>
         {pending ? "Zakładanie konta…" : "Załóż konto"}
       </Button>
     </form>

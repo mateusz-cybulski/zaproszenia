@@ -55,7 +55,7 @@ export function EventDialog(props: EventDialogProps) {
           end={
             <>
               <FormStatus result={eventForm.lastResult} />
-              <Button type="submit" form={eventForm.form.id} disabled={eventForm.pending}>
+              <Button type="submit" form={eventForm.form.id} aria-disabled={eventForm.pending}>
                 {eventForm.pending ? copy.pending : copy.submit}
               </Button>
             </>

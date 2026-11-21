@@ -80,7 +80,7 @@ export function UploadTemplateForm({ onUploaded, onCancel }: UploadTemplateFormP
         <Button type="button" variant="outline" onClick={onCancel}>
           Anuluj
         </Button>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" aria-disabled={pending}>
           <Upload /> {pending ? "Wgrywanie…" : "Wgraj"}
         </Button>
       </div>

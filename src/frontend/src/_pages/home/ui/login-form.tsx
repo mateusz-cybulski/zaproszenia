@@ -56,7 +56,7 @@ export function LoginForm({ config }: { config: FirebaseClientConfig }) {
               variant="link"
               className="h-auto justify-self-start p-0"
               onClick={resend}
-              disabled={pending}
+              aria-disabled={pending}
             >
               Wyślij link ponownie
             </Button>
@@ -64,7 +64,7 @@ export function LoginForm({ config }: { config: FirebaseClientConfig }) {
         </div>
       )}
 
-      <Button type="submit" size="lg" className="w-full" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" aria-disabled={pending}>
         {pending ? "Logowanie…" : "Zaloguj się"}
       </Button>
     </form>

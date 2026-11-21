@@ -21,7 +21,7 @@ export function TemplateActions({ template }: { template: Template }) {
           <PencilLine /> {template.isSystem ? "Pola" : "Edytuj"}
         </Link>
       </Button>
-      <Button variant="outline" size="sm" onClick={() => copy.run()} disabled={copy.pending}>
+      <Button variant="outline" size="sm" onClick={() => copy.run()} aria-disabled={copy.pending}>
         <Copy /> {copy.pending ? "Kopiowanie…" : "Kopiuj"}
       </Button>
       {!template.isSystem && <DeleteTemplateDialog template={template} />}
