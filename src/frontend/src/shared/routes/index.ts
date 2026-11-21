@@ -8,6 +8,7 @@ export const routes = {
   event: (id: number) => `/events/${id}`,
   eventPreviewImage: (id: number, templateId: number, page: number) =>
     `/api/events/${id}/preview.png?${new URLSearchParams({ template_id: String(templateId), page: String(page) })}`,
+  eventDocument: (id: number, kind: string) => `/api/events/${id}/documents/${kind}`,
   guests: () => "/guests",
   guestAdd: () => "/guests/add",
   guestsDeleted: () => "/guests/deleted",

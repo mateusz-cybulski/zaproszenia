@@ -57,3 +57,23 @@ export const DELETE_COPY = {
   failed: "Nie udało się usunąć wydarzenia. Spróbuj ponownie.",
   restoreFailed: "Nie udało się przywrócić wydarzenia. Spróbuj ponownie.",
 } as const;
+
+export const EVENT_DOCUMENTS_COPY = {
+  label: "Do druku",
+  invitation: "Zaproszenia (PDF)",
+  envelope: "Koperty (PDF)",
+  generating: "Generowanie…",
+  fileName: (kind: "invitation" | "envelope", eventName: string) =>
+    `${kind === "invitation" ? "Zaproszenia" : "Koperty"} – ${eventName.replace(/[\\/:*?"<>|]/g, "-")}.pdf`,
+  noGuests: "Najpierw dodaj gości do wydarzenia.",
+  noTemplate: (kind: "invitation" | "envelope") =>
+    `Wybierz szablon ${kind === "invitation" ? "zaproszenia" : "koperty"} w sekcji „Szablony”.`,
+  failed: "Nie udało się wygenerować pliku. Spróbuj ponownie.",
+  confirmTitle: "Wygenerować mimo braków?",
+  confirmDescription: "Plik powstanie, ale sprawdź, czy to Ci nie przeszkadza:",
+  unverified: (count: number) => `Niezweryfikowani goście: ${count}. Ich dane mogą zawierać błędy.`,
+  senderIncomplete:
+    "Brakuje danych nadawcy (nazwy i adresu w Ustawieniach), więc nie będzie ich na zaproszeniach i kopertach.",
+  confirm: "Generuj mimo to",
+  cancel: "Wróć",
+} as const;
