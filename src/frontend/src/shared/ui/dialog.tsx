@@ -60,21 +60,22 @@ function DialogHeader({ className, ...props }: ComponentProps<"div">) {
 type DialogTitleBarProps = ComponentProps<"div"> & { start?: ReactNode; end?: ReactNode };
 
 // The header of a dialog whose subject has a name: switches on the left, the name in the middle,
-// the main action on the right. The middle column is as wide as its content; the sides share the rest.
+// the main action on the right. The sides share the space equally, so the name is centred; when
+// the dialog is too narrow (e.g. 200% zoom) they keep their content and the name gets narrower.
 function DialogTitleBar({ start, end, children, className, ...props }: DialogTitleBarProps) {
   return (
     <div
       data-slot="dialog-title-bar"
       className={cn(
-        "grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b px-6 py-4",
+        "grid shrink-0 grid-cols-[minmax(max-content,1fr)_minmax(0,18rem)_minmax(max-content,1fr)] items-center gap-3 border-b px-6 py-4",
         className,
       )}
       {...props}
     >
-      <div className="flex min-w-0 items-center gap-3">{start}</div>
+      <div className="flex items-center gap-3">{start}</div>
       <div className="min-w-0">{children}</div>
       {/* Room for the close button inside the column, so both sides stay equal and the name centred. */}
-      <div className="flex min-w-0 items-center justify-end gap-3 pr-8">{end}</div>
+      <div className="flex items-center justify-end gap-3 pr-8">{end}</div>
     </div>
   );
 }

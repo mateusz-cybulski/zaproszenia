@@ -3,10 +3,19 @@ from typing import Any
 
 import pytest
 from httpx import AsyncClient
+from PIL import Image
 from pypdf import PdfReader, PdfWriter
+from reportlab.pdfbase import pdfmetrics
 
 from app.main import app
-from app.services.pdf import POINTS_PER_MM, blank_pdf, render
+from app.services.pdf import (
+    POINTS_PER_MM,
+    PREVIEW_MAX_PIXELS,
+    _wrap,
+    blank_pdf,
+    render,
+    render_png,
+)
 from app.services.placeholders import fill, guest_values, sample_values, to_storage
 from app.services.templates import ensure_system_templates
 from app.storage import LocalStorage
@@ -235,6 +244,8 @@ async def test_invalid_uploads_are_rejected(client: AsyncClient, storage: LocalS
     cases = {
         b"to nie jest pdf": "poprawny plik PDF",
         _pdf(pages=5): "najwyżej 4 strony",
+        _pdf(width_mm=0.35, height_mm=5080): "od 20 do 1000 mm",
+        _pdf(width_mm=148, height_mm=1200): "od 20 do 1000 mm",
         encrypted.getvalue(): "hasłem",
     }
     for pdf, message in cases.items():
@@ -245,6 +256,26 @@ async def test_invalid_uploads_are_rejected(client: AsyncClient, storage: LocalS
     assert not storage.root.exists()
     templates = (await client.get("/templates")).json()
     assert all(template["is_system"] for template in templates)
+
+
+def test_preview_of_a_tall_page_stays_within_the_pixel_limit() -> None:
+    image = render_png(blank_pdf([{"width_mm": 20, "height_mm": 1000}]), 0)
+
+    width, height = Image.open(io.BytesIO(image)).size
+    # PDFium rounds each side of the bitmap up.
+    assert width * height <= PREVIEW_MAX_PIXELS * 1.01
+    assert height > width
+
+
+def test_a_word_wider_than_the_field_is_broken_to_fit() -> None:
+    font, size, width = "ZaproszeniaSans", 11.0, 40 * POINTS_PER_MM
+    address = "sekretariat.dyrektora.generalnego@muzeum-narodowe.example.pl"
+
+    lines = _wrap(f"Kontakt: {address}", font, size, width)
+
+    assert len(lines) > 2
+    assert all(pdfmetrics.stringWidth(line, font, size) <= width for line in lines)
+    assert "".join(lines[1:]) == address
 
 
 async def test_too_large_upload_is_rejected(client: AsyncClient) -> None:
@@ -262,6 +293,23 @@ async def test_copy_has_its_own_file(client: AsyncClient, storage: LocalStorage)
 
     assert len(list(storage.root.rglob("*.pdf"))) == 1
     assert (await client.get(f"/templates/{copy['id']}/file")).status_code == 200
+
+
+async def test_missing_template_file_is_a_conflict(
+    client: AsyncClient, storage: LocalStorage
+) -> None:
+    template_id = (await _upload(client, _pdf())).json()["id"]
+    for file in storage.root.rglob("*.pdf"):
+        file.unlink()
+
+    responses = [
+        await client.post(f"/templates/{template_id}/copy"),
+        await client.get(f"/templates/{template_id}/file"),
+        await client.get(f"/templates/{template_id}/preview.png"),
+    ]
+
+    assert [response.status_code for response in responses] == [409, 409, 409]
+    assert all("zniknął" in response.json()["detail"] for response in responses)
 
 
 async def test_files_follow_template_access(client: AsyncClient) -> None:

@@ -69,7 +69,7 @@ export function EventGuestRow({ eventId, eventGuest }: EventGuestRowProps) {
           size="icon-sm"
           aria-label={EVENT_GUESTS_COPY.remove(name)}
           onClick={() => remove.run()}
-          disabled={remove.pending}
+          aria-disabled={remove.pending}
         >
           {remove.pending ? <LoaderCircle className="animate-spin" /> : <X />}
         </Button>

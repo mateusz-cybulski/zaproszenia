@@ -40,6 +40,7 @@ export function TemplateEditor({ template, options, editor }: TemplateEditorProp
         )}
         <FieldCanvas
           page={page}
+          pageIndex={editor.pageIndex}
           fields={editor.pageFields}
           placeholders={options.placeholders}
           selectedId={editor.selectedId}

@@ -30,7 +30,7 @@ export function SenderForm({ sender }: { sender: Sender }) {
         <div className="grid grid-cols-2 gap-4">{SENDER_ADDRESS_FIELDS.map(renderField)}</div>
       </fieldset>
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" aria-disabled={pending}>
           {pending ? "Zapisywanie…" : "Zapisz"}
         </Button>
         <FormStatus result={lastResult} successMessage={SETTINGS_MESSAGES.saved} />

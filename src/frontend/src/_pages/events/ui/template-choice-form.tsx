@@ -40,7 +40,7 @@ export function TemplateChoiceForm({ event, templates }: TemplateChoiceFormProps
         />
       </div>
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" aria-disabled={pending}>
           {pending ? "Zapisywanie…" : "Zapisz szablony"}
         </Button>
         <FormStatus result={lastResult} successMessage={EVENT_SECTION_COPY.templatesSaved} />

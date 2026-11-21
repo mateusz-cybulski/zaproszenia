@@ -15,7 +15,8 @@ export function RestoreButton({ name, pending, disabled, onRestore }: RestoreBut
       variant="outline"
       size="sm"
       onClick={onRestore}
-      disabled={disabled || pending}
+      disabled={disabled}
+      aria-disabled={pending}
       aria-label={`Przywróć: ${name}`}
     >
       {pending ? <LoaderCircle className="animate-spin" /> : <ArchiveRestore />} Przywróć

@@ -39,14 +39,14 @@ export function PurgeButton({ name, pending, disabled, onPurge }: PurgeButtonPro
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={cancel} disabled={pending}>
+      <Button variant="ghost" size="sm" onClick={cancel} aria-disabled={pending}>
         Anuluj
       </Button>
       <Button
         variant="destructive"
         size="sm"
         onClick={onPurge}
-        disabled={pending}
+        aria-disabled={pending}
         aria-label={`Potwierdź usunięcie na stałe: ${name}`}
         autoFocus
       >
