@@ -3,7 +3,7 @@ name: api-structure
 description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, how deleting user data works (soft delete with restore by default), how routers share lookups such as the user's own event or 404 (dependencies in app/dependencies.py, never imports between routers), how list endpoints are paged (Pagination, Page, paginate), and how endpoints stay robust: uploaded files checked for what processing them costs (page sizes, pixel budgets), join rows inserted with on_conflict_do_nothing, missing stored files, and no API docs in production."
 license: MIT
 metadata:
-  version: "1.6.1"
+  version: "1.7.0"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -176,6 +176,7 @@ Rules from the security review; each one closed a real gap.
 
 - **A file from a user is checked for what processing it costs, not only for its byte size.** A 470-byte PDF with a page 1 pt wide passed a 15 MB limit and asked the preview for a 54 GiB bitmap. Check the properties the code later depends on (page count, page sides, image dimensions) right after upload, with named limits (`PageSide.MIN_MM`), and bound the output of every rendering step (a pixel budget in `render_png`) too, so files stored before a check are safe as well. Add a test with the hostile file.
 - **Inserting join rows tolerates a concurrent duplicate.** Two tabs can add the same guest to an event at once; a plain insert then fails on the primary key with a 500. Insert with `insert(Model).values(...).on_conflict_do_nothing()` (or `from_select` + `on_conflict_do_nothing`) and count what was really inserted with `.returning(...)`.
+- **A generated file made of many copies of one template shares the template.** Merging rendered copies (`writer.append(render(...))` per guest) stores the template's images and fonts once per copy: 300 invitations on a 1 MB background were 341 MB, built in memory on a 512 MiB instance. Add every copy's pages from **one** `PdfReader` of the template (`writer.add_page(base_page)`, so pypdf shares its resources), draw only the per-copy layer on top, then `writer.compress_identical_objects(remove_duplicates=True, remove_unreferenced=True)`: the same 300 were 3 MB in about 2 s. Measure size, time and peak memory for the largest expected list.
 - **A stored file may be missing.** Any `storage.get()` of a key from the database handles `FileNotFoundError` (an object removed by hand, a failed upload): return a clear 404/409 with a message for the user, never a 500.
 - **Interactive API docs only outside production.** `FastAPI(docs_url=None, redoc_url=None, openapi_url=None)` when running on Cloud Run (`K_SERVICE` is set); locally `/docs` stays. The schema is still generated in tests and by `app.openapi()`.
 
