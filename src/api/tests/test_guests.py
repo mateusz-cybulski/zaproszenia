@@ -39,7 +39,9 @@ async def test_create_and_read_guest(client: AsyncClient) -> None:
     guest = created.json()
     assert {field: guest[field] for field in JAN} == JAN
     assert guest["verification_status"] == "pending"
-    assert guest["declension"] is None
+    assert guest["declension"]["full_name"]["gen"] == "Jana Kowalskiego"
+    assert guest["declension"]["position"]["dat"] == "Dyrektorowi"
+    assert guest["declension"]["institution"]["loc"] == "Muzeum Narodowym"
     assert guest["verification_result"] is None
     assert guest["verified_at"] is None
     assert guest["created_at"]
@@ -117,7 +119,7 @@ async def test_replace_guest_resets_verification(client: AsyncClient) -> None:
     assert guest["full_name"] == "Jan Nowak"
     assert guest["verification_status"] == "pending"
     assert guest["verified_at"] is None
-    assert guest["declension"] is None
+    assert guest["declension"]["full_name"]["gen"] == "Jana Nowaka"
     assert (await client.get(f"/guests/{created['id']}")).json() == guest
 
 

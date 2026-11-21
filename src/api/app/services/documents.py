@@ -15,6 +15,7 @@ from app.models import (
     TemplateKind,
 )
 from app.schemas.documents import DocumentProblem
+from app.services.declension import guest_declension
 from app.services.event_guests import active_guests_of, in_list_order
 from app.services.pdf import render_all
 from app.services.placeholders import event_and_sender_values, guest_values
@@ -83,6 +84,12 @@ async def event_document(
             )
         )
 
+    # Guests saved before declension was computed get it now, and keep it.
+    for item in event_guests:
+        if item.guest.declension is None:
+            item.guest.declension = guest_declension(
+                item.guest.full_name, item.guest.position, item.guest.institution
+            )
     shared = event_and_sender_values(event, profile)
     values = [{**shared, **guest_values(_guest_record(item.guest))} for item in event_guests]
     pdf = await asyncio.to_thread(

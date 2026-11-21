@@ -3,7 +3,10 @@ from typing import Any
 
 from httpx import AsyncClient
 from pypdf import PdfReader
+from sqlalchemy import update
 
+from app.main import app
+from app.models import Guest
 from tests.conftest import OTHER_SESSION_COOKIE
 
 SENDER = {
@@ -151,3 +154,24 @@ async def test_documents_are_private_to_the_event_owner(client: AsyncClient) -> 
     response = await _generate(client, event_id, "invitation", confirmed=True)
 
     assert response.status_code == 404
+
+
+async def test_fields_use_declined_forms_filled_in_for_older_guests(client: AsyncClient) -> None:
+    event_id = await _ready_event(client, "Anna Kowalska")
+    event = (await client.get(f"/events/{event_id}")).json()
+    template = (await client.post(f"/templates/{event['invitation_template_id']}/copy")).json()
+    field = {**template["fields"][0], "content": "Dla {recipient}", "cases": {"recipient": "dat"}}
+    await client.patch(f"/templates/{template['id']}", json={"fields": [field]})
+    await client.put(
+        f"/events/{event_id}/templates",
+        json={"invitation_template_id": template["id"], "envelope_template_id": None},
+    )
+    guest_id = (await client.get(f"/events/{event_id}/guests")).json()["items"][0]["guest"]["id"]
+    async with app.state.sessionmaker() as session, session.begin():
+        await session.execute(update(Guest).where(Guest.id == guest_id).values(declension=None))
+
+    response = await _generate(client, event_id, "invitation")
+
+    assert "Dla Annie Kowalskiej" in _pages(response.content)[0]
+    guest = (await client.get(f"/guests/{guest_id}")).json()
+    assert guest["declension"]["full_name"]["dat"] == "Annie Kowalskiej"
