@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Final, final
 
 import pypdfium2 as pdfium
-from pypdf import PdfReader, PdfWriter
+from pypdf import PageObject, PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 from reportlab.lib.colors import HexColor
 from reportlab.pdfbase import pdfmetrics
@@ -160,24 +160,59 @@ def _draw_field(canvas: Canvas, field: dict[str, Any], text: str, left: float, t
         y -= size * float(field["line_height"])
 
 
+def _draw_overlay(
+    page: PageObject, page_fields: list[dict[str, Any]], values: dict[str, str]
+) -> None:
+    """Draw the page's fields, filled with values, onto the page."""
+    crop = page.cropbox
+    media = page.mediabox
+    overlay = io.BytesIO()
+    # Absolute page coordinates, measured from the top left corner of the cropbox.
+    canvas = Canvas(overlay, pagesize=(float(media.right), float(media.top)))
+    for field in page_fields:
+        text = fill(field["content"], field_values(values, field))
+        if text.strip():
+            _draw_field(canvas, field, text, float(crop.left), float(crop.top))
+    canvas.save()
+    page.merge_page(PdfReader(io.BytesIO(overlay.getvalue())).pages[0])
+
+
+def _fields_by_page(fields: list[dict[str, Any]], page_count: int) -> list[list[dict[str, Any]]]:
+    return [[field for field in fields if field["page"] == index] for index in range(page_count)]
+
+
 def render(base_pdf: bytes, fields: list[dict[str, Any]], values: dict[str, str]) -> bytes:
     """Draw the fields, filled with values, over the template pages."""
     writer = PdfWriter(clone_from=PdfReader(io.BytesIO(base_pdf)))
-    for page_index, page in enumerate(writer.pages):
-        page_fields = [field for field in fields if field["page"] == page_index]
-        if not page_fields:
-            continue
-        crop = page.cropbox
-        media = page.mediabox
-        overlay = io.BytesIO()
-        # Absolute page coordinates, measured from the top left corner of the cropbox.
-        canvas = Canvas(overlay, pagesize=(float(media.right), float(media.top)))
-        for field in page_fields:
-            text = fill(field["content"], field_values(values, field))
-            if text.strip():
-                _draw_field(canvas, field, text, float(crop.left), float(crop.top))
-        canvas.save()
-        page.merge_page(PdfReader(io.BytesIO(overlay.getvalue())).pages[0])
+    for page, page_fields in zip(
+        writer.pages, _fields_by_page(fields, len(writer.pages)), strict=True
+    ):
+        if page_fields:
+            _draw_overlay(page, page_fields, values)
+    output = io.BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+def render_all(
+    base_pdf: bytes, fields: list[dict[str, Any]], values: list[dict[str, str]]
+) -> bytes:
+    """One copy of the template per set of values, in order, in a single PDF.
+
+    Every copy is added from the same reader, so pypdf shares the template's images and other
+    resources between copies instead of storing one per guest (300 copies of a 1 MB background
+    would be over 300 MB); only the text layer is per copy.
+    """
+    base = PdfReader(io.BytesIO(base_pdf))
+    fields_by_page = _fields_by_page(fields, len(base.pages))
+    writer = PdfWriter()
+    for copy_values in values:
+        for base_page, page_fields in zip(base.pages, fields_by_page, strict=True):
+            page = writer.add_page(base_page)
+            if page_fields:
+                _draw_overlay(page, page_fields, copy_values)
+    # The same font subsets come back in many copies.
+    writer.compress_identical_objects(remove_duplicates=True, remove_unreferenced=True)
     output = io.BytesIO()
     writer.write(output)
     return output.getvalue()
