@@ -73,7 +73,8 @@ export function ConfirmActionDialog({
             <Button
               variant={tone === "destructive" ? "destructive" : "default"}
               onClick={() => run()}
-              disabled={pending || confirmDisabled}
+              disabled={confirmDisabled}
+              aria-disabled={pending}
             >
               {pending ? pendingLabel : confirmLabel}
             </Button>

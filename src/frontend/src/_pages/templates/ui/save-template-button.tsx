@@ -44,7 +44,7 @@ export function SaveTemplateButton({
       >
         {status}
       </p>
-      <Button size="sm" onClick={onSave} disabled={!dirty || blocked || pending}>
+      <Button size="sm" onClick={onSave} aria-disabled={!dirty || blocked || pending}>
         <Save /> {pending ? SAVE_COPY.saving : SAVE_COPY.save}
       </Button>
     </div>

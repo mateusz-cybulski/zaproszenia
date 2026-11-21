@@ -1,6 +1,6 @@
 ---
 name: api-structure
-description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, how deleting user data works (soft delete with restore by default), how routers share lookups such as the user's own event or 404 (dependencies in app/dependencies.py, never imports between routers), and how list endpoints are paged (Pagination, Page, paginate)."
+description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, how deleting user data works (soft delete with restore by default), how routers share lookups such as the user's own event or 404 (dependencies in app/dependencies.py, never imports between routers), how list endpoints are paged (Pagination, Page, paginate), and how endpoints stay robust: uploaded files checked for what processing them costs (page sizes, pixel budgets), join rows inserted with on_conflict_do_nothing, missing stored files, and no API docs in production."
 license: MIT
 metadata:
   version: "1.6.1"
@@ -169,3 +169,13 @@ Rows that the code defines and every user sees (system templates, default catego
 3. Run it right after `alembic upgrade head`: in the API service's start `command` in `compose.yml` (before `exec uvicorn`) and in the "Migrate database" step of `.github/workflows/terraform.yml`. Production never migrates in the API process: several instances would race.
 4. Tests run it once after migrating the test database, and clean up only user rows between tests, not the reference rows.
 5. A data migration is the wrong place: migrations are frozen history, while reference rows follow the current code.
+
+## Robust endpoints: files, join rows, the public surface
+
+Rules from the security review; each one closed a real gap.
+
+- **A file from a user is checked for what processing it costs, not only for its byte size.** A 470-byte PDF with a page 1 pt wide passed a 15 MB limit and asked the preview for a 54 GiB bitmap. Check the properties the code later depends on (page count, page sides, image dimensions) right after upload, with named limits (`PageSide.MIN_MM`), and bound the output of every rendering step (a pixel budget in `render_png`) too, so files stored before a check are safe as well. Add a test with the hostile file.
+- **Inserting join rows tolerates a concurrent duplicate.** Two tabs can add the same guest to an event at once; a plain insert then fails on the primary key with a 500. Insert with `insert(Model).values(...).on_conflict_do_nothing()` (or `from_select` + `on_conflict_do_nothing`) and count what was really inserted with `.returning(...)`.
+- **A stored file may be missing.** Any `storage.get()` of a key from the database handles `FileNotFoundError` (an object removed by hand, a failed upload): return a clear 404/409 with a message for the user, never a 500.
+- **Interactive API docs only outside production.** `FastAPI(docs_url=None, redoc_url=None, openapi_url=None)` when running on Cloud Run (`K_SERVICE` is set); locally `/docs` stays. The schema is still generated in tests and by `app.openapi()`.
+

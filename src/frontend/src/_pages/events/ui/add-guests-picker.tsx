@@ -119,11 +119,11 @@ export function AddGuestsPicker({ eventId, onDone }: AddGuestsPickerProps) {
           {EVENT_GUESTS_COPY.cancel}
         </Button>
         {candidates.total > 0 && (
-          <Button variant="outline" onClick={() => addAll.run()} disabled={busy}>
+          <Button variant="outline" onClick={() => addAll.run()} aria-disabled={busy}>
             {EVENT_GUESTS_COPY.addAllMatching(candidates.total)}
           </Button>
         )}
-        <Button onClick={() => add.run()} disabled={selected.size === 0 || busy}>
+        <Button onClick={() => add.run()} disabled={selected.size === 0} aria-disabled={busy}>
           {EVENT_GUESTS_COPY.addSelected(selected.size)}
         </Button>
       </div>

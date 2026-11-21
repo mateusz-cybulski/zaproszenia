@@ -1,5 +1,6 @@
 import { parseTemplateId } from "@/entities/template";
 import { fetchTemplatePreviewImage } from "@/entities/template/index.server";
+import { readTextWithin } from "@/shared/lib/request-body";
 
 type TemplatePreviewContext = { params: Promise<{ id: string }> };
 
@@ -12,9 +13,12 @@ export async function postTemplatePreviewImage(
   { params }: TemplatePreviewContext,
 ) {
   const templateId = parseTemplateId((await params).id);
-  const body = await request.text();
-  if (templateId === null || body.length > MAX_BODY_BYTES) {
-    return new Response(null, { status: templateId === null ? 404 : 413 });
+  if (templateId === null) {
+    return new Response(null, { status: 404 });
+  }
+  const body = await readTextWithin(request, MAX_BODY_BYTES);
+  if (body === null) {
+    return new Response(null, { status: 413 });
   }
   const response = await fetchTemplatePreviewImage(templateId, body);
   if (!response.ok) {

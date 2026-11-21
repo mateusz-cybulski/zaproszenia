@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 import type { Guest } from "@/entities/guest";
-import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
+import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Dialog, DialogBody, DialogContent, DialogTitleBar } from "@/shared/ui/dialog";
@@ -23,19 +23,24 @@ type GuestDialogProps = {
 
 export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProps) {
   const dismiss = useDismiss(dismissal, routes.guests());
+  const returnFocus = useReturnFocus();
   const copy = guest ? GUEST_DIALOG_COPY.edit : GUEST_DIALOG_COPY.add;
   const guestForm = useGuestForm(guest, dismiss);
   const nameMeta = guestForm.fields[FULL_NAME_FIELD.name];
 
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
-      <DialogContent className="max-w-2xl" aria-describedby={undefined}>
+      <DialogContent
+        onCloseAutoFocus={returnFocus}
+        className="max-w-2xl"
+        aria-describedby={undefined}
+      >
         <DialogTitleBar
           start={headerActions}
           end={
             <>
               <FormStatus result={guestForm.lastResult} />
-              <Button type="submit" form={guestForm.form.id} disabled={guestForm.pending}>
+              <Button type="submit" form={guestForm.form.id} aria-disabled={guestForm.pending}>
                 {guestForm.pending ? copy.pending : copy.submit}
               </Button>
             </>

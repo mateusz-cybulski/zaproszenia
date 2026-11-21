@@ -3,7 +3,7 @@
 import type { Event, EventGuest } from "@/entities/event";
 import type { Template } from "@/entities/template";
 import type { Page } from "@/shared/api";
-import { type Dismissal, useDismiss } from "@/shared/lib/dialogs";
+import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Dialog, DialogBody, DialogContent, DialogTitleBar } from "@/shared/ui/dialog";
@@ -33,6 +33,7 @@ type EventDialogProps = {
 
 export function EventDialog(props: EventDialogProps) {
   const dismiss = useDismiss(props.dismissal, routes.events());
+  const returnFocus = useReturnFocus();
   const copy = props.event ? EVENT_DIALOG_COPY.edit : EVENT_DIALOG_COPY.add;
   const eventForm = useEventForm(props.event, dismiss);
   const sections = useEventSections(props.event ? props.initialSection : "details");
@@ -41,6 +42,7 @@ export function EventDialog(props: EventDialogProps) {
   return (
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
       <DialogContent
+        onCloseAutoFocus={returnFocus}
         className={props.event ? "max-w-4xl" : "max-w-2xl"}
         aria-describedby={undefined}
       >
@@ -53,7 +55,7 @@ export function EventDialog(props: EventDialogProps) {
           end={
             <>
               <FormStatus result={eventForm.lastResult} />
-              <Button type="submit" form={eventForm.form.id} disabled={eventForm.pending}>
+              <Button type="submit" form={eventForm.form.id} aria-disabled={eventForm.pending}>
                 {eventForm.pending ? copy.pending : copy.submit}
               </Button>
             </>

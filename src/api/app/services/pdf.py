@@ -1,8 +1,9 @@
 import io
+import math
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Final, final
 
 import pypdfium2 as pdfium
 from pypdf import PdfReader, PdfWriter
@@ -17,6 +18,19 @@ from app.services.placeholders import field_values, fill
 
 POINTS_PER_MM = 72 / 25.4
 PREVIEW_WIDTH_PX = 1000
+# A preview is drawn 1000 px wide; a very tall page is drawn smaller to stay within this.
+PREVIEW_MAX_PIXELS = 4_000_000
+
+
+@final
+class PageSide:
+    """Each side of a template page, in mm: from a small label to A0. The preview scales a page
+    to a fixed width, so a sliver of a page would otherwise need a bitmap of gigabytes."""
+
+    MIN_MM: Final = 20
+    MAX_MM: Final = 1000
+
+
 # Where the first baseline sits below the top of a field, as a share of the font size.
 FIRST_BASELINE = 0.85
 
@@ -63,17 +77,19 @@ def inspect_pdf(data: bytes) -> InspectedPdf:
     if page_count > MAX_PAGES:
         raise PdfFileError(f"Szablon może mieć najwyżej {MAX_PAGES} strony.")
 
-    pages = []
+    pages: list[dict[str, float]] = []
     for page in writer.pages:
         # Field positions are measured on the page as displayed, so the rotation goes into content.
         page.transfer_rotation_to_content()
         box = page.cropbox
-        pages.append(
-            {
-                "width_mm": round(float(box.width) / POINTS_PER_MM, 2),
-                "height_mm": round(float(box.height) / POINTS_PER_MM, 2),
-            }
-        )
+        width_mm = round(float(box.width) / POINTS_PER_MM, 2)
+        height_mm = round(float(box.height) / POINTS_PER_MM, 2)
+        if not all(PageSide.MIN_MM <= side <= PageSide.MAX_MM for side in (width_mm, height_mm)):
+            raise PdfFileError(
+                f"Każdy bok strony {len(pages) + 1} musi mieć od {PageSide.MIN_MM} "
+                f"do {PageSide.MAX_MM} mm."
+            )
+        pages.append({"width_mm": width_mm, "height_mm": height_mm})
     output = io.BytesIO()
     writer.write(output)
     return InspectedPdf(output.getvalue(), pages)
@@ -90,11 +106,32 @@ def blank_pdf(pages: list[dict[str, float]]) -> bytes:
     return output.getvalue()
 
 
+def _fitting_pieces(word: str, font: str, size: float, width: float) -> list[str]:
+    """A word wider than the field (an e-mail, a URL) split into pieces that each fit."""
+    if pdfmetrics.stringWidth(word, font, size) <= width:
+        return [word]
+    pieces: list[str] = []
+    current = ""
+    for character in word:
+        if current and pdfmetrics.stringWidth(current + character, font, size) > width:
+            pieces.append(current)
+            current = character
+        else:
+            current += character
+    pieces.append(current)
+    return pieces
+
+
 def _wrap(text: str, font: str, size: float, width: float) -> list[str]:
     lines: list[str] = []
     for paragraph in text.split("\n"):
         current = ""
-        for word in paragraph.split(" "):
+        words = (
+            piece
+            for word in paragraph.split(" ")
+            for piece in _fitting_pieces(word, font, size, width)
+        )
+        for word in words:
             candidate = f"{current} {word}" if current else word
             if current and pdfmetrics.stringWidth(candidate, font, size) > width:
                 lines.append(current)
@@ -153,7 +190,9 @@ def render_png(pdf: bytes, page_index: int) -> bytes:
             if page_index >= len(document):
                 raise PdfFileError(f"Szablon nie ma strony {page_index + 1}.")
             page = document[page_index]
-            image = page.render(scale=PREVIEW_WIDTH_PX / page.get_width()).to_pil()
+            width, height = page.get_size()
+            scale = min(PREVIEW_WIDTH_PX / width, math.sqrt(PREVIEW_MAX_PIXELS / (width * height)))
+            image = page.render(scale=scale).to_pil()
         finally:
             document.close()
     output = io.BytesIO()

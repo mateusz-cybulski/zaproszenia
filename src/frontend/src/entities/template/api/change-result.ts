@@ -26,6 +26,7 @@ export async function toChangeResult(response: Response | null): Promise<Templat
       return { ok: false, reason: "read-only" };
     case 413:
       return { ok: false, reason: "too-large" };
+    case 409:
     case 422:
       return { ok: false, reason: "invalid", detail: await apiDetail(response) };
     default:

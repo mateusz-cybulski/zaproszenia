@@ -25,6 +25,7 @@ type Drag = {
 
 type FieldCanvasProps = {
   page: TemplatePage;
+  pageIndex: number;
   fields: TemplateField[];
   placeholders: Placeholder[];
   selectedId: string | null;
@@ -39,6 +40,7 @@ type FieldCanvasProps = {
 // The inspector's position inputs are the keyboard alternative to dragging.
 export function FieldCanvas({
   page,
+  pageIndex,
   fields,
   placeholders,
   selectedId,
@@ -104,7 +106,12 @@ export function FieldCanvas({
     >
       {imageUrl && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt="" className="absolute inset-0 size-full" draggable={false} />
+        <img
+          src={imageUrl}
+          alt={EDITOR_COPY.previewAlt(pageIndex)}
+          className="absolute inset-0 size-full"
+          draggable={false}
+        />
       )}
       {loading && (
         <LoaderCircle
