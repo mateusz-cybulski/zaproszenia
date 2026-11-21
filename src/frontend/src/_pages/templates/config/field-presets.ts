@@ -27,6 +27,7 @@ export const EDITOR_COPY = {
   noFields: "Na tej stronie nie ma pól.",
   pickField: "Kliknij ramkę na podglądzie albo wybierz pole z listy.",
   page: (index: number) => `Strona ${index + 1}`,
+  previewAlt: (index: number) => `Podgląd strony ${index + 1} z przykładowymi danymi`,
   pageSelect: "Strona szablonu",
   canvasHint:
     "Podgląd pokazuje przykładowego gościa. Ramki to przybliżony obszar pól: przeciągnij ramkę, by ją przesunąć, i złap uchwyt z prawej, by zmienić szerokość. Długi tekst łamie się w szerokości pola.",
