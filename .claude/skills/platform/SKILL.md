@@ -3,7 +3,7 @@ name: platform
 description: "Use whenever you add, rename, remove or configure a component under src/, write a Dockerfile, compose.yml, service.json or lefthook.yml for one, read another service's URL, set environment variables or GCP permissions for a service, or wonder how code gets deployed. Describes this repo's platform: each src/<name> with a Dockerfile is a Cloud Run service on its own subdomain, deployed by Terraform from GitHub Actions; local dev runs through docker compose and mise."
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Platform: how components become services
@@ -83,7 +83,7 @@ Optional per-service overrides, merged over these defaults:
 - **Compose Watch, not bind mounts, for source code.** Each service declares `develop.watch`:
   - `sync` of the component folder to the container's workdir: the dev server's own reload (Next HMR, uvicorn `--reload`) picks the copied files up;
   - `rebuild` on the dependency manifests and lockfiles (`package.json`, `package-lock.json`, `pyproject.toml`, `uv.lock`): dependencies are installed in the image and nowhere else;
-  - `rebuild` of a one-shot service whose input changes (e.g. a migrations service on `migrations/`), so new migrations apply without restarting the stack.
+  - `sync+restart` on files that a start-up step reads (e.g. `migrations/` when the service's `command` runs `alembic upgrade head && … && exec uvicorn …`): the container restarts and applies them, without restarting the stack. Exclude that folder from the plain `sync` (`ignore`). A one-time step runs in the service's own `command`, not in a separate one-shot container: locally there is one instance.
 
   Do not mount the source (`.:/app`) or keep dependency folders in anonymous volumes (`/app/node_modules`, `/venv`): compose reuses anonymous volumes across rebuilds, so after a dependency change the container keeps the old packages until `docker compose up -V`.
 - Watch never re-reads `compose.yml` itself: new `environment` entries, volumes, ports or a changed `command` apply only after restarting `mise run dev`. Say so whenever you change a `compose.yml`.

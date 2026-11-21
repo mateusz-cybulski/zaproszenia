@@ -3,7 +3,7 @@ name: api-structure
 description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. system templates) gets into the database, how deleting user data works (soft delete with restore by default), how routers share lookups such as the user's own event or 404 (dependencies in app/dependencies.py, never imports between routers), how list endpoints are paged (Pagination, Page, paginate), and how endpoints stay robust: uploaded files checked for what processing them costs (page sizes, pixel budgets), join rows inserted with on_conflict_do_nothing, missing stored files, and no API docs in production."
 license: MIT
 metadata:
-  version: "1.6.0"
+  version: "1.6.1"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -166,7 +166,7 @@ Rows that the code defines and every user sees (system templates, default catego
 
 1. Keep the definitions in code (`services/<resource>.py`) and write an idempotent sync: an upsert keyed on a unique column (`insert(...).on_conflict_do_update(index_elements=[Model.system_key], ...)`) plus deleting rows whose key is no longer defined.
 2. Expose it as a module command, `app/<task>.py` with `asyncio.run(main())`, e.g. `python -m app.system_templates`.
-3. Run it right after `alembic upgrade head`: in the migrations service command in `compose.yml` and in the "Migrate database" step of `.github/workflows/terraform.yml`.
+3. Run it right after `alembic upgrade head`: in the API service's start `command` in `compose.yml` (before `exec uvicorn`) and in the "Migrate database" step of `.github/workflows/terraform.yml`. Production never migrates in the API process: several instances would race.
 4. Tests run it once after migrating the test database, and clean up only user rows between tests, not the reference rows.
 5. A data migration is the wrong place: migrations are frozen history, while reference rows follow the current code.
 
