@@ -1,16 +1,20 @@
 # Included by .config/docker-compose.yml: paths are relative to this file.
-x-api: &api
-  build:
-    context: .
-    dockerfile: Dockerfile.dev
-  platform: linux/amd64
-  environment:
-    DATABASE_URL: postgresql+psycopg://api:api@api-db:5432/api
-    DEV_AUTH_USER: dev@localhost
-
 services:
   api:
-    <<: *api
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    platform: linux/amd64
+    # Migrations and reference data run before the server, in its container: locally there is
+    # one instance. Production runs them in the deploy workflow, never in the API process.
+    command:
+      - sh
+      - -c
+      - >-
+        alembic upgrade head
+        && python -m app.system_templates
+        && python -m app.seed
+        && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     environment:
       DATABASE_URL: postgresql+psycopg://api:api@api-db:5432/api
       DEV_AUTH_USER: dev@localhost
@@ -20,29 +24,23 @@ services:
     volumes:
       - api-storage:/data/storage
     depends_on:
-      api-migrate:
-        condition: service_completed_successfully
-    develop:
-      watch:
-        - action: sync
-          path: .
-          target: /app
-        - action: rebuild
-          path: pyproject.toml
-        - action: rebuild
-          path: uv.lock
-
-  # Never migrate inside the API process: instances would race each other.
-  api-migrate:
-    <<: *api
-    command: ["sh", "-c", "alembic upgrade head && python -m app.system_templates && python -m app.seed"]
-    depends_on:
       api-db:
         condition: service_healthy
     develop:
       watch:
-        - action: rebuild
+        # A new migration restarts the container, which runs the migrations again.
+        - action: sync+restart
           path: migrations/
+          target: /app/migrations
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - migrations/
+        - action: rebuild
+          path: pyproject.toml
+        - action: rebuild
+          path: uv.lock
 
   api-db:
     image: postgres:18-alpine
