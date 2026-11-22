@@ -162,9 +162,15 @@ async def test_fields_use_declined_forms_filled_in_for_older_guests(client: Asyn
     template = (await client.post(f"/templates/{event['invitation_template_id']}/copy")).json()
     field = {**template["fields"][0], "content": "Dla {recipient}", "cases": {"recipient": "dat"}}
     await client.patch(f"/templates/{template['id']}", json={"fields": [field]})
+    details = ["name", "starts_at", "timezone", "venue_name", "invitation_text"]
+    writable = [*details, "street", "postal_code", "city", "country"]
     await client.put(
-        f"/events/{event_id}/templates",
-        json={"invitation_template_id": template["id"], "envelope_template_id": None},
+        f"/events/{event_id}",
+        json={
+            **{key: event[key] for key in writable},
+            "invitation_template_id": template["id"],
+            "envelope_template_id": None,
+        },
     )
     guest_id = (await client.get(f"/events/{event_id}/guests")).json()["items"][0]["guest"]["id"]
     async with app.state.sessionmaker() as session, session.begin():

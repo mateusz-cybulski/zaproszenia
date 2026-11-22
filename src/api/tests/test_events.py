@@ -201,25 +201,26 @@ async def test_events_require_sign_in(anonymous_client: AsyncClient) -> None:
     assert (await anonymous_client.get("/events")).status_code == 401
 
 
-async def test_set_templates_only(client: AsyncClient) -> None:
+async def test_replace_event_saves_templates_with_the_details(client: AsyncClient) -> None:
     event = await _create(client)
     envelope = await _system_template_id(client, "envelope")
+    body = {**GALA, "name": "Gala"}
 
     response = await client.put(
-        f"/events/{event['id']}/templates",
-        json={"invitation_template_id": None, "envelope_template_id": envelope},
+        f"/events/{event['id']}",
+        json={**body, "invitation_template_id": None, "envelope_template_id": envelope},
     )
     wrong_kind = await client.put(
-        f"/events/{event['id']}/templates", json={"invitation_template_id": envelope}
+        f"/events/{event['id']}", json={**body, "invitation_template_id": envelope}
     )
 
     assert response.status_code == 200
     saved = response.json()
     assert (saved["invitation_template_id"], saved["envelope_template_id"]) == (None, envelope)
-    assert saved["name"] == event["name"]
+    assert saved["name"] == "Gala"
     assert wrong_kind.status_code == 422
     client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
-    foreign = await client.put(f"/events/{event['id']}/templates", json={})
+    foreign = await client.put(f"/events/{event['id']}", json=body)
     assert foreign.status_code == 404
 
 
