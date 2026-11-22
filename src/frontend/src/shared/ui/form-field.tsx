@@ -1,3 +1,4 @@
+import { DateTimeInput } from "@/shared/ui/date-time-input";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { NativeSelect } from "@/shared/ui/native-select";
@@ -20,6 +21,7 @@ export type FormFieldConfig<Name extends string = string> = {
 export type FormFieldMeta = {
   id: string;
   name: string;
+  formId: string;
   key: string | undefined;
   defaultValue: string | undefined;
   errors: string[] | undefined;
@@ -46,7 +48,20 @@ export function FormField({ field, meta }: FormFieldProps) {
   return (
     <div className="grid content-start gap-2">
       <Label htmlFor={meta.id}>{field.label}</Label>
-      {"options" in field ? (
+      {"inputType" in field ? (
+        <DateTimeInput
+          key={meta.key}
+          meta={{
+            key: meta.key,
+            name: meta.name,
+            formId: meta.formId,
+            initialValue: meta.defaultValue,
+          }}
+          id={meta.id}
+          invalid={Boolean(error)}
+          describedBy={describedBy}
+        />
+      ) : "options" in field ? (
         <NativeSelect key={meta.key} {...inputProps}>
           {field.options.map((option) => (
             <option key={option.value} value={option.value}>
@@ -66,7 +81,7 @@ export function FormField({ field, meta }: FormFieldProps) {
         <Input
           key={meta.key}
           {...inputProps}
-          type={"inputType" in field ? field.inputType : "text"}
+          type="text"
           autoComplete={field.autoComplete ?? "off"}
           maxLength={"maxLength" in field ? field.maxLength : undefined}
         />
