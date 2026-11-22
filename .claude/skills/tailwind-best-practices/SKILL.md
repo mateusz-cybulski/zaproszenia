@@ -3,7 +3,7 @@ name: tailwind-best-practices
 description: "Use when writing, changing or reviewing styles in a component that uses Tailwind CSS (tailwindcss in package.json): class names in JSX/TSX, the Tailwind entry CSS (@import \"tailwindcss\", @theme, @custom-variant, @utility, @source), design tokens, variants and the cn() helper, dark mode, responsive and container queries, focus and motion accessibility, class sorting and linting, and adding UI kit components with the shadcn/ui CLI. Tailwind CSS v4 (CSS-first configuration). Pair with feature-sliced-design for where the files live."
 license: MIT
 metadata:
-  version: "1.6.0"
+  version: "1.7.0"
   tailwind: "4"
 ---
 
@@ -123,7 +123,7 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
 A component with `components.json` in its root takes its UI kit from shadcn/ui (style, aliases and the kit folder are in that file; here the kit is `@/shared/ui`).
 
 1. **Look in shadcn first.** Before writing a kit component (input, toggle, checkbox, tooltip, select, tabs, pagination, popover, slider...), check https://ui.shadcn.com/docs/components and add it with the CLI: `npx shadcn add <name>`. A hand-written radio group, checkbox or pagination misses the keyboard handling and ARIA that the Radix-based one has.
-2. **Preview, never overwrite.** Run `npx shadcn add <name> --dry-run` first: adding a component also re-adds the kit files it depends on (pagination brings `button`), and `--overwrite` replaces our edits to them (it once reverted the destructive button's contrast fix). Add only the new files; keep ours.
+2. **Preview, never overwrite.** Run `npx shadcn add <name> --dry-run` first: adding a component also re-adds the kit files it depends on (pagination brings `button`), and `--overwrite` replaces our edits to them (it once reverted the destructive button's contrast fix). Add only the new files; keep ours. After adding, `git diff` every existing kit file the CLI reports as updated and restore ours (it can report a file both updated and skipped; keep a copy of files the dry run lists as overwritten).
 3. **Fix the `cn` import.** The CLI writes `import { cn } from "cn"` and adds an npm package `cn`, ignoring the `utils` alias. Change the import to `@/shared/lib/css` and remove the package (`npm uninstall cn`).
 4. **Adapt inside the kit, once.** Behaviour the app needs everywhere goes into the kit file itself, e.g. `PaginationLink` renders Next's `Link` (client navigation) instead of `<a>`, and Polish screen-reader text; `Button` honours `aria-disabled` (ignores clicks and Enter, looks disabled, stays focusable), so a button waiting for the server uses `aria-disabled={pending}` instead of `disabled`, which drops focus to `<body>` (`better-accessibility`). Native `disabled` stays for an action that is genuinely unavailable. Screens still do not restyle kit components (above).
 5. **Compose on top, in a separate file.** App-level components built from kit parts keep their own name and file (`ListPagination` in `list-pagination.tsx` on top of shadcn's `pagination.tsx`), so a later `shadcn add` cannot overwrite them.
@@ -137,6 +137,7 @@ A component with `components.json` in its root takes its UI kit from shadcn/ui (
 - Keep breakpoint and container tokens in one unit (rem).
 - Layout with `flex`/`grid` and `gap-*`, not margins between siblings. `space-x-*`/`space-y-*` only for simple stacks.
 - Use dynamic viewport units for full-height layouts: `min-h-dvh`, not `h-screen`.
+- **Reserve the space of media whose size is known** (a page preview, a thumbnail): a box with `aspect-ratio` from the data (inline `style`, since class names cannot be built at runtime) and a skeleton until `onLoad`. An `<img>` without a size is 0 px until it loads and then pushes everything below it. A cached image can load before React attaches `onLoad`: check `complete && naturalWidth` once mounted.
 - **Layouts survive 200% zoom** (`better-accessibility`; a 1440 px screen becomes a 720 px viewport). In Tailwind:
   - a header or toolbar with a title and actions wraps (`flex flex-wrap gap-x-4 gap-y-3`) and gives the title a minimum width (`min-w-60 flex-1`), instead of `truncate` squeezing the title to nothing under the actions;
   - a grid or flex item that holds wide content (a table, a long line) may shrink: grid tracks `minmax(0,1fr)` (`grid-cols-[minmax(0,1fr)]`), flex items `min-w-0`, so the wide content scrolls in its own `overflow-x-auto` container instead of the whole page. A plain `grid` track is `auto` and grows to its widest child;

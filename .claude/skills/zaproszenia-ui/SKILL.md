@@ -1,9 +1,9 @@
 ---
 name: zaproszenia-ui
-description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
+description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), loading skeletons, the unsaved-changes guard, one save per dialog, the date and time picker, and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # UI conventions of this project
@@ -58,3 +58,10 @@ Writing follows `better-accessibility`, checking uses the AccessLint skills (`ac
 
 - **Desktop only.** Check zoom at 200% on a 1440 px screen, i.e. a 720 px wide viewport (WCAG 1.4.4): no sideways page scroll, nothing covered, every title visible. The Tailwind recipes are in `tailwind-best-practices` section 4.
 - **Reflow at 320 px (1.4.10) is out of scope** by the product's decision and documented in the user instructions and the case study: do not report or fix it, although `better-accessibility` asks for it.
+
+## 3. Loading, leaving and dates
+
+- **Loading** (the general rules are in `nextjs-best-practices`, Loading states). The kit has `Skeleton`, `Spinner` (`decorative` next to text such as "Zapisywanie…"), `TableSkeleton`, `CardGridSkeleton`, `DialogSkeleton` (`header="title-bar"` or `"header"`, at the dialog's width) and `PagePreview` for a rendered page (box with the page's proportions, skeleton until loaded). Each `_pages` slice keeps its page title and description in `config/page-copy.ts`, shared by the page and its skeleton, and exports its loading components from `ui/<slice>-loading-routes.tsx`; `app/**/loading.tsx` only re-exports them.
+- **Leaving a form**: every form dialog closes through `useDiscardGuard(dirty, dismiss)` and renders `DiscardChangesDialog` (`@/shared/lib/dialogs`, `@/shared/ui/discard-changes-dialog`); a page form calls `useUnsavedChangesWarning(form.dirty)`. When the form state lives in the dialog's content (the event dialog), the content renders the `Dialog` itself.
+- **One "Zapisz" per dialog**: the event dialog saves its details and its template choice together through `useSaveForms`; a section never has its own save button.
+- **Dates and times are picked, never typed**: a field with `inputType: "datetime-local"` renders `DateTimeInput` (the kit's `DateTimePicker`: a calendar and hour/minute lists, the whole field opens it).

@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.13.0"
+  version: "1.14.0"
   next: "16"
 ---
 
@@ -84,6 +84,10 @@ return submission.reply();
 - **A form that stays on screen keeps what was saved.** React 19 resets a `<form action>` after the action, back to the values it rendered with, so a settings form would show empty or stale fields after a successful save. `useServerForm` returns `formProps` that submit from `onSubmit` (Conform validates, then the action runs in `startTransition`), which React does not reset; `action` stays for a browser without JavaScript. Spread `formProps` on the form, never `action={formAction}` alone.
 - Fields render through `FormField` with Conform's field metadata; `FormStatus` announces the form error or success message.
 - **An action that reads the saved data (generate, export, send) asks about unsaved changes first.** Check `form.dirty` of every form whose data the action uses (the dialog owns those forms' state for this) and offer "Zapisz i …", "… bez zapisywania" and "Wróć". "Save and continue" submits each dirty form (`requestSubmit()` on the element with `form.id`) and runs the action in `onSuccess` once all of them saved; a failed save (`lastResult.status === "error"` or `form.allErrors`) cancels it, so a later plain save does not trigger it.
+- **A control that is not a native input** (a date picker, a combobox) joins the form through Conform's `useInputControl({ key, name, formId, initialValue })`: Conform keeps the value in a hidden base input of the form, so it is submitted, validated and counted in `form.dirty` like a typed value. A `<button>` trigger cannot carry `aria-invalid`: link the error with `aria-describedby` and style the state with a data attribute.
+- **The dialog's main button stays the form's submit button** (`type="submit" form={form.id}` in the header), even when it does more than submit that form: without a submit button Enter in a field does nothing (implicit submission presses it). Intercept its `onClick` (`preventDefault()`, then save every changed form).
+- **Saving several forms together** (one "Zapisz" for a dialog with two forms): keep the set of forms still saving in a `useRef`, not in state; both can report success in the same render, and each must see the other's report or the batch never completes.
+- **Closing a form dialog with unsaved changes asks first** (close button, Escape, a click outside), with "Wróć do edycji" as the default, and `beforeunload` warns on reload. Next cannot stop a link navigation, so a page form only gets the reload warning.
 - Conform tracks values from real input events. Browser tests type with CDP `Input.insertText` (and keys), not by setting `.value` and dispatching a synthetic event, which leaves `form.dirty` false; a `<select>` change needs an `input` event as well as `change`.
 
 ### Calling actions from buttons and dialogs
@@ -103,6 +107,11 @@ const copy = useAction(() => copyTemplateAction(template.id));
 - Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the `useAction`. Two actions in one row are two hooks; show `first.error ?? second.error`.
 - Client hooks live in their own `shared/lib` topic (`action-call`, `server-form`), never in an index that `"use server"` files import: a Server Action module must not pull a `"use client"` module through a shared barrel.
 - A raw `startTransition` is fine only where no `ActionResult` comes back: router navigation (search as you type), or client SDK flows such as sign-in.
+
+### Loading states
+
+- **Every route that loads server data has a `loading.tsx`**, and so does every dialog route in a parallel slot (`@modal/(.)[id]/loading.tsx`): without one nothing happens after a click until the server answers. The skeleton has the final shape: the page's real header with skeleton rows or cards, a dialog opening at once at its final width.
+- In development Next does not prefetch, so a skeleton appears with the server's first answer; in production visible links prefetch it and it shows at once. To see and test one, delay the server component briefly (and remove the delay before committing): throttling the network delays the skeleton as much as the content.
 
 ### Paged lists
 
