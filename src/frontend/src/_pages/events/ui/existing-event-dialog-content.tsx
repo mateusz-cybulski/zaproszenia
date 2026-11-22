@@ -14,7 +14,7 @@ import type { EventSection } from "../model/event-section";
 import { useEventDocument } from "../model/use-event-document";
 import { useEventForm } from "../model/use-event-form";
 import { useEventSections } from "../model/use-event-sections";
-import { type EventDialogForm, useSaveThenGenerate } from "../model/use-save-then-generate";
+import { type EventDialogForm, useSaveForms } from "../model/use-save-forms";
 import { useTemplateChoiceForm } from "../model/use-template-choice-form";
 import { EventDocumentMenu } from "./event-document-menu";
 import { EventDocumentConfirmDialog } from "./event-document-confirm-dialog";
@@ -48,10 +48,9 @@ export function ExistingEventDialogContent({
   onSaved,
 }: ExistingEventDialogContentProps) {
   const documents = useEventDocument(event);
-  const saveThenGenerate = useSaveThenGenerate((kind) => void documents.generate(kind));
-  // Saving for "Zapisz i generuj" keeps the dialog open; a plain save closes it as before.
-  const eventForm = useEventForm(event, () => saveThenGenerate.saved("details") || onSaved());
-  const templateForm = useTemplateChoiceForm(event, () => saveThenGenerate.saved("templates"));
+  const batch = useSaveForms();
+  const eventForm = useEventForm(event, () => batch.saved("details") || onSaved());
+  const templateForm = useTemplateChoiceForm(event, () => batch.saved("templates"));
   const sections = useEventSections(initialSection);
   const [unsavedKind, setUnsavedKind] = useState<EventDocumentKind | null>(null);
 
@@ -65,9 +64,19 @@ export function ExistingEventDialogContent({
 
   useEffect(() => {
     if (saveFailed) {
-      saveThenGenerate.cancel();
+      batch.cancel();
     }
-  }, [saveFailed, saveThenGenerate]);
+  }, [saveFailed, batch]);
+
+  function saveForms(names: EventDialogForm[], then: () => void) {
+    batch.start(names, then);
+    names.forEach((name) => submitForm(forms[name].form.id));
+  }
+
+  // "Zapisz" saves whatever changed, the details when nothing did, then closes the dialog.
+  function save() {
+    saveForms(unsaved.length > 0 ? unsaved : ["details"], onSaved);
+  }
 
   function generate(kind: EventDocumentKind) {
     if (unsaved.length > 0) {
@@ -81,10 +90,12 @@ export function ExistingEventDialogContent({
     if (!unsavedKind) {
       return;
     }
-    saveThenGenerate.start(unsavedKind, unsaved);
+    const kind = unsavedKind;
     setUnsavedKind(null);
-    unsaved.forEach((name) => submitForm(forms[name].form.id));
+    saveForms(unsaved, () => void documents.generate(kind));
   }
+
+  const pending = eventForm.pending || templateForm.pending;
 
   return (
     <>
@@ -98,13 +109,24 @@ export function ExistingEventDialogContent({
               {documents.error}
             </p>
             <FormStatus result={eventForm.lastResult} />
+            <FormStatus result={templateForm.lastResult} />
             <EventDocumentMenu
               pending={documents.pending}
-              busy={saveThenGenerate.waiting}
+              busy={batch.saving}
               onGenerate={generate}
             />
-            <Button type="submit" form={eventForm.form.id} aria-disabled={eventForm.pending}>
-              {eventForm.pending ? COPY.pending : COPY.submit}
+            {/* The details form's submit button, so Enter in a field presses it too; it saves
+                every form with changes, not only the details. */}
+            <Button
+              type="submit"
+              form={eventForm.form.id}
+              aria-disabled={pending || batch.saving}
+              onClick={(clickEvent) => {
+                clickEvent.preventDefault();
+                save();
+              }}
+            >
+              {pending ? COPY.pending : COPY.submit}
             </Button>
           </>
         }

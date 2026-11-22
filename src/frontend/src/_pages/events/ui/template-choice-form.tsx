@@ -2,8 +2,6 @@
 
 import type { Event } from "@/entities/event";
 import type { Template } from "@/entities/template";
-import { Button } from "@/shared/ui/button";
-import { FormStatus } from "@/shared/ui/form-status";
 
 import { EVENT_SECTION_COPY } from "../config/messages";
 import type { TemplateChoiceFormState } from "../model/use-template-choice-form";
@@ -16,7 +14,7 @@ type TemplateChoiceFormProps = {
 };
 
 export function TemplateChoiceForm({ event, templates, templateForm }: TemplateChoiceFormProps) {
-  const { fields, formProps, pending, lastResult } = templateForm;
+  const { fields, formProps } = templateForm;
 
   return (
     <form {...formProps} className="grid gap-6">
@@ -36,12 +34,6 @@ export function TemplateChoiceForm({ event, templates, templateForm }: TemplateC
           templates={templates}
           meta={fields.envelopeTemplateId}
         />
-      </div>
-      <div className="flex items-center gap-3">
-        <Button type="submit" aria-disabled={pending}>
-          {pending ? "Zapisywanie…" : "Zapisz szablony"}
-        </Button>
-        <FormStatus result={lastResult} successMessage={EVENT_SECTION_COPY.templatesSaved} />
       </div>
     </form>
   );
