@@ -3,7 +3,7 @@ name: api-structure
 description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. default categories) gets into the database, how deleting user data works (soft delete with restore by default), how routers share lookups such as the user's own order or 404 (dependencies in app/dependencies.py, never imports between routers), how list endpoints are paged (Pagination, Page, paginate), and how endpoints stay robust: uploaded files checked for what processing them costs (page sizes, pixel budgets), join rows inserted with on_conflict_do_nothing, missing stored files, and no API docs in production."
 license: MIT
 metadata:
-  version: "1.8.0"
+  version: "1.9.0"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -170,6 +170,14 @@ Rows that the code defines and every user sees (default categories, built-in pla
 3. Run it right after `alembic upgrade head`: in the API service's start `command` in `compose.yml` (before `exec uvicorn`) and in the "Migrate database" step of `.github/workflows/terraform.yml`. Production never migrates in the API process: several instances would race.
 4. Tests run it once after migrating the test database, and clean up only user rows between tests, not the reference rows.
 5. A data migration is the wrong place: migrations are frozen history, while reference rows follow the current code.
+
+## Changing a response other services read
+
+Services deploy independently: for a while a new frontend talks to the old API, or the other way round.
+
+- Adding a field is safe for the API; the consumer must accept its absence until the API is deployed (a default, see `nextjs-best-practices`).
+- Removing or renaming a field, or making it required in a request, takes two deploys: first the consumers stop depending on it, then the API changes.
+- Before a pull request that changes the contract, run both combinations locally: the new consumer against the old API (e.g. the old API from `git worktree add <scratchpad>/old main`) and the old consumer against the new API, or parse the old and the new response with the consumer's schema.
 
 ## Robust endpoints: files, join rows, the public surface
 
