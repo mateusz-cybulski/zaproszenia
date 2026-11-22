@@ -5,6 +5,7 @@ import { requireViewer } from "@/entities/viewer/index.server";
 import { routes } from "@/shared/routes";
 import { ThemeSwitcher } from "@/shared/ui/theme-switcher";
 
+import { AppFooter } from "./app-footer";
 import { LogoutButton } from "./logout-button";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -30,7 +31,10 @@ export async function AppShell({ children }: { children: ReactNode }) {
           <LogoutButton />
         </div>
       </aside>
-      <main className="min-w-0">{children}</main>
+      <div className="flex min-w-0 flex-col">
+        <main className="min-w-0 flex-1">{children}</main>
+        <AppFooter />
+      </div>
     </div>
   );
 }
