@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     storage_bucket: str | None = None
     local_storage_dir: Path | None = None
 
+    # Cloud Run gets GOOGLE_CLOUD_PROJECT from Terraform; locally the ADC's quota project is used.
+    google_cloud_project: str | None = None
+    gemini_model: str = "gemini-3.8-flash"
+    gemini_location: str = "global"
+
     @field_validator("dev_auth_user")
     @classmethod
     def _no_dev_auth_on_cloud_run(cls, value: str | None) -> str | None:
