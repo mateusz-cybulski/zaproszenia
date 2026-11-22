@@ -3,7 +3,7 @@ name: clean-code
 description: "Use whenever you write or change code in this repo, in any language: how to name variables, functions, types and constants so the name says what the thing is (full words, no abbreviations, no names made of a bare number like Text300), that deprecated APIs are never used (the lint and mypy fail on them), when a literal number or string must become a named constant, how to group related constants (limits, sizes, timeouts) and related field types in one typed namespace (a @final class such as TextLimit or TextField) instead of a dictionary with string keys or copies in several layers, and the naming convention that keeps those namespaces from clashing with variables. Applies to Python, TypeScript and the rest; code-reviewer checks the same rules in reviews."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
 ---
 
 # Clean code: names and constants
@@ -19,9 +19,9 @@ Code is read far more often than it is written. A reader should understand what 
 |---|---|---|
 | `Text300`, `Text5000` | `TextField.OptionalShort`, `TextField.OptionalLong` | says what the field holds; the limit lives in one constant |
 | `MAX_300`, `TIMEOUT_30` | `TextLimit.SHORT`, `REQUEST_TIMEOUT_SECONDS` | the number is the value, not the name |
-| `data`, `info`, `item`, `result` (alone) | `guests`, `sender`, `template`, `verification_result` | names the business concept |
-| `flag`, `check` | `is_verified`, `has_file`, `sender_complete` | booleans read as yes/no questions |
-| `handle()`, `process()` | `restore_guest()`, `render_preview()` | verb + what it acts on |
+| `data`, `info`, `item`, `result` (alone) | `orders`, `customer`, `invoice`, `payment_result` | names the business concept |
+| `flag`, `check` | `is_paid`, `has_invoice`, `address_complete` | booleans read as yes/no questions |
+| `handle()`, `process()` | `restore_order()`, `render_invoice()` | verb + what it acts on |
 
 - **Units in the name** when a number has one and the type does not carry it: `timeout_seconds`, `size_mm`, `max_bytes`.
 - **If a name needs a comment to be understood, rename it** (see `remove-comments`).
@@ -93,7 +93,7 @@ The convention keeps a namespace from ever clashing with a variable of the same 
 | Variables, parameters, modules | — | `snake_case` / `camelCase`, never the bare container name | — | `text`, `field_text` |
 
 - **In TypeScript and JavaScript every module-level constant is `UPPER_SNAKE_CASE`**: a fixed primitive (`MAX_PDF_BYTES`, `DELETE_CONFIRMATION`) and a fixed object or array (copy, labels, lookup maps, option lists, form field configs: `DELETE_COPY`, `VERIFICATION_STATUS_LABELS`, `COUNTRIES`, `ADDRESS_FIELDS`). Keys inside stay `camelCase`. In Python the group is a class, so it is `PascalCase` with `UPPER_SNAKE` members (`TextLimit.SHORT`).
-- A `const` binding alone does not make a constant. `camelCase` stays for locals inside functions, functions, components, hooks, zod schemas, objects of functions (`routes.guests()`), stateful instances (a `Map` used as a cache, a `Set` of listeners, an `Intl.DateTimeFormat`), and names a framework requires (`export const metadata` in Next).
+- A `const` binding alone does not make a constant. `camelCase` stays for locals inside functions, functions, components, hooks, zod schemas, objects of functions (`routes.orders()`), stateful instances (a `Map` used as a cache, a `Set` of listeners, an `Intl.DateTimeFormat`), and names a framework requires (`export const metadata` in Next).
 - **The container always has a suffix** saying what it holds (`Limit`, `Size`, `Field`, `Copy`, `Labels`). A bare concept (`Text`, `Paper`) is left free for variables and classes of the business concept itself.
 - **The concept joins related containers**: `TextLimit.SHORT` and `TextField.OptionalShort` read as a pair; the frontend mirror is `TEXT_LIMIT.short`.
 - Members are named by their meaning (`SHORT`, `A5`, `MAX_ATTEMPTS`), not by their value.

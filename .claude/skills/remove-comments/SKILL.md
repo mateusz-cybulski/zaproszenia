@@ -1,9 +1,9 @@
 ---
 name: remove-comments
-description: "Use when writing or changing code in this repo, to decide whether a comment belongs there (by default it does not), and when asked to remove, strip or clean up comments (\"remove comments\", \"usuń komentarze\", \"wywal komentarze\") in a file, a directory, or the current changes. Keeps only comments without which the code cannot be understood (a non-obvious workaround or tweak, a constraint the code cannot show) and the comment-shaped lines that change behavior (shebangs, directives, lint/type pragmas). Covers JS/TS/JSX, CSS, shell, Python, YAML, TOML, Terraform, Dockerfile and ignore files; verifies the code still lints, type-checks and parses afterwards."
+description: "Use when writing or changing code in this repo, to decide whether a comment belongs there (by default it does not), and when asked to remove, strip or clean up comments (\"remove comments\", \"strip comments\", \"clean up comments\") in a file, a directory, or the current changes. Keeps only comments without which the code cannot be understood (a non-obvious workaround or tweak, a constraint the code cannot show) and the comment-shaped lines that change behavior (shebangs, directives, lint/type pragmas). Covers JS/TS/JSX, CSS, shell, Python, YAML, TOML, Terraform, Dockerfile and ignore files; verifies the code still lints, type-checks and parses afterwards."
 license: MIT
 metadata:
-  version: "2.0.0"
+  version: "2.0.1"
 ---
 
 # Comments: only when the code cannot speak for itself
@@ -33,7 +33,7 @@ When unsure, ask: "would a competent reader of this file get it wrong without th
 
 When writing new code, apply this rule before adding any comment, including doc comments (`/** */`) and Python docstrings: a docstring is written only when it carries a "keep" reason from the table above.
 
-When asked to remove comments, follow the sections below. The user can ask to remove **all** comments ("wszystkie", "every comment"); then drop the "necessary" exception and keep only section 3.
+When asked to remove comments, follow the sections below. The user can ask to remove **all** comments ("all comments", "every comment"); then drop the "necessary" exception and keep only section 3.
 
 ## 1. Scope
 

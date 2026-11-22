@@ -3,7 +3,7 @@ name: tailwind-best-practices
 description: "Use when writing, changing or reviewing styles in a component that uses Tailwind CSS (tailwindcss in package.json): class names in JSX/TSX, the Tailwind entry CSS (@import \"tailwindcss\", @theme, @custom-variant, @utility, @source), design tokens, variants and the cn() helper, dark mode, responsive and container queries, focus and motion accessibility, class sorting and linting, and adding UI kit components with the shadcn/ui CLI. Tailwind CSS v4 (CSS-first configuration). Pair with feature-sliced-design for where the files live."
 license: MIT
 metadata:
-  version: "1.7.0"
+  version: "1.7.1"
   tailwind: "4"
 ---
 
@@ -125,7 +125,7 @@ A component with `components.json` in its root takes its UI kit from shadcn/ui (
 1. **Look in shadcn first.** Before writing a kit component (input, toggle, checkbox, tooltip, select, tabs, pagination, popover, slider...), check https://ui.shadcn.com/docs/components and add it with the CLI: `npx shadcn add <name>`. A hand-written radio group, checkbox or pagination misses the keyboard handling and ARIA that the Radix-based one has.
 2. **Preview, never overwrite.** Run `npx shadcn add <name> --dry-run` first: adding a component also re-adds the kit files it depends on (pagination brings `button`), and `--overwrite` replaces our edits to them (it once reverted the destructive button's contrast fix). Add only the new files; keep ours. After adding, `git diff` every existing kit file the CLI reports as updated and restore ours (it can report a file both updated and skipped; keep a copy of files the dry run lists as overwritten).
 3. **Fix the `cn` import.** The CLI writes `import { cn } from "cn"` and adds an npm package `cn`, ignoring the `utils` alias. Change the import to `@/shared/lib/css` and remove the package (`npm uninstall cn`).
-4. **Adapt inside the kit, once.** Behaviour the app needs everywhere goes into the kit file itself, e.g. `PaginationLink` renders Next's `Link` (client navigation) instead of `<a>`, and Polish screen-reader text; `Button` honours `aria-disabled` (ignores clicks and Enter, looks disabled, stays focusable), so a button waiting for the server uses `aria-disabled={pending}` instead of `disabled`, which drops focus to `<body>` (`better-accessibility`). Native `disabled` stays for an action that is genuinely unavailable. Screens still do not restyle kit components (above).
+4. **Adapt inside the kit, once.** Behaviour the app needs everywhere goes into the kit file itself, e.g. `PaginationLink` renders Next's `Link` (client navigation) instead of `<a>`, and screen-reader text in the app's language; `Button` honours `aria-disabled` (ignores clicks and Enter, looks disabled, stays focusable), so a button waiting for the server uses `aria-disabled={pending}` instead of `disabled`, which drops focus to `<body>` (`better-accessibility`). Native `disabled` stays for an action that is genuinely unavailable. Screens still do not restyle kit components (above).
 5. **Compose on top, in a separate file.** App-level components built from kit parts keep their own name and file (`ListPagination` in `list-pagination.tsx` on top of shadcn's `pagination.tsx`), so a later `shadcn add` cannot overwrite them.
 6. Write a kit component by hand only when shadcn has none, in its style: `data-slot`, variants with `cva`, design tokens, `cn()`.
 
