@@ -49,7 +49,7 @@ function toEvent(dto: EventDto) {
 export const eventDtoSchema = z.object(eventDtoShape).transform(toEvent);
 
 export const eventListItemDtoSchema = z
-  .object({ ...eventDtoShape, guest_count: z.int().nonnegative() })
+  .object({ ...eventDtoShape, guest_count: z.int().nonnegative().default(0) })
   .transform((dto) => ({ ...toEvent(dto), guestCount: dto.guest_count }));
 
 export function toEventBody(input: EventInput) {
