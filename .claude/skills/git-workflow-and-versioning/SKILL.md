@@ -1,9 +1,9 @@
 ---
 name: git-workflow-and-versioning
-description: "Use when committing, branching, splitting uncommitted work into separate commits, writing a commit message or a pull request description, pushing, merging, resolving conflicts, rewriting history, or cutting a release in this repo. Covers this repo's rules: commits and pushes only when the user asks, English git texts in plain sentences (no feat:/fix: prefixes), feat/ fix/ refactor/ branches (one topic per branch; an unrelated request mid-branch gets a new branch from main) merged with a merge commit one pull request at a time (the target branch's runs pass before the next merge), one logical change per commit, checks before committing, and force pushes only with the user's consent. For splitting a branch into several dependent pull requests see stacked-prs."
+description: "Use when committing, branching, splitting uncommitted work into separate commits, writing a commit message or a pull request description (with a \"Check on production\" checklist), pushing, merging, resolving conflicts, rewriting history, or cutting a release in this repo. Covers this repo's rules: commits and pushes only when the user asks, English git texts in plain sentences (no feat:/fix: prefixes), feat/ fix/ refactor/ branches (one topic per branch; an unrelated request mid-branch gets a new branch from main) merged with a merge commit one pull request at a time (the target branch's runs pass before the next merge), one logical change per commit, checks before committing, and force pushes only with the user's consent. For splitting a branch into several dependent pull requests see stacked-prs."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
   source: "Adapted from addyosmani/agent-skills git-workflow-and-versioning (MIT)"
 ---
 
@@ -60,6 +60,33 @@ Co-Authored-By: …
 - The body is grouped (API / Frontend / Tests) when the commit spans layers; bullets say what changed and why, not which lines.
 - Write the message to a file in the scratchpad and commit with `git commit -F <file>`; `-F -` with a heredoc is unreliable here.
 - Never: `update`, `fix`, `misc`, `wip`.
+
+### Pull request descriptions
+
+Written to a file in the scratchpad (`gh pr create --body-file`) and shown to the user in the reply.
+
+```markdown
+## What
+What the change does for the user, and why.
+
+## <Area> (Frontend, API, Skills, ...)
+- what changed, grouped like the commit bodies
+
+## Testing
+What was checked before the pull request: checks, tests, browser steps.
+
+## Check on production
+- [ ] Open an existing event: the date reads "Sobota, 12 grudnia 2026 18:00".
+- [ ] Close the guest dialog after typing a name: it asks before discarding.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+**Check on production** is a checklist for the user after the deploy:
+
+- One checkbox per step anyone can click through, with the expected result. Never "check that it works".
+- Cover what the local checks could not: the changed flows on real data, migrations, environment variables, domains, permissions, third-party services, and the things a deploy can break around the change.
+- Nothing to check on production (skills only, docs only): write `Nothing to check: no deployed code changes.` instead of leaving the section out.
 
 ## 3. Branches
 
@@ -167,4 +194,5 @@ The app deploys from `main` and has no versioned consumers, so it has no release
 - A commit that mixes a refactor with a feature, or code with skill updates.
 - A commit that does not pass the checks on its own.
 - Merging the next pull request before the previous merge's runs on the target branch (checks, deploy) have passed.
+- A pull request description without the "Check on production" checklist.
 - Building an unrelated request on the open branch, or a pull request whose commits cover several topics.

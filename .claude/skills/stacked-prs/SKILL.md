@@ -3,7 +3,7 @@ name: stacked-prs
 description: "Use when the user wants to split a large branch or feature into several smaller pull requests (stacked or dependent PRs), review a branch in parts, or manage a chain of branches where each builds on the previous one: cutting the stack from existing commits without rewriting history, naming, PR descriptions with the stack overview, updating lower branches, and merging in order with merge commits on GitHub. Follows git-workflow-and-versioning for commits, messages and pushes."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   source: "Adapted from bobmatnyc/claude-mpm-skills stacked-prs (MIT)"
 ---
 
@@ -77,6 +77,10 @@ Only this step's changes: `git diff feat/x-1-data...feat/x-2-kit`
 
 ## Testing
 What was checked for this step.
+
+## Check on production
+- [ ] What to click through after this step is deployed, with the expected result
+  (see git-workflow-and-versioning, Pull request descriptions).
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
