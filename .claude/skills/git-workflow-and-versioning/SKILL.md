@@ -1,9 +1,9 @@
 ---
 name: git-workflow-and-versioning
-description: "Use when committing, branching, splitting uncommitted work into separate commits, writing a commit message or a pull request description, pushing, merging, resolving conflicts, rewriting history, or cutting a release in this repo. Covers this repo's rules: commits and pushes only when the user asks, English git texts in plain sentences (no feat:/fix: prefixes), feat/ fix/ refactor/ branches merged with a merge commit one pull request at a time (the target branch's runs pass before the next merge), one logical change per commit, checks before committing, and force pushes only with the user's consent. For splitting a branch into several dependent pull requests see stacked-prs."
+description: "Use when committing, branching, splitting uncommitted work into separate commits, writing a commit message or a pull request description, pushing, merging, resolving conflicts, rewriting history, or cutting a release in this repo. Covers this repo's rules: commits and pushes only when the user asks, English git texts in plain sentences (no feat:/fix: prefixes), feat/ fix/ refactor/ branches (one topic per branch; an unrelated request mid-branch gets a new branch from main) merged with a merge commit one pull request at a time (the target branch's runs pass before the next merge), one logical change per commit, checks before committing, and force pushes only with the user's consent. For splitting a branch into several dependent pull requests see stacked-prs."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   source: "Adapted from addyosmani/agent-skills git-workflow-and-versioning (MIT)"
 ---
 
@@ -73,7 +73,19 @@ main (deployed on every push)
 - Branch from `main`, kebab-case names. **Check the current branch before committing**: never commit onto `main`; if the work started on `main`, create the branch first.
 - A new branch's upstream is its own remote branch (`git push -u origin feat/x` when the user asks to push), never `origin/main`. A branch tracking `origin/main` pushes straight to main.
 - Pull requests are merged on GitHub **with a merge commit**, so history shows the work happened on a branch. Never fast-forward or squash a feature branch into `main` locally. A local merge, when the user asks for one, is `git merge --no-ff -F <message file>`.
-- Branches may live for several steps (one per feature: data, kit, UI, save), but merge `main` in when it moves, and keep each step a commit.
+- **One topic per branch.** A branch may live for several steps of its own topic (data, kit, UI, save), but merge `main` in when it moves, and keep each step a commit. The branch name and the pull request title must still describe everything in it.
+
+### A new request while a branch is open
+
+The user often asks for the next thing in the middle of a branch. Before writing any code, decide whether it belongs to the branch's topic:
+
+- **It does** (a fix or a change to what this branch builds, e.g. a tweak to the skeleton on a loading branch): keep working on the branch.
+- **It does not** (a new feature, another screen, another component, e.g. a date picker on a loading branch): finish or commit the current step first (when the user agrees to commit), then `git switch -c <prefix>/<topic> main` and do the new work there. Say in one line that it goes to a new branch and why.
+- **Unclear**: ask before starting, with both options.
+
+A new branch from `main` does not see the open branch's unmerged work. If the new topic needs it, say so and either branch from the open branch (a stack, see `stacked-prs`) or wait until it is merged.
+
+**Before opening a pull request**, read `git log --oneline main..HEAD`. If the commits cover more than one topic, tell the user and propose splitting them (separate branches with the commits picked over, or `stacked-prs`) before anything reaches `main`; once merged, splitting would need rewriting `main`.
 
 ### Merging pull requests (when the user asks)
 
@@ -155,3 +167,4 @@ The app deploys from `main` and has no versioned consumers, so it has no release
 - A commit that mixes a refactor with a feature, or code with skill updates.
 - A commit that does not pass the checks on its own.
 - Merging the next pull request before the previous merge's runs on the target branch (checks, deploy) have passed.
+- Building an unrelated request on the open branch, or a pull request whose commits cover several topics.
