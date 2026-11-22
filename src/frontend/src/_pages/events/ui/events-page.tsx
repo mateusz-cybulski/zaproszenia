@@ -12,6 +12,7 @@ import { Button } from "@/shared/ui/button";
 import { Page } from "@/shared/ui/page";
 import { ListPagination } from "@/shared/ui/list-pagination";
 
+import { EVENTS_PAGE } from "../config/page-copy";
 import { EventRowActions } from "./event-row-actions";
 
 export const metadata: Metadata = { title: "Wydarzenia · Zaproszenia" };
@@ -34,8 +35,8 @@ export async function EventsPage({ searchParams }: { searchParams: SearchParams 
 
   return (
     <Page
-      title="Wydarzenia"
-      description="Wydarzenia, na które wysyłasz zaproszenia."
+      title={EVENTS_PAGE.title}
+      description={EVENTS_PAGE.description}
       actions={
         <>
           <Button asChild variant="outline">

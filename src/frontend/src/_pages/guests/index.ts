@@ -3,3 +3,8 @@ export { GuestEditModal, GuestsEditPage } from "./ui/guest-edit-routes";
 export { DeletedGuestsModal, GuestsDeletedPage } from "./ui/deleted-guests-routes";
 export { GuestsLayout } from "./ui/guests-layout";
 export { GuestsPage, metadata } from "./ui/guests-page";
+export {
+  DeletedGuestsModalLoading,
+  GuestModalLoading,
+  GuestsLoading,
+} from "./ui/guests-loading-routes";
