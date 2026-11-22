@@ -3,7 +3,7 @@ name: zaproszenia-ui
 description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), loading skeletons, the unsaved-changes guard, one save per dialog, the date and time picker, and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
 license: MIT
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # UI conventions of this project
@@ -63,5 +63,5 @@ Writing follows `better-accessibility`, checking uses the AccessLint skills (`ac
 
 - **Loading** (the general rules are in `nextjs-best-practices`, Loading states). The kit has `Skeleton`, `Spinner` (`decorative` next to text such as "Zapisywanie…" and inside a badge or control that has its own label; never a raw `LoaderCircle` with `animate-spin`; sized with `h-4 w-4` so small buttons and badges can shrink it like their icons; a `Button` that runs an operation takes `pending` and its `icon` as props instead: it swaps the icon for the spinner and sets `aria-disabled`, so call sites never write their own `pending ? <Spinner /> : <Icon />`), `TableSkeleton`, `CardGridSkeleton`, `DialogSkeleton` (`header="title-bar"` or `"header"`, at the dialog's width) and `PagePreview` for a rendered page (box with the page's proportions, skeleton until loaded). Each `_pages` slice keeps its page title and description in `config/page-copy.ts`, shared by the page and its skeleton, and exports its loading components from `ui/<slice>-loading-routes.tsx`; `app/**/loading.tsx` only re-exports them.
 - **Leaving a form**: every form dialog closes through `useDiscardGuard(dirty, dismiss)` and renders `DiscardChangesDialog` (`@/shared/lib/dialogs`, `@/shared/ui/discard-changes-dialog`); a page form calls `useUnsavedChangesWarning(form.dirty)`. When the form state lives in the dialog's content (the event dialog), the content renders the `Dialog` itself.
-- **One "Zapisz" per dialog**: the event dialog saves its details and its template choice together through `useSaveForms`; a section never has its own save button.
+- **One "Zapisz" per dialog**: the event dialog's details and template choice are one form (`EventSections` wraps both sections; `EventDetailsFields` and `TemplateChoiceFields` render fields only), saved by `updateEventAction` in one `PUT /events/{id}`; the template selects stay mounted, their previews load when the section opens. A section never has its own save button.
 - **Dates and times are picked, never typed**: a field with `inputType: "datetime-local"` renders `DateTimeInput` (the kit's `DateTimePicker`: a calendar and hour/minute lists, the whole field opens it).
