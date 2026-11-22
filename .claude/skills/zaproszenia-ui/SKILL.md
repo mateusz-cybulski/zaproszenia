@@ -3,7 +3,7 @@ name: zaproszenia-ui
 description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.2.0"
 ---
 
 # UI conventions of this project
@@ -48,6 +48,8 @@ Every dialog (`@/shared/ui/dialog`) has a header and a body, so the header and t
 - The name and the submit button sit outside the `<form>`: they join it with `form={form.id}`. So the dialog owns the form state: a `use<Thing>Form` hook in the slice's `model` wraps `useServerForm`, the dialog calls it and passes it to the form component, which renders only the body fields.
 - Variants (the event's Szczegóły / Szablony / Goście) switch in `start`, not under the header. Switching scrolls the body back to the top (a ref on `DialogBody`). The form that owns the name stays mounted (hidden) in every variant.
 - The side columns are equal so the name stays centred; when the dialog is too narrow (200% zoom) they keep their content and the name narrows, up to 18rem wide otherwise. If `start` or `end` still does not fit, shorten the labels (the action's label does not repeat the name: "Utwórz", not "Utwórz wydarzenie").
+- Secondary actions of the record go in `end` before the main action, grouped in **one** outline dropdown with an icon (the event's "Do druku" with "Zaproszenia (PDF)" and "Koperty (PDF)"), not a button each; below `lg` the trigger shows only its icon (`max-lg:sr-only` on the label, a tooltip), so the name keeps its room at 200% zoom. Radix opens a menu on pointer down, so a busy menu stays closed through a controlled `open`, not through `aria-disabled`.
+- Lists and cards open a record with "Otwórz" (the dialog does more than edit).
 - Other dialogs (confirmations, the trash, uploads) keep `DialogHeader` with a title and a description.
 
 ## 2. Accessibility scope

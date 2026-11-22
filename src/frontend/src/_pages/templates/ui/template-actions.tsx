@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, PencilLine } from "lucide-react";
+import { Copy, FolderOpen } from "lucide-react";
 import Link from "next/link";
 
 import type { Template } from "@/entities/template";
@@ -18,7 +18,7 @@ export function TemplateActions({ template }: { template: Template }) {
     <>
       <Button variant="outline" size="sm" asChild>
         <Link href={routes.template(template.id)} scroll={false}>
-          <PencilLine /> {template.isSystem ? "Pola" : "Edytuj"}
+          <FolderOpen /> Otwórz<span className="sr-only"> {template.name}</span>
         </Link>
       </Button>
       <Button variant="outline" size="sm" onClick={() => copy.run()} aria-disabled={copy.pending}>

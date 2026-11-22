@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import Select, literal, select
+from sqlalchemy import literal, select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import contains_eager
 
 from app.auth import CurrentUser
 from app.db import Session
@@ -15,24 +14,15 @@ from app.schemas.event_guests import (
     EventGuestUpdate,
 )
 from app.schemas.pagination import Page
+from app.services.event_guests import active_guests_of, in_list_order
 from app.services.guests import guest_search
 from app.services.pagination import paginate
 
 router = APIRouter(prefix="/events/{event_id}/guests", tags=["events"])
 
 
-def _active_guests_of(event_id: int) -> Select[EventGuest]:
-    # A deleted guest drops off every event list and comes back when restored.
-    return (
-        select(EventGuest)
-        .join(EventGuest.guest)
-        .options(contains_eager(EventGuest.guest))
-        .where(EventGuest.event_id == event_id, Guest.deleted_at.is_(None))
-    )
-
-
 async def _event_guest(session: Session, event_id: int, guest_id: int) -> EventGuest:
-    statement = _active_guests_of(event_id).where(EventGuest.guest_id == guest_id)
+    statement = active_guests_of(event_id).where(EventGuest.guest_id == guest_id)
     event_guest = await session.scalar(statement)
     if event_guest is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Guest is not on this event's list")
@@ -43,7 +33,7 @@ async def _event_guest(session: Session, event_id: int, guest_id: int) -> EventG
 async def list_event_guests(
     event: OwnEvent, session: Session, pagination: Pagination
 ) -> Page[EventGuestRead]:
-    statement = _active_guests_of(event.id).order_by(Guest.recipient_name, Guest.id)
+    statement = in_list_order(active_guests_of(event.id))
     event_guests, total = await paginate(session, statement, pagination)
     return Page[EventGuestRead](
         items=[EventGuestRead.model_validate(event_guest) for event_guest in event_guests],

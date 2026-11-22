@@ -300,12 +300,10 @@ def sender_values(name: str | None, address: list[str]) -> dict[str, str]:
     return {"sender_name": name or "", "sender_address": "\n".join(address)}
 
 
-def event_preview_values(event: Event, profile: Profile | None) -> dict[str, str]:
-    """This event and sender with the sample guest: how the event's invitations will look."""
+def event_and_sender_values(event: Event, profile: Profile | None) -> dict[str, str]:
     starts_at = event.starts_at.astimezone(ZoneInfo(event.timezone))
     sender = profile or Profile(country="PL")
     return {
-        **guest_values(SAMPLE_GUEST),
         **event_values(
             event.name,
             starts_at,
@@ -318,6 +316,11 @@ def event_preview_values(event: Event, profile: Profile | None) -> dict[str, str
             address_lines(sender.street, sender.postal_code, sender.city, sender.country),
         ),
     }
+
+
+def event_preview_values(event: Event, profile: Profile | None) -> dict[str, str]:
+    """This event and sender with the sample guest: how the event's invitations will look."""
+    return {**guest_values(SAMPLE_GUEST), **event_and_sender_values(event, profile)}
 
 
 def sample_values() -> dict[str, str]:

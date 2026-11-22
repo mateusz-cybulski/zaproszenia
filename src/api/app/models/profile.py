@@ -11,3 +11,8 @@ class Profile(TimestampMixin, AddressMixin, Base):
 
     owner_uid: Mapped[str] = mapped_column(String(TextLimit.USER_ID), primary_key=True)
     sender_name: Mapped[str | None] = mapped_column(String(TextLimit.SHORT))
+
+    @property
+    def sender_complete(self) -> bool:
+        """Enough to print the sender on an envelope."""
+        return bool(self.sender_name and self.street and self.postal_code and self.city)

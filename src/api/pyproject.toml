@@ -7,6 +7,7 @@ dependencies = [
     "fastapi>=0.162.5",
     "firebase-admin>=7.8.0",
     "google-cloud-storage>=3.17.1",
+    "morfeusz2>=1.99.15",
     "psycopg[binary]>=3.3.9",
     "pydantic-settings>=2.16.2",
     "pypdf>=7.1.0",
@@ -54,6 +55,10 @@ pythonpath = ["."]
 addopts = ["-ra", "--strict-markers", "--strict-config"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+# morfeusz2 is a SWIG binding whose types trip a Python 3.14 deprecation warning on import.
+filterwarnings = [
+    "ignore:builtin type (SwigPyPacked|SwigPyObject|swigvarlink) has no __module__ attribute:DeprecationWarning",
+]
 
 [[tool.mypy.overrides]]
 module = [
@@ -61,6 +66,7 @@ module = [
     "firebase_admin.*",
     "google.cloud.storage",
     "google.cloud.storage.*",
+    "morfeusz2",
     "pypdfium2",
     "pypdfium2.*",
     "reportlab",

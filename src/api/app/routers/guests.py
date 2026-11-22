@@ -17,6 +17,7 @@ from app.schemas.guests import (
     ManualVerificationResult,
 )
 from app.schemas.pagination import Page
+from app.services.declension import guest_declension
 from app.services.guests import SEARCH_MAX_LENGTH, guest_search
 from app.services.pagination import paginate
 
@@ -71,6 +72,7 @@ async def verify_manually(guest_id: int, session: Session, user: CurrentUser) ->
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_guest(payload: GuestWrite, session: Session, user: CurrentUser) -> GuestRead:
     guest = Guest(owner_uid=user.uid, **payload.model_dump())
+    guest.declension = guest_declension(guest.full_name, guest.position, guest.institution)
     async with session.begin():
         session.add(guest)
     await session.refresh(guest)
@@ -126,7 +128,7 @@ async def replace_guest(
         for field, value in changes.items():
             setattr(guest, field, value)
         if changed & set(DECLINED_FIELDS):
-            guest.declension = None
+            guest.declension = guest_declension(guest.full_name, guest.position, guest.institution)
         if changed & set(VERIFIED_FIELDS):
             guest.verification_status = VerificationStatus.PENDING
             guest.verification_result = None

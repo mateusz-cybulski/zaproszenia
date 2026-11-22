@@ -7,6 +7,7 @@ import { DialogBody } from "@/shared/ui/dialog";
 
 import type { EventFormState } from "../model/use-event-form";
 import type { EventSectionsState } from "../model/use-event-sections";
+import type { TemplateChoiceFormState } from "../model/use-template-choice-form";
 import { EventForm } from "./event-form";
 import { EventGuestsSection } from "./event-guests-section";
 import { TemplateChoiceForm } from "./template-choice-form";
@@ -17,6 +18,7 @@ type EventSectionsProps = {
   eventGuests: Page<EventGuest>;
   sections: EventSectionsState;
   eventForm: EventFormState;
+  templateForm: TemplateChoiceFormState;
 };
 
 export function EventSections({
@@ -25,6 +27,7 @@ export function EventSections({
   eventGuests,
   sections,
   eventForm,
+  templateForm,
 }: EventSectionsProps) {
   const { section, opened, bodyRef } = sections;
 
@@ -35,7 +38,7 @@ export function EventSections({
       </div>
       {opened.has("templates") && (
         <div hidden={section !== "templates"}>
-          <TemplateChoiceForm event={event} templates={templates} />
+          <TemplateChoiceForm event={event} templates={templates} templateForm={templateForm} />
         </div>
       )}
       {opened.has("guests") && (

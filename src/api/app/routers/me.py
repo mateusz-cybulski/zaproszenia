@@ -21,9 +21,7 @@ def _me_read(email: str | None, profile: Profile | None) -> MeRead:
         postal_code=profile.postal_code,
         city=profile.city,
         country=profile.country,
-        sender_complete=bool(
-            profile.sender_name and profile.street and profile.postal_code and profile.city
-        ),
+        sender_complete=profile.sender_complete,
     )
 
 

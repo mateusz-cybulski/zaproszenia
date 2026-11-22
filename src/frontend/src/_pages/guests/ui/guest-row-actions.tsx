@@ -11,7 +11,7 @@ export function GuestRowActions({ guest }: { guest: Guest }) {
     <div className="flex items-center justify-end gap-1">
       <Button asChild variant="outline" size="sm">
         <Link href={routes.guestEdit(guest.id)} scroll={false}>
-          Edytuj<span className="sr-only"> {recipientName(guest)}</span>
+          Otwórz<span className="sr-only"> {recipientName(guest)}</span>
         </Link>
       </Button>
       <DeleteGuestDialog guest={guest} />

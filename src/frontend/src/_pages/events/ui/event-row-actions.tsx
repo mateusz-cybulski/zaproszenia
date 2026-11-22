@@ -11,7 +11,7 @@ export function EventRowActions({ event }: { event: Event }) {
     <div className="flex items-center justify-end gap-1">
       <Button asChild variant="outline" size="sm">
         <Link href={routes.event(event.id)} scroll={false}>
-          Edytuj<span className="sr-only"> {event.name}</span>
+          Otwórz<span className="sr-only"> {event.name}</span>
         </Link>
       </Button>
       <DeleteEventDialog event={event} />

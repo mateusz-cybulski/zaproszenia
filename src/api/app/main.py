@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.db import create_engine_and_sessionmaker
-from app.routers import auth, event_guests, events, guests, me, templates
+from app.routers import auth, event_documents, event_guests, events, guests, me, templates
 from app.storage import StoredFileMissingError
 
 
@@ -32,6 +32,7 @@ app = FastAPI(
 app.include_router(auth.router)
 app.include_router(events.router)
 app.include_router(event_guests.router)
+app.include_router(event_documents.router)
 app.include_router(guests.router)
 app.include_router(me.router)
 app.include_router(templates.router)
