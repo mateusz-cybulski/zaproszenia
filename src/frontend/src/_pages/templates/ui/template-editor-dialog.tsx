@@ -82,6 +82,7 @@ export function TemplateEditorDialog({ template, options, dismissal }: TemplateE
               title={editor.name.trim() || template.name}
               value={editor.name}
               maxLength={MAX_NAME_LENGTH}
+              aria-required
               error={nameEmpty ? SAVE_COPY.nameEmpty : undefined}
               errorId={nameErrorId}
               onChange={(event) => editor.rename(event.target.value)}

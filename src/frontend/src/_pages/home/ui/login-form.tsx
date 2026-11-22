@@ -14,7 +14,9 @@ export function LoginForm({ config }: { config: FirebaseClientConfig }) {
   return (
     <form onSubmit={submit} className="grid gap-4">
       <div className="grid gap-2">
-        <Label htmlFor="login-email">E-mail</Label>
+        <Label htmlFor="login-email" required>
+          E-mail
+        </Label>
         <Input
           id="login-email"
           name="email"
@@ -27,7 +29,9 @@ export function LoginForm({ config }: { config: FirebaseClientConfig }) {
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="login-password">Hasło</Label>
+        <Label htmlFor="login-password" required>
+          Hasło
+        </Label>
         <Input
           id="login-password"
           name="password"

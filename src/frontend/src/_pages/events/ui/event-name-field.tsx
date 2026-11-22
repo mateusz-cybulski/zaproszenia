@@ -19,6 +19,7 @@ export function EventNameField({ eventForm, title }: { eventForm: EventFormState
       defaultValue={meta.defaultValue ?? ""}
       placeholder={NAME_FIELD.label}
       maxLength={NAME_FIELD.maxLength}
+      aria-required
       error={meta.errors?.[0]}
       errorId={meta.errorId}
     />

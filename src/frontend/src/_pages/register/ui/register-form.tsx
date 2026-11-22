@@ -20,7 +20,9 @@ export function RegisterForm({ config }: { config: FirebaseClientConfig }) {
   return (
     <form onSubmit={submit} className="grid gap-4" noValidate>
       <div className="grid gap-2">
-        <Label htmlFor="register-email">E-mail</Label>
+        <Label htmlFor="register-email" required>
+          E-mail
+        </Label>
         <Input
           id="register-email"
           name="email"
@@ -33,7 +35,9 @@ export function RegisterForm({ config }: { config: FirebaseClientConfig }) {
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="register-password">Hasło</Label>
+        <Label htmlFor="register-password" required>
+          Hasło
+        </Label>
         <Input
           id="register-password"
           name="password"
@@ -50,7 +54,9 @@ export function RegisterForm({ config }: { config: FirebaseClientConfig }) {
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="register-password-repeat">Powtórz hasło</Label>
+        <Label htmlFor="register-password-repeat" required>
+          Powtórz hasło
+        </Label>
         <Input
           id="register-password-repeat"
           name="password-repeat"
