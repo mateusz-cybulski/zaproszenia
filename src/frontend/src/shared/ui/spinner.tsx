@@ -12,7 +12,8 @@ function Spinner({ className, decorative = false, ...props }: SpinnerProps) {
     <LoaderCircle
       data-slot="spinner"
       {...(decorative ? { "aria-hidden": true } : { role: "status", "aria-label": "Ładowanie" })}
-      className={cn("size-4 animate-spin", className)}
+      // h-4 w-4, not size-4: buttons and badges size icons whose class has no "size-".
+      className={cn("h-4 w-4 animate-spin", className)}
       {...props}
     />
   );
