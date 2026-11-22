@@ -6,25 +6,28 @@ import { apiTimestamp } from "@/shared/api";
 import type { EventInput } from "../model/event";
 import { eventIdSchema } from "../model/event-id";
 
-export const eventDtoSchema = z
-  .object({
-    id: eventIdSchema,
-    name: z.string(),
-    starts_at: apiTimestamp,
-    timezone: z.string(),
-    venue_name: z.string().nullable(),
-    invitation_text: z.string().nullable(),
-    invitation_template_id: templateIdSchema.nullable(),
-    envelope_template_id: templateIdSchema.nullable(),
-    street: z.string().nullable(),
-    postal_code: z.string().nullable(),
-    city: z.string().nullable(),
-    country: z.string(),
-    deleted_at: apiTimestamp.nullable(),
-    created_at: apiTimestamp,
-    updated_at: apiTimestamp,
-  })
-  .transform((dto) => ({
+const eventDtoShape = {
+  id: eventIdSchema,
+  name: z.string(),
+  starts_at: apiTimestamp,
+  timezone: z.string(),
+  venue_name: z.string().nullable(),
+  invitation_text: z.string().nullable(),
+  invitation_template_id: templateIdSchema.nullable(),
+  envelope_template_id: templateIdSchema.nullable(),
+  street: z.string().nullable(),
+  postal_code: z.string().nullable(),
+  city: z.string().nullable(),
+  country: z.string(),
+  deleted_at: apiTimestamp.nullable(),
+  created_at: apiTimestamp,
+  updated_at: apiTimestamp,
+};
+
+type EventDto = z.output<z.ZodObject<typeof eventDtoShape>>;
+
+function toEvent(dto: EventDto) {
+  return {
     id: dto.id,
     name: dto.name,
     startsAt: dto.starts_at,
@@ -40,7 +43,14 @@ export const eventDtoSchema = z
     deletedAt: dto.deleted_at,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
-  }));
+  };
+}
+
+export const eventDtoSchema = z.object(eventDtoShape).transform(toEvent);
+
+export const eventListItemDtoSchema = z
+  .object({ ...eventDtoShape, guest_count: z.int().nonnegative() })
+  .transform((dto) => ({ ...toEvent(dto), guestCount: dto.guest_count }));
 
 export function toEventBody(input: EventInput) {
   return {

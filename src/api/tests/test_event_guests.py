@@ -198,3 +198,20 @@ async def test_lists_are_private_to_the_event_owner(client: AsyncClient) -> None
 
     client.headers["Authorization"] = "Bearer session-cookie"
     assert await _names_on_list(client, event_id) == ["Jan Kowalski"]
+
+
+async def test_event_list_counts_active_guests(client: AsyncClient) -> None:
+    gala = await _event(client, "Gala")
+    empty = await _event(client, "Pusta")
+    anna, jan = (
+        await _guest(client, full_name="Anna Nowak"),
+        await _guest(client, full_name="Jan Nowak"),
+    )
+    await client.post(f"/events/{gala}/guests", json={"guest_ids": [anna, jan]})
+    await client.delete(f"/guests/{jan}")
+
+    counts = {
+        event["id"]: event["guest_count"] for event in (await client.get("/events")).json()["items"]
+    }
+
+    assert counts == {gala: 1, empty: 0}

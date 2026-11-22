@@ -3,7 +3,7 @@ name: api-structure
 description: "Use when adding, moving or reviewing code in a FastAPI component of this repo (src/<name> with fastapi in pyproject.toml): where a new SQLAlchemy model, Pydantic schema, router, shared field type or service function goes, how the files are named, what app/models/__init__.py must import, and how a new model reaches Alembic migrations, how reference data (rows the app ships, e.g. default categories) gets into the database, how deleting user data works (soft delete with restore by default), how routers share lookups such as the user's own order or 404 (dependencies in app/dependencies.py, never imports between routers), how list endpoints are paged (Pagination, Page, paginate), and how endpoints stay robust: uploaded files checked for what processing them costs (page sizes, pixel budgets), join rows inserted with on_conflict_do_nothing, missing stored files, and no API docs in production."
 license: MIT
 metadata:
-  version: "1.7.1"
+  version: "1.8.0"
 ---
 
 # FastAPI component layout: one module per model, per resource
@@ -72,6 +72,7 @@ async def list_customers(session: Session, user: CurrentUser, pagination: Pagina
 - A page past the end returns empty `items` with the real `total`, not 404.
 - Filters that a picker needs run on the server (`?q=`, `?not_in_order=`), and "select all matching" is its own endpoint (`POST /orders/{id}/items/matching` with the same search) doing one `INSERT ... SELECT`, never ids gathered page by page in the browser.
 - Small reference lists the app ships (countries, categories) stay unpaged.
+- **Numbers per row come from one grouped query for the page's ids** (`select(OrderItem.order_id, func.count()).where(OrderItem.order_id.in_(ids)).group_by(...)`), never one query per row; rows without a match get 0. Build the mapping with `dict(result.tuples().all())`: `dict(result)` treats the result as a mapping (it has `keys()`) and fails. The list endpoint returns its own read schema with the extra field (`OrderListItem(OrderRead)`), so single-record endpoints do not pay for it.
 
 ## Shared lookups are dependencies
 

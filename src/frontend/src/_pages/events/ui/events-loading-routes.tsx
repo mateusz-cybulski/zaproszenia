@@ -8,7 +8,7 @@ import { EVENTS_PAGE } from "../config/page-copy";
 export function EventsLoading() {
   return (
     <Page title={EVENTS_PAGE.title} description={EVENTS_PAGE.description}>
-      <TableSkeleton columns={4} />
+      <TableSkeleton columns={5} />
     </Page>
   );
 }

@@ -52,3 +52,7 @@ class EventRead(AddressRead):
     deleted_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class EventListItem(EventRead):
+    guest_count: int
