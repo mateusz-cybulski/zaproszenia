@@ -3,7 +3,7 @@ name: gcp-backend
 description: "Use when Python backend code in this repo talks to Google Cloud: verifying users with Identity Platform / Firebase Auth (firebase-admin, ID tokens, custom claims, tenants), issuing or checking your own JWTs with PyJWT, queuing background work with Cloud Tasks and handling those requests, storing files in Cloud Storage (uploads, downloads, signed URLs), or calling Gemini through Vertex AI with the google-genai SDK. Covers credentials (ADC), IAM roles via service.json, async usage in FastAPI, local dev and testing."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # GCP from a Python backend
@@ -223,6 +223,7 @@ async def extract_invoice(text: str) -> InvoiceFields:
 - **Model name from settings** (`GEMINI_MODEL`), never hard-coded in many places: models are versioned and retired. Pick a GA model from https://cloud.google.com/vertex-ai/generative-ai/docs/models and prefer the Flash tier unless quality demands Pro.
 - Structured output: `response_schema` with a Pydantic model, then validate with `model_validate_json`; still handle validation errors (the model can return incomplete data).
 - Use `client.aio` in async code. Set timeouts and retry only on 429/5xx with backoff.
+  Concretely: retry `errors.APIError` with codes 429, 500, 503 and 504 and `httpx.TimeoutException` a few times with a growing delay (a busy model answers `504 DEADLINE_EXCEEDED` now and then), never other 4xx; make the delay a module constant so a test can set it to 0, and test the retry with a fake client that fails first.
 - **A failed model call is not the user's data's fault.** Catch `google.genai.errors.APIError`, `google.auth.exceptions.GoogleAuthError` (expired or missing credentials raise it while refreshing the token, outside `APIError`) and `httpx.HTTPError` (timeouts), turn them into one "AI unavailable" error of your own, and store or show that instead of a 500. Import `httpx` only as a direct runtime dependency.
 - **No database transaction stays open during a model call** (seconds): read what the prompt needs, end the transaction, ask the model, then load the record again in a new transaction and store the result only if the data the prompt used has not changed meanwhile (409 otherwise).
 - Locally ADC are user credentials: `google.auth.default()` may return no project, so fall back to `credentials.quota_project_id`; on Cloud Run use `GOOGLE_CLOUD_PROJECT`. Expired user credentials need `gcloud auth application-default login` again (interactive, the user runs it).

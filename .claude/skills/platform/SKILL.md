@@ -3,7 +3,7 @@ name: platform
 description: "Use whenever you add, rename, remove or configure a component under src/, write a Dockerfile, compose.yml, service.json or lefthook.yml for one, read another service's URL, set environment variables or GCP permissions for a service, or wonder how code gets deployed. Describes this repo's platform: each src/<name> with a Dockerfile is a Cloud Run service on its own subdomain, deployed by Terraform from GitHub Actions; local dev runs through docker compose and mise."
 license: MIT
 metadata:
-  version: "1.6.0"
+  version: "1.7.0"
 ---
 
 # Platform: how components become services
@@ -97,6 +97,7 @@ Optional per-service overrides, merged over these defaults:
   Do not mount the source (`.:/app`) or keep dependency folders in anonymous volumes (`/app/node_modules`, `/venv`): compose reuses anonymous volumes across rebuilds, so after a dependency change the container keeps the old packages until `docker compose up -V`.
 - Watch never re-reads `compose.yml` itself: new `environment` entries, volumes, ports or a changed `command` apply only after restarting `mise run dev`. Say so whenever you change a `compose.yml`.
 - Watch skips everything in the component's `.dockerignore` (dependency folders, build caches, and `Dockerfile*`, so a `Dockerfile.dev` change needs a manual `docker compose up --build`).
+- **A change to a `compose.yml` itself (environment, volumes, ports) is not watched:** a running `mise run dev` keeps the old configuration and recreates containers with it on the next rebuild. Restart `mise run dev`. To recreate one service by hand, name the project: `docker compose -p <repo folder> -f .config/docker-compose.yml up -d --build --no-deps <service>`; without `-p` compose takes the project name from `.config` and starts a second, empty stack.
 
 ```yaml
 # src/<name>/compose.yml (Next.js; for uvicorn watch pyproject.toml and uv.lock instead)
