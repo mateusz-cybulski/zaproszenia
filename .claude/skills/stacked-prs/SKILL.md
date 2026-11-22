@@ -3,7 +3,7 @@ name: stacked-prs
 description: "Use when the user wants to split a large branch or feature into several smaller pull requests (stacked or dependent PRs), review a branch in parts, or manage a chain of branches where each builds on the previous one: cutting the stack from existing commits without rewriting history, naming, PR descriptions with the stack overview, updating lower branches, and merging in order with merge commits on GitHub. Follows git-workflow-and-versioning for commits, messages and pushes."
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
   source: "Adapted from bobmatnyc/claude-mpm-skills stacked-prs (MIT)"
 ---
 
@@ -27,21 +27,21 @@ Propose a stack with its steps and wait for the user's go-ahead before creating 
 Same prefix and topic, numbered in merge order:
 
 ```
-feat/template-editor-1-data
-feat/template-editor-2-kit
-feat/template-editor-3-editor
+feat/checkout-1-data
+feat/checkout-2-kit
+feat/checkout-3-ui
 ```
 
-PR titles: `[1/3] Template editor: data, editor options and live preview`, `[2/3] …`. Each PR's base is the branch below it; only `[1/n]` targets `main`.
+PR titles: `[1/3] Checkout: order data, delivery options and prices`, `[2/3] …`. Each PR's base is the branch below it; only `[1/n]` targets `main`.
 
 ## 3. Cutting a stack from an existing branch (no history rewrite)
 
 When the branch's commits already follow the steps, each stack branch is just a name on an existing commit. Nothing is rewritten, so nothing needs a force push:
 
 ```bash
-git log --oneline main..feat/template-editor    # find the last commit of each step
-git branch feat/template-editor-1-data  <sha of the last data commit>
-git branch feat/template-editor-2-kit   <sha of the last kit commit>
+git log --oneline main..feat/checkout          # find the last commit of each step
+git branch feat/checkout-1-data  <sha of the last data commit>
+git branch feat/checkout-2-kit   <sha of the last kit commit>
 # the original branch (or a renamed copy) is the top of the stack
 ```
 

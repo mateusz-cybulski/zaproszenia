@@ -1,9 +1,9 @@
 ---
 name: nextjs-best-practices
-description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (and calling them from buttons and dialogs with useAction and ConfirmActionDialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
+description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (forms through one shared Conform hook, and calls from buttons and dialogs through one shared action hook and confirm dialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.15.0"
+  version: "1.15.1"
   next: "16"
 ---
 
@@ -61,52 +61,52 @@ return { form, fields };
 - Use Server Actions (`"use server"`) for forms and mutations from your own UI. Use `<form action={action}>`, `useActionState` for results and errors, `useFormStatus` for pending state.
 - Use Route Handlers (`app/**/route.ts`) for external callers: webhooks, other services, public APIs.
 - A Server Action is a public endpoint. Validate input on the server (e.g. with a schema) and check authorization inside every action.
-- An id argument is typed with the entity's branded id (`id: GuestId`) so our own callers cannot pass the wrong one, **and** checked in the first line (`if (!isGuestId(id)) return { error: … }`), because a caller outside our code can send anything. The check is the boundary: keep it even though the type already says `GuestId`.
+- An id argument is typed with the entity's branded id (`id: CustomerId`) so our own callers cannot pass the wrong one, **and** checked in the first line (`if (!isCustomerId(id)) return { error: … }`), because a caller outside our code can send anything. The check is the boundary: keep it even though the type already says `CustomerId`.
 - After a mutation, invalidate with the APIs from section 2 or `redirect()`. Do not rely on client-side refetching.
 - A Route Handler that takes a body bounds it **before** reading it: reject a `Content-Length` over the limit with 413, then read through a counting reader that stops at the limit. `await request.text()` / `request.json()` first and checking the length afterwards has already buffered whatever the caller sent.
 
 ### Forms with fields (Conform)
 
-Forms are Conform (`@conform-to/react`, `@conform-to/zod/v4`) on top of `useActionState`, through `useServerForm({ schema, action, defaultValue, onSuccess })` from `@/shared/lib/server-form`. One zod schema validates in the browser and again in the action.
+Forms are Conform (`@conform-to/react`, `@conform-to/zod/v4`) on top of `useActionState`. Wrap the two in **one shared form hook** in `shared/lib` (e.g. `useServerForm({ schema, action, defaultValue, onSuccess })` returning `{ form, fields, formProps, pending, lastResult }`), so every form behaves the same. One zod schema validates in the browser and again in the action.
 
 ```ts
 // the action
-const submission = parseWithZod(formData, { schema: guestFormSchema });
+const submission = parseWithZod(formData, { schema: orderFormSchema });
 if (submission.status !== "success") return submission.reply();
-const result = await createGuest(submission.value);
+const result = await createOrder(submission.value);
 if (!result.ok) return submission.reply({ formErrors: [FAILURE_MESSAGES[result.reason]] });
-revalidatePath(routes.guests(), "layout");
+revalidatePath(routes.orders(), "layout");
 return submission.reply();
 ```
 
 - **Validate on submit, re-validate on input** (`shouldValidate: "onSubmit"`, `shouldRevalidate: "onInput"`). Not on blur: pressing a dialog's close button blurs the field, the error grows the vertically centred dialog and moves the button before the click lands, so the dialog needs a second click.
 - **Reply to success with a plain `submission.reply()`.** `reply({ resetForm: true })` returns only `{ initialValue: null }`, without `status: "success"`, so `onSuccess` (closing the dialog) never runs. A form that closes on success needs no reset; one that stays on screen resets on the client in `onSuccess` (`form.reset()` or a new `key`).
-- **A form that stays on screen keeps what was saved.** React 19 resets a `<form action>` after the action, back to the values it rendered with, so a settings form would show empty or stale fields after a successful save. `useServerForm` returns `formProps` that submit from `onSubmit` (Conform validates, then the action runs in `startTransition`), which React does not reset; `action` stays for a browser without JavaScript. Spread `formProps` on the form, never `action={formAction}` alone.
-- Fields render through `FormField` with Conform's field metadata; `FormStatus` announces the form error or success message.
-- **An action that reads the saved data (generate, export, send) asks about unsaved changes first.** Check `form.dirty` (the dialog owns the form's state for this) and offer "Zapisz i …", "… bez zapisywania" and "Wróć". "Save and continue" remembers the action in a ref, submits the form (`requestSubmit()` on the element with `form.id`) and runs the action in `onSuccess`; a failed save (`lastResult.status === "error"` or `form.allErrors`) clears it, so a later plain save does not trigger it.
+- **A form that stays on screen keeps what was saved.** React 19 resets a `<form action>` after the action, back to the values it rendered with, so a settings form would show empty or stale fields after a successful save. The form hook returns `formProps` that submit from `onSubmit` (Conform validates, then the action runs in `startTransition`), which React does not reset; `action` stays for a browser without JavaScript. Spread `formProps` on the form, never `action={formAction}` alone.
+- Fields render through one shared field component that takes Conform's field metadata (label, hint, error, `aria-describedby`); one shared status component announces the form error or success message.
+- **An action that reads the saved data (generate, export, send) asks about unsaved changes first.** Check `form.dirty` (the dialog owns the form's state for this) and offer "Save and …", "… without saving" and "Back". "Save and continue" remembers the action in a ref, submits the form (`requestSubmit()` on the element with `form.id`) and runs the action in `onSuccess`; a failed save (`lastResult.status === "error"` or `form.allErrors`) clears it, so a later plain save does not trigger it.
 - **A control that is not a native input** (a date picker, a combobox) joins the form through Conform's `useInputControl({ key, name, formId, initialValue })`: Conform keeps the value in a hidden base input of the form, so it is submitted, validated and counted in `form.dirty` like a typed value. A `<button>` trigger cannot carry `aria-invalid`: link the error with `aria-describedby` and style the state with a data attribute.
 - **The dialog's main button is the form's submit button** (`type="submit" form={form.id}` in the header): without a submit button Enter in a field does nothing (implicit submission presses it).
-- **One button that saves several sections saves one form.** Sections of a dialog under one "Zapisz" are one `<form>` and one Server Action, not several forms submitted together (that needs its own success bookkeeping and can save half). Switch sections with `hidden`; when the action replaces the whole resource (PUT), keep every field it sends mounted, or an unopened section saves as empty. Parts with their own save stay outside the form.
-- **Closing a form dialog with unsaved changes asks first** (close button, Escape, a click outside), with "Wróć do edycji" as the default, and `beforeunload` warns on reload. Next cannot stop a link navigation, so a page form only gets the reload warning.
+- **One button that saves several sections saves one form.** Sections of a dialog under one save button are one `<form>` and one Server Action, not several forms submitted together (that needs its own success bookkeeping and can save half). Switch sections with `hidden`; when the action replaces the whole resource (PUT), keep every field it sends mounted, or an unopened section saves as empty. Parts with their own save stay outside the form.
+- **Closing a form dialog with unsaved changes asks first** (close button, Escape, a click outside), with "Keep editing" as the default, and `beforeunload` warns on reload. Next cannot stop a link navigation, so a page form only gets the reload warning.
 - Conform tracks values from real input events. Browser tests type with CDP `Input.insertText` (and keys), not by setting `.value` and dispatching a synthetic event, which leaves `form.dirty` false; a `<select>` change needs an `input` event as well as `change`.
 
 ### Calling actions from buttons and dialogs
 
 Forms with fields use `<form action>` + `useActionState` (above). Everything else that calls a Server Action from a click (delete, restore, copy, confirm) goes through **one shared hook and one shared dialog**, never a hand-written `useTransition` + `useState` pair per component:
 
-- Every such action returns `ActionResult` = `{ error?: string }` (in this repo: `@/shared/lib/actions`): a message the user can read, or nothing on success. Failures are returned, not thrown.
-- `useAction(action, { onSuccess })` (`@/shared/lib/action-call`) returns `{ run, pending, error, setError }`: `run(...args)` clears the error, runs the action in a transition, then shows `error` or calls `onSuccess`.
+- Every such action returns one result type, e.g. `ActionResult = { error?: string }`: a message the user can read, or nothing on success. Failures are returned, not thrown.
+- A shared hook, e.g. `useAction(action, { onSuccess })` returning `{ run, pending, error, setError }`: `run(...args)` clears the error, runs the action in a transition, then shows `error` or calls `onSuccess`.
 
 ```tsx
-const copy = useAction(() => copyTemplateAction(template.id));
-<Button onClick={() => copy.run()} disabled={copy.pending}>{copy.pending ? "Kopiowanie…" : "Kopiuj"}</Button>
-<p role="alert" className="empty:hidden">{copy.error}</p>
+const archive = useAction(() => archiveOrderAction(order.id));
+<Button onClick={() => archive.run()} pending={archive.pending}>Archive</Button>
+<p role="alert" className="empty:hidden">{archive.error}</p>
 ```
 
-- "Open, confirm, run; success closes, an error stays in the dialog" is `ConfirmActionDialog` (`@/shared/ui/confirm-action-dialog`): `trigger`, `title`, `description`, `confirmLabel`/`pendingLabel`, `action`, `tone`, optional `children` and `confirmDisabled` (e.g. "type DELETE to confirm"). Several choices in one dialog (soft or permanent delete) build on `useAction` the same way (`DeleteChoiceDialog`).
-- Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the `useAction`. Two actions in one row are two hooks; show `first.error ?? second.error`.
-- Client hooks live in their own `shared/lib` topic (`action-call`, `server-form`), never in an index that `"use server"` files import: a Server Action module must not pull a `"use client"` module through a shared barrel.
-- A raw `startTransition` is fine only where no `ActionResult` comes back: router navigation (search as you type), or client SDK flows such as sign-in.
+- "Open, confirm, run; success closes, an error stays in the dialog" is one shared confirm dialog built on that hook (`trigger`, `title`, `description`, confirm and pending labels, `action`, `tone`, optional extra content and a disabled confirm, e.g. "type DELETE to confirm"). Several choices in one dialog (soft or permanent delete) build on the hook the same way.
+- Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the hook. Two actions in one row are two hooks; show `first.error ?? second.error`.
+- Client hooks live in their own `shared/lib` topic (one folder per hook), never in an index that `"use server"` files import: a Server Action module must not pull a `"use client"` module through a shared barrel.
+- A raw `startTransition` is fine only where no action result comes back: router navigation (search as you type), or client SDK flows such as sign-in.
 
 ### Loading states
 
@@ -115,9 +115,9 @@ const copy = useAction(() => copyTemplateAction(template.id));
 
 ### Paged lists
 
-- The page is in the URL (`/guests?page=2&q=kow`), read on the server with `parsePage()` (`@/shared/lib/pagination`; anything odd is page 1), and fetched by the entity's list function, which parses the API's envelope with `pageSchema(itemSchema)` (`@/shared/api`) into `Page<Item>`.
-- `Pagination` (`@/shared/ui/pagination`) renders "51–100 z 137", previous and next, and `1 … 4 5 6 … 12`, as links from `hrefForPage(page)`; build them with `withQuery(path, params)` (`@/shared/routes`), leaving page 1 and empty values out. A page past the end says it is empty and links back.
-- **A dialog over a list has its own page parameter** (`deleted_page`, `guests_page`), so the list behind keeps its page when the dialog is opened by URL.
+- The page is in the URL (`/orders?page=2&q=smith`), read on the server by one shared parser (anything odd is page 1), and fetched by the entity's list function, which parses the API's envelope (`items`, `total`, `page`, `size`) with one generic schema into a `Page<Item>` type.
+- One shared pagination component renders the range ("51–100 of 137"), previous and next, and `1 … 4 5 6 … 12`, as links from `hrefForPage(page)`; build them with one URL helper that leaves page 1 and empty values out. A page past the end says it is empty and links back.
+- **A dialog over a list has its own page parameter** (`archived_page`, `items_page`), so the list behind keeps its page when the dialog is opened by URL.
 - Changing the search starts again at page 1 (the search URL carries only `q`).
 - A picker inside a dialog searches on the server and appends with "Show more"; "add all matching" calls an API endpoint with the same search instead of collecting ids in the browser.
 

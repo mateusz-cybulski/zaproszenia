@@ -10,6 +10,7 @@ skills/code-reviewer
 skills/fastapi-expert
 skills/feature-sliced-design
 skills/gcp-backend
+skills/git-workflow-and-versioning
 skills/nextjs-best-practices
 skills/nextjs-sitemap
 skills/platform
@@ -17,4 +18,5 @@ skills/polish-nlp
 skills/python-tooling
 skills/remove-comments
 skills/shared
+skills/stacked-prs
 skills/tailwind-best-practices

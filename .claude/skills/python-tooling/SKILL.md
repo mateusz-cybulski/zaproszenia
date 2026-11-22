@@ -3,7 +3,7 @@ name: python-tooling
 description: "Use when creating, configuring or changing a Python component in this repo (src/<name> with pyproject.toml): Python 3.14, uv (dependencies, lockfile, uv run), ruff (lint and format), mypy strict with the Pydantic plugin, pytest, the component's mise.toml, lefthook hooks, Dockerfile and Dockerfile.dev for Cloud Run. Also use when adding or upgrading a Python dependency, fixing ruff/mypy/pytest failures, or writing Python code that must pass them."
 license: MIT
 metadata:
-  version: "1.3.0"
+  version: "1.3.1"
   python: "3.14"
 ---
 
@@ -122,7 +122,7 @@ warn_required_dynamic_aliases = true
 
 ```toml
 [[tool.mypy.overrides]]
-module = ["morfeusz2.*"]
+module = ["untyped_library.*"]
 ignore_missing_imports = true
 ```
 

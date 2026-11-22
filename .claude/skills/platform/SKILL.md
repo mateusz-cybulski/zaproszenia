@@ -3,7 +3,7 @@ name: platform
 description: "Use whenever you add, rename, remove or configure a component under src/, write a Dockerfile, compose.yml, service.json or lefthook.yml for one, read another service's URL, set environment variables or GCP permissions for a service, or wonder how code gets deployed. Describes this repo's platform: each src/<name> with a Dockerfile is a Cloud Run service on its own subdomain, deployed by Terraform from GitHub Actions; local dev runs through docker compose and mise."
 license: MIT
 metadata:
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # Platform: how components become services
@@ -26,6 +26,15 @@ Facts below come from `.config/terraform/` (`services.tf`, `main.tf`, `variables
 - From a template: `mise run add-setup <group>/<template> [name]` (templates live on the `templates` branch; the name defaults to the group, e.g. `frontend/next` -> `src/frontend`). It copies the template, replaces `__NAME__` in `compose.yml` and `lefthook.yml`, adds the compose file to `.config/docker-compose.yml`, installs the component's mise tools and offers matching Claude skills.
 - By hand, a component needs: `Dockerfile`, `.dockerignore`, `Dockerfile.dev`, `compose.yml`, `lefthook.yml`, `mise.toml`, optionally `service.json`; then add `  - ../src/<name>/compose.yml` under `include:` in `.config/docker-compose.yml`.
 - After adding a component, run `mise run agents` to install the skills for its stack.
+
+### Skills: shared on the agents branch, or local to one project
+
+`mise run agents` installs skills from the `agents` branch (listed in `.claude/stacks.conf`) and records them in `.claude/.managed`; it overwrites them on every run. Everything else in `.claude/skills` is local to the project and never touched.
+
+- **A shared skill (agents branch) is written for any project on this platform**: entirely in English; no project names, repository names, domain examples, UI copy, file paths or helper names that exist in one project only. Examples use a neutral domain (orders, customers, invoices) and describe a project's own helpers as a pattern ("one shared form hook"), not by their name.
+- **A project-local skill** (named after the project, e.g. `<project>-ui`) holds what is true for that project only: its helpers and where they live, its UI copy and language, its decisions (scope, accessibility baseline), its git conventions. It may be in the project's language. It never goes to the agents branch.
+- **Never fork a shared skill into the project.** A project rule that changes a shared one goes into the project-local skill ("in this project, also …"); a rule every project needs goes to the shared skill on the agents branch. A managed skill edited in the project is overwritten by the next sync.
+- Before committing to the agents branch, search the changed skills for the project's name, its domain words and non-English letters, e.g. `git grep -n -i -E '<project>|<domain words>' -- .claude/skills` and `git grep -n -P '[\x{0100}-\x{017F}]' -- .claude/skills` (Latin letters with diacritics); nothing may remain except in a skill about that language itself.
 
 ## 3. One architecture everywhere: linux/amd64
 
