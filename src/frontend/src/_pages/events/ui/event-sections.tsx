@@ -7,10 +7,9 @@ import { DialogBody } from "@/shared/ui/dialog";
 
 import type { EventFormState } from "../model/use-event-form";
 import type { EventSectionsState } from "../model/use-event-sections";
-import type { TemplateChoiceFormState } from "../model/use-template-choice-form";
-import { EventForm } from "./event-form";
+import { EventDetailsFields } from "./event-details-fields";
 import { EventGuestsSection } from "./event-guests-section";
-import { TemplateChoiceForm } from "./template-choice-form";
+import { TemplateChoiceFields } from "./template-choice-fields";
 
 type EventSectionsProps = {
   event: Event;
@@ -18,7 +17,6 @@ type EventSectionsProps = {
   eventGuests: Page<EventGuest>;
   sections: EventSectionsState;
   eventForm: EventFormState;
-  templateForm: TemplateChoiceFormState;
 };
 
 export function EventSections({
@@ -27,20 +25,26 @@ export function EventSections({
   eventGuests,
   sections,
   eventForm,
-  templateForm,
 }: EventSectionsProps) {
   const { section, opened, bodyRef } = sections;
 
   return (
     <DialogBody ref={bodyRef}>
-      <div hidden={section !== "details"}>
-        <EventForm eventForm={eventForm} />
-      </div>
-      {opened.has("templates") && (
-        <div hidden={section !== "templates"}>
-          <TemplateChoiceForm event={event} templates={templates} templateForm={templateForm} />
+      {/* Details and templates are one form, saved together, so the template selects are always
+        mounted: a save without them would clear the event's templates. Guests save on their own. */}
+      <form {...eventForm.formProps}>
+        <div hidden={section !== "details"} className="grid gap-6">
+          <EventDetailsFields fields={eventForm.fields} />
         </div>
-      )}
+        <div hidden={section !== "templates"} className="grid gap-6">
+          <TemplateChoiceFields
+            event={event}
+            templates={templates}
+            fields={eventForm.fields}
+            showPreviews={opened.has("templates")}
+          />
+        </div>
+      </form>
       {opened.has("guests") && (
         <div hidden={section !== "guests"}>
           <EventGuestsSection event={event} eventGuests={eventGuests} />

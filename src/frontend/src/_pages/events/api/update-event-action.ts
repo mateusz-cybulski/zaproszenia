@@ -20,12 +20,12 @@ export async function updateEventAction(
   if (submission.status !== "success") {
     return submission.reply();
   }
-  // The saved event, not the form, supplies the time zone and the templates the form leaves out.
+  // The saved event, not the form, supplies the time zone.
   const event = isEventId(id) ? await getEvent(id) : null;
   if (!event) {
     return submission.reply({ formErrors: [FAILURE_MESSAGES["not-found"]] });
   }
-  const result = await updateEvent(event, { ...submission.value, timeZone: event.timeZone });
+  const result = await updateEvent(event.id, { ...submission.value, timeZone: event.timeZone });
   if (!result.ok) {
     return submission.reply({ formErrors: [FAILURE_MESSAGES[result.reason]] });
   }

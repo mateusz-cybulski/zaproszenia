@@ -10,13 +10,13 @@ import { createEvent } from "@/entities/event/index.server";
 import { routes } from "@/shared/routes";
 
 import { FAILURE_MESSAGES } from "../config/messages";
-import { eventFormSchema } from "../model/event-form";
+import { eventDetailsSchema } from "../model/event-form";
 
 export async function createEventAction(
   _previous: SubmissionResult | undefined,
   formData: FormData,
 ): Promise<SubmissionResult> {
-  const submission = parseWithZod(formData, { schema: eventFormSchema });
+  const submission = parseWithZod(formData, { schema: eventDetailsSchema });
   if (submission.status !== "success") {
     return submission.reply();
   }

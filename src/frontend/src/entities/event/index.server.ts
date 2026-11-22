@@ -12,6 +12,5 @@ export { getEvents } from "./api/get-events";
 export { removeEventGuest } from "./api/remove-event-guest";
 export { restoreEvent } from "./api/restore-event";
 export { setEventGuestStatus } from "./api/set-event-guest-status";
-export { setEventTemplates } from "./api/set-event-templates";
 export { updateEvent } from "./api/update-event";
 export type { SaveEventFailure, SaveEventResult } from "./api/save-result";
