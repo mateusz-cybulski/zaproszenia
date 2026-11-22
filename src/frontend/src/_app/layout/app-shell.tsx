@@ -16,7 +16,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-dvh grid-cols-[auto_minmax(0,1fr)]">
       <aside className="sticky top-0 flex h-dvh w-sidebar flex-col gap-4 border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground">
-        <Link href={routes.guests()} className="px-3 text-lg font-semibold tracking-tight">
+        <Link href={routes.events()} className="px-3 text-lg font-semibold tracking-tight">
           Zaproszenia
         </Link>
         <SidebarNav />
