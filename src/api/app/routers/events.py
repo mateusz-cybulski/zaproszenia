@@ -10,9 +10,10 @@ from app.auth import CurrentUser
 from app.db import Session
 from app.dependencies import OwnEvent, Pagination, find_own_event, find_visible_template
 from app.models import Event, Profile, Template, TemplateKind
-from app.schemas.events import EventRead, EventTemplates, EventWrite
+from app.schemas.events import EventListItem, EventRead, EventTemplates, EventWrite
 from app.schemas.pagination import Page
 from app.schemas.templates import MAX_PAGES
+from app.services.event_guests import active_guest_counts
 from app.services.pagination import paginate
 from app.services.pdf import render, render_png
 from app.services.placeholders import event_preview_values
@@ -76,7 +77,7 @@ async def create_event(payload: EventWrite, session: Session, user: CurrentUser)
 @router.get("")
 async def list_events(
     session: Session, user: CurrentUser, pagination: Pagination, deleted: bool = False
-) -> Page[EventRead]:
+) -> Page[EventListItem]:
     statement = select(Event).where(Event.owner_uid == user.uid)
     if deleted:
         statement = statement.where(Event.deleted_at.is_not(None)).order_by(
@@ -87,8 +88,17 @@ async def list_events(
             Event.starts_at.desc(), Event.id
         )
     events, total = await paginate(session, statement, pagination)
-    return Page[EventRead](
-        items=[EventRead.model_validate(event) for event in events],
+    guest_counts = await active_guest_counts(session, [event.id for event in events])
+    return Page[EventListItem](
+        items=[
+            EventListItem.model_validate(
+                {
+                    **EventRead.model_validate(event).model_dump(),
+                    "guest_count": guest_counts.get(event.id, 0),
+                }
+            )
+            for event in events
+        ],
         total=total,
         page=pagination.page,
         page_size=pagination.page_size,
