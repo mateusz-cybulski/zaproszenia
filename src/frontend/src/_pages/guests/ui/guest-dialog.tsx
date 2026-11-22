@@ -3,11 +3,12 @@
 import type { ReactNode } from "react";
 
 import type { Guest } from "@/entities/guest";
-import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
+import { type Dismissal, useDiscardGuard, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Dialog, DialogBody, DialogContent, DialogTitleBar } from "@/shared/ui/dialog";
 import { DialogNameField } from "@/shared/ui/dialog-name-field";
+import { DiscardChangesDialog } from "@/shared/ui/discard-changes-dialog";
 import { FormStatus } from "@/shared/ui/form-status";
 
 import { GUEST_DIALOG_COPY } from "../config/guest-dialog-copy";
@@ -26,10 +27,11 @@ export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProp
   const returnFocus = useReturnFocus();
   const copy = guest ? GUEST_DIALOG_COPY.edit : GUEST_DIALOG_COPY.add;
   const guestForm = useGuestForm(guest, dismiss);
+  const guard = useDiscardGuard(guestForm.form.dirty, dismiss);
   const nameMeta = guestForm.fields[FULL_NAME_FIELD.name];
 
   return (
-    <Dialog open onOpenChange={(open) => !open && dismiss()}>
+    <Dialog open onOpenChange={(open) => !open && guard.close()}>
       <DialogContent
         onCloseAutoFocus={returnFocus}
         className="max-w-2xl"
@@ -64,6 +66,11 @@ export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProp
           <GuestForm guestForm={guestForm} />
         </DialogBody>
       </DialogContent>
+      <DiscardChangesDialog
+        open={guard.confirming}
+        onKeepEditing={guard.keepEditing}
+        onDiscard={guard.discard}
+      />
     </Dialog>
   );
 }

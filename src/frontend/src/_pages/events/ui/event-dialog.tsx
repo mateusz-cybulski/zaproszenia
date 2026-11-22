@@ -5,7 +5,6 @@ import type { Template } from "@/entities/template";
 import type { Page } from "@/shared/api";
 import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
-import { Dialog, DialogContent } from "@/shared/ui/dialog";
 
 import type { EventSection } from "../model/event-section";
 import { ExistingEventDialogContent } from "./existing-event-dialog-content";
@@ -27,25 +26,16 @@ export function EventDialog(props: EventDialogProps) {
   const dismiss = useDismiss(props.dismissal, routes.events());
   const returnFocus = useReturnFocus();
 
-  return (
-    <Dialog open onOpenChange={(open) => !open && dismiss()}>
-      <DialogContent
-        onCloseAutoFocus={returnFocus}
-        className={props.event ? "max-w-4xl" : "max-w-2xl"}
-        aria-describedby={undefined}
-      >
-        {props.event ? (
-          <ExistingEventDialogContent
-            event={props.event}
-            templates={props.templates}
-            eventGuests={props.eventGuests}
-            initialSection={props.initialSection}
-            onSaved={dismiss}
-          />
-        ) : (
-          <NewEventDialogContent onSaved={dismiss} />
-        )}
-      </DialogContent>
-    </Dialog>
+  return props.event ? (
+    <ExistingEventDialogContent
+      event={props.event}
+      templates={props.templates}
+      eventGuests={props.eventGuests}
+      initialSection={props.initialSection}
+      dismiss={dismiss}
+      returnFocus={returnFocus}
+    />
+  ) : (
+    <NewEventDialogContent dismiss={dismiss} returnFocus={returnFocus} />
   );
 }
