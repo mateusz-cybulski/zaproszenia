@@ -14,7 +14,7 @@ export async function HomePage({
   // FIREBASE_API_KEY and API_URL exist only at runtime on Cloud Run, so render on every request.
   await connection();
   if (await getViewer()) {
-    redirect(routes.guests());
+    redirect(routes.events());
   }
   const { verified } = await searchParams;
   return <LoginScreen verified={verified === "1"} />;

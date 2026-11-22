@@ -45,5 +45,5 @@ export async function startSessionAction(idToken: string): Promise<StartSessionR
 
   const session = await parseResponse(response, sessionDtoSchema);
   await writeSessionCookie(session.session_cookie, session.expires_in);
-  redirect(routes.guests());
+  redirect(routes.events());
 }
