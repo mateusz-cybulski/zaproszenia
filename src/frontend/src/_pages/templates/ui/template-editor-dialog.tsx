@@ -1,13 +1,14 @@
 "use client";
 
 import { TriangleAlert } from "lucide-react";
-import { useId, useState } from "react";
+import { useId } from "react";
 
 import { type EditorOptions, TEMPLATE_KIND_LABELS, type TemplateDetail } from "@/entities/template";
-import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
+import { type Dismissal, useDiscardGuard, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
 import { routes } from "@/shared/routes";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
 import { Badge } from "@/shared/ui/badge";
+import { DiscardChangesDialog } from "@/shared/ui/discard-changes-dialog";
 import { Dialog, DialogBody, DialogContent, DialogTitle, DialogTitleBar } from "@/shared/ui/dialog";
 import { DialogNameField } from "@/shared/ui/dialog-name-field";
 
@@ -17,9 +18,7 @@ import { MAX_NAME_LENGTH } from "../config/upload";
 import { useCopyAndEdit } from "../model/use-copy-and-edit";
 import { useSaveTemplate } from "../model/use-save-template";
 import { useTemplateEditor } from "../model/use-template-editor";
-import { useUnsavedChangesWarning } from "../model/use-unsaved-changes-warning";
 import { CopyAndEditButton } from "./copy-and-edit-button";
-import { DiscardChangesDialog } from "./discard-changes-dialog";
 import { SaveTemplateButton } from "./save-template-button";
 import { TemplateEditor } from "./template-editor";
 import { TemplatePageSwitcher } from "./template-page-switcher";
@@ -36,22 +35,13 @@ export function TemplateEditorDialog({ template, options, dismissal }: TemplateE
   const editor = useTemplateEditor(template, options);
   const saving = useSaveTemplate(template.id, editor.markSaved);
   const copying = useCopyAndEdit(template.id);
-  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
-  useUnsavedChangesWarning(editor.dirty);
+  const guard = useDiscardGuard(editor.dirty, dismiss);
   const error = saving.error ?? copying.error;
   const nameEmpty = editor.name.trim() === "";
   const nameErrorId = useId();
 
-  function close() {
-    if (editor.dirty) {
-      setConfirmingDiscard(true);
-    } else {
-      dismiss();
-    }
-  }
-
   return (
-    <Dialog open onOpenChange={(open) => !open && close()}>
+    <Dialog open onOpenChange={(open) => !open && guard.close()}>
       <DialogContent
         onCloseAutoFocus={returnFocus}
         className="max-w-6xl"
@@ -116,9 +106,9 @@ export function TemplateEditorDialog({ template, options, dismissal }: TemplateE
         </DialogBody>
       </DialogContent>
       <DiscardChangesDialog
-        open={confirmingDiscard}
-        onKeepEditing={() => setConfirmingDiscard(false)}
-        onDiscard={dismiss}
+        open={guard.confirming}
+        onKeepEditing={guard.keepEditing}
+        onDiscard={guard.discard}
       />
     </Dialog>
   );

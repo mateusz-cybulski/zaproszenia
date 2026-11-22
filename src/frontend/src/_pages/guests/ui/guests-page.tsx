@@ -11,6 +11,7 @@ import { Button } from "@/shared/ui/button";
 import { Page } from "@/shared/ui/page";
 import { ListPagination } from "@/shared/ui/list-pagination";
 
+import { GUESTS_PAGE } from "../config/page-copy";
 import { GuestRowActions } from "./guest-row-actions";
 import { GuestSearch } from "./guest-search";
 import { VerificationMenu } from "./verification-menu";
@@ -29,8 +30,8 @@ export async function GuestsPage({ searchParams }: GuestsPageProps) {
 
   return (
     <Page
-      title="Goście"
-      description="Baza gości, których zapraszasz na wydarzenia."
+      title={GUESTS_PAGE.title}
+      description={GUESTS_PAGE.description}
       actions={
         <>
           <Button asChild variant="outline">

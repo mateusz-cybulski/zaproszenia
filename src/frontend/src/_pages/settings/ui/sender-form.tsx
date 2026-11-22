@@ -1,6 +1,7 @@
 "use client";
 
 import type { Sender } from "@/entities/viewer";
+import { useUnsavedChangesWarning } from "@/shared/lib/dialogs";
 import { useServerForm } from "@/shared/lib/server-form";
 import { Button } from "@/shared/ui/button";
 import { FormField, type FormFieldConfig } from "@/shared/ui/form-field";
@@ -12,11 +13,13 @@ import { SENDER_ADDRESS_FIELDS, SENDER_NAME_FIELD } from "../config/sender-field
 import { type SenderField, senderFormDefaults, senderFormSchema } from "../model/sender-form";
 
 export function SenderForm({ sender }: { sender: Sender }) {
-  const { fields, formProps, pending, lastResult } = useServerForm({
+  const { form, fields, formProps, pending, lastResult } = useServerForm({
     schema: senderFormSchema,
     action: updateSenderAction,
     defaultValue: senderFormDefaults(sender),
   });
+  // Leaving by the sidebar cannot be stopped; reloading or closing the tab asks first.
+  useUnsavedChangesWarning(form.dirty);
 
   const renderField = (field: FormFieldConfig<SenderField>) => (
     <FormField key={field.name} field={field} meta={fields[field.name]} />

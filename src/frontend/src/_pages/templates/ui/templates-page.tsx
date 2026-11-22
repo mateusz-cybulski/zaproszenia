@@ -5,6 +5,7 @@ import { getTemplates } from "@/entities/template/index.server";
 import { requireViewer } from "@/entities/viewer/index.server";
 import { Page } from "@/shared/ui/page";
 
+import { TEMPLATES_PAGE } from "../config/page-copy";
 import { TemplateGrid } from "./template-grid";
 import { UploadTemplateDialog } from "./upload-template-dialog";
 
@@ -19,8 +20,8 @@ export async function TemplatesPage() {
 
   return (
     <Page
-      title="Szablony"
-      description="Projekty zaproszeń i kopert w PDF z polami na dane gości."
+      title={TEMPLATES_PAGE.title}
+      description={TEMPLATES_PAGE.description}
       actions={<UploadTemplateDialog />}
     >
       <section aria-labelledby="own-templates" className="grid gap-3">

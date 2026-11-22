@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { routes } from "@/shared/routes";
 import { Badge } from "@/shared/ui/badge";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/card";
+import { PagePreview } from "@/shared/ui/page-preview";
 
 import { TEMPLATE_KIND_LABELS } from "../config/template-kind";
 import { pageSizeLabel } from "../lib/page-size";
@@ -20,14 +21,18 @@ export function TemplateCard({ template, actions }: TemplateCardProps) {
 
   return (
     <Card className="pt-0">
-      <div className="flex h-48 items-center justify-center border-b bg-muted p-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={routes.savedTemplatePreviewImage(template.id, template.updatedAt)}
-          alt=""
-          loading="lazy"
-          className="max-h-full max-w-full bg-white shadow-sm"
-        />
+      <div className="flex h-48 items-center justify-center overflow-hidden border-b bg-muted p-3">
+        {firstPage && (
+          <PagePreview
+            src={routes.savedTemplatePreviewImage(template.id, template.updatedAt)}
+            alt=""
+            loading="lazy"
+            widthMm={firstPage.widthMm}
+            heightMm={firstPage.heightMm}
+            // Fill the longer side; the box then keeps the page's proportions.
+            className={firstPage.widthMm >= firstPage.heightMm ? "w-full" : "h-full"}
+          />
+        )}
       </div>
       <CardHeader>
         <CardTitle className="flex items-start justify-between gap-2">

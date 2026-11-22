@@ -1,7 +1,9 @@
 "use client";
 
+import { type ReturnFocus, useDiscardGuard } from "@/shared/lib/dialogs";
 import { Button } from "@/shared/ui/button";
-import { DialogBody, DialogTitleBar } from "@/shared/ui/dialog";
+import { Dialog, DialogBody, DialogContent, DialogTitleBar } from "@/shared/ui/dialog";
+import { DiscardChangesDialog } from "@/shared/ui/discard-changes-dialog";
 import { FormStatus } from "@/shared/ui/form-status";
 
 import { EVENT_DIALOG_COPY } from "../config/messages";
@@ -11,26 +13,44 @@ import { EventNameField } from "./event-name-field";
 
 const COPY = EVENT_DIALOG_COPY.add;
 
-export function NewEventDialogContent({ onSaved }: { onSaved: () => void }) {
-  const eventForm = useEventForm(undefined, onSaved);
+export function NewEventDialogContent({
+  dismiss,
+  returnFocus,
+}: {
+  dismiss: () => void;
+  returnFocus: ReturnFocus;
+}) {
+  const eventForm = useEventForm(undefined, dismiss);
+  const guard = useDiscardGuard(eventForm.form.dirty, dismiss);
 
   return (
-    <>
-      <DialogTitleBar
-        end={
-          <>
-            <FormStatus result={eventForm.lastResult} />
-            <Button type="submit" form={eventForm.form.id} aria-disabled={eventForm.pending}>
-              {eventForm.pending ? COPY.pending : COPY.submit}
-            </Button>
-          </>
-        }
+    <Dialog open onOpenChange={(open) => !open && guard.close()}>
+      <DialogContent
+        onCloseAutoFocus={returnFocus}
+        className="max-w-2xl"
+        aria-describedby={undefined}
       >
-        <EventNameField eventForm={eventForm} title={COPY.title} />
-      </DialogTitleBar>
-      <DialogBody>
-        <EventForm eventForm={eventForm} />
-      </DialogBody>
-    </>
+        <DialogTitleBar
+          end={
+            <>
+              <FormStatus result={eventForm.lastResult} />
+              <Button type="submit" form={eventForm.form.id} aria-disabled={eventForm.pending}>
+                {eventForm.pending ? COPY.pending : COPY.submit}
+              </Button>
+            </>
+          }
+        >
+          <EventNameField eventForm={eventForm} title={COPY.title} />
+        </DialogTitleBar>
+        <DialogBody>
+          <EventForm eventForm={eventForm} />
+        </DialogBody>
+      </DialogContent>
+      <DiscardChangesDialog
+        open={guard.confirming}
+        onKeepEditing={guard.keepEditing}
+        onDiscard={guard.discard}
+      />
+    </Dialog>
   );
 }

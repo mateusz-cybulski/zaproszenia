@@ -15,8 +15,4 @@ export const SAVE_COPY = {
   invalidFields: "Sprawdź pola szablonu.",
   copyAndEdit: "Kopiuj i edytuj",
   copying: "Kopiowanie…",
-  discardTitle: "Porzucić niezapisane zmiany?",
-  discardDescription: "Zmiany w polach i nazwie szablonu nie zostały zapisane.",
-  keepEditing: "Wróć do edycji",
-  discard: "Porzuć zmiany",
 } as const;

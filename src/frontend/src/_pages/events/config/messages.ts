@@ -11,8 +11,7 @@ export const EVENT_SECTION_COPY = {
   templates: "Szablony",
   guests: "Goście",
   templatesDescription:
-    "Podgląd pokazuje to wydarzenie, Twoje dane nadawcy i przykładowego gościa. Zmiana szablonu od razu odświeża podgląd; zapisz, aby ją zachować.",
-  templatesSaved: "Zapisano szablony.",
+    "Podgląd pokazuje to wydarzenie, Twoje dane nadawcy i przykładowego gościa. Zmiana szablonu od razu odświeża podgląd; „Zapisz” w nagłówku ją zachowa.",
   noTemplate: "Bez szablonu nie wydrukujesz tego dokumentu.",
 } as const;
 
