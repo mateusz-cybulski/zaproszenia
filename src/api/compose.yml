@@ -19,10 +19,13 @@ services:
       DATABASE_URL: postgresql+psycopg://api:api@api-db:5432/api
       DEV_AUTH_USER: dev@localhost
       LOCAL_STORAGE_DIR: /data/storage
+      # Gemini through Vertex AI with your `gcloud auth application-default login` credentials.
+      GOOGLE_APPLICATION_CREDENTIALS: /gcloud/application_default_credentials.json
     ports:
       - "8000:8000"
     volumes:
       - api-storage:/data/storage
+      - ${HOME}/.config/gcloud:/gcloud:ro
     depends_on:
       api-db:
         condition: service_healthy

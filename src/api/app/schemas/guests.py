@@ -82,3 +82,13 @@ class ManualVerification(BaseModel):
 
 class ManualVerificationResult(BaseModel):
     verified: int
+
+
+AcceptedField = Literal[
+    "full_name", "position", "institution", "street", "postal_code", "city", "salutation"
+]
+
+
+class AiVerificationAccept(BaseModel):
+    # The fields whose suggestion the user takes; the rest keep their current values.
+    accept: list[AcceptedField] = Field(default_factory=list, max_length=7)

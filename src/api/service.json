@@ -2,5 +2,8 @@
   "secrets": {
     "DATABASE_URL": "database-url"
   },
-  "roles": ["roles/firebaseauth.admin"]
+  "roles": [
+    "roles/firebaseauth.admin",
+    "roles/aiplatform.user"
+  ]
 }

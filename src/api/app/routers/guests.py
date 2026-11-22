@@ -2,6 +2,8 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 from sqlalchemy import select
 
 from app.auth import CurrentUser
@@ -11,6 +13,7 @@ from app.models import VERIFIED_STATUSES, EventGuest, Guest, VerificationStatus
 from app.schemas.guests import (
     DECLINED_FIELDS,
     VERIFIED_FIELDS,
+    AiVerificationAccept,
     GuestRead,
     GuestWrite,
     ManualVerification,
@@ -20,8 +23,12 @@ from app.schemas.pagination import Page
 from app.services.declension import guest_declension
 from app.services.guests import SEARCH_MAX_LENGTH, guest_search
 from app.services.pagination import paginate
+from app.services.verification import accept_ai_result, ask_ai, guest_data, store_ai_result
+from app.verifier import Verifier
 
 router = APIRouter(prefix="/guests", tags=["guests"])
+
+GUEST_CHANGED_DURING_CHECK = "Dane gościa zmieniły się w trakcie weryfikacji. Spróbuj ponownie."
 
 
 async def _own_guest(
@@ -65,6 +72,42 @@ async def verify_manually(guest_id: int, session: Session, user: CurrentUser) ->
     async with session.begin():
         guest = await _own_guest(session, guest_id, user.uid)
         _verify_manually(guest)
+    await session.refresh(guest)
+    return GuestRead.model_validate(guest)
+
+
+@router.post("/{guest_id}/verification/ai")
+async def verify_with_ai_endpoint(
+    guest_id: int, session: Session, user: CurrentUser, verifier: Verifier
+) -> GuestRead:
+    """Checks one guest with AI; the result (or why it failed) is stored on the guest."""
+    async with session.begin():
+        data = guest_data(await _own_guest(session, guest_id, user.uid))
+    # No transaction stays open while the model answers (seconds).
+    check = await ask_ai(data, verifier)
+    async with session.begin():
+        guest = await _own_guest(session, guest_id, user.uid)
+        if guest_data(guest) != data:
+            raise HTTPException(status.HTTP_409_CONFLICT, GUEST_CHANGED_DURING_CHECK)
+        store_ai_result(guest, check, verifier.model)
+    await session.refresh(guest)
+    return GuestRead.model_validate(guest)
+
+
+@router.post("/{guest_id}/verification/ai/accept")
+async def accept_ai_verification(
+    guest_id: int, payload: AiVerificationAccept, session: Session, user: CurrentUser
+) -> GuestRead:
+    async with session.begin():
+        guest = await _own_guest(session, guest_id, user.uid)
+        try:
+            accept_ai_result(guest, set(payload.accept))
+        except ValidationError as error:
+            raise RequestValidationError(error.errors()) from None
+        except ValueError:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT, "Najpierw zweryfikuj gościa z AI."
+            ) from None
     await session.refresh(guest)
     return GuestRead.model_validate(guest)
 
