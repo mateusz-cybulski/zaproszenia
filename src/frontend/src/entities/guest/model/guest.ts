@@ -15,6 +15,20 @@ export const VERIFICATION_STATUSES = [
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
 export type Guest = z.output<typeof guestDtoSchema>;
+export type VerificationResult = NonNullable<Guest["verificationResult"]>;
+export type FieldCheck = VerificationResult["fields"][string];
+
+// The fields AI may correct, by their API names, and the salutation it proposes.
+export const AI_CHECKED_FIELDS = [
+  "full_name",
+  "position",
+  "institution",
+  "street",
+  "postal_code",
+  "city",
+] as const;
+export type AiCheckedField = (typeof AI_CHECKED_FIELDS)[number];
+export type AcceptedAiField = AiCheckedField | "salutation";
 
 export type GuestInput = Address & {
   fullName: string | null;
