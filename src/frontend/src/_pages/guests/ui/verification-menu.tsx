@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, Sparkles, UserCheck } from "lucide-react";
+import { ChevronDown, ListChecks, Sparkles, UserCheck } from "lucide-react";
+import { useState } from "react";
 
 import { type Guest, VerificationBadge, VERIFICATION_STATUS_LABELS } from "@/entities/guest";
 import { useAction } from "@/shared/lib/action-call";
@@ -13,11 +14,19 @@ import {
 } from "@/shared/ui/dropdown-menu";
 
 import { verifyGuestManuallyAction } from "../api/verify-guest-manually-action";
+import { verifyGuestWithAiAction } from "../api/verify-guest-with-ai-action";
+import { AiReviewDialog } from "./ai-review-dialog";
 import { MenuOption } from "./menu-option";
 
 export function VerificationMenu({ guest }: { guest: Guest }) {
+  const [reviewing, setReviewing] = useState(false);
   const verify = useAction(() => verifyGuestManuallyAction(guest.id));
-  const { pending, error } = verify;
+  // After a check with remarks the review opens; without remarks the badge says it is done.
+  const verifyWithAi = useAction(() => verifyGuestWithAiAction(guest.id), {
+    onSuccess: () => setReviewing(true),
+  });
+  const pending = verify.pending || verifyWithAi.pending;
+  const error = verify.error ?? verifyWithAi.error;
   const label = VERIFICATION_STATUS_LABELS[guest.verificationStatus];
 
   return (
@@ -39,8 +48,21 @@ export function VerificationMenu({ guest }: { guest: Guest }) {
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
             {label}
           </DropdownMenuLabel>
-          <DropdownMenuItem disabled>
-            <MenuOption icon={Sparkles} title="Zweryfikuj z AI" description="Dostępne wkrótce" />
+          {guest.verificationStatus === "needs_review" && (
+            <DropdownMenuItem onSelect={() => setReviewing(true)}>
+              <MenuOption
+                icon={ListChecks}
+                title="Przejrzyj wynik AI"
+                description="Przyjmij albo odrzuć poprawki"
+              />
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onSelect={() => verifyWithAi.run()}>
+            <MenuOption
+              icon={Sparkles}
+              title="Zweryfikuj z AI"
+              description="Tytuły, nazwy, adres i zwrot grzecznościowy"
+            />
           </DropdownMenuItem>
           {guest.verificationStatus !== "verified_manual" && (
             <DropdownMenuItem onSelect={() => verify.run()}>
@@ -58,6 +80,11 @@ export function VerificationMenu({ guest }: { guest: Guest }) {
           {error}
         </p>
       )}
+      <AiReviewDialog
+        guest={guest}
+        open={reviewing && guest.verificationStatus === "needs_review"}
+        onOpenChange={setReviewing}
+      />
     </div>
   );
 }

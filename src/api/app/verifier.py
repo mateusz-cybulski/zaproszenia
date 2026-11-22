@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from dataclasses import asdict, dataclass
@@ -17,7 +18,10 @@ from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
-MAX_ATTEMPTS = 2
+MAX_ATTEMPTS = 3
+# Gemini answers these when it is busy or slow; a second try usually succeeds.
+TRANSIENT_STATUS_CODES = frozenset({429, 500, 503, 504})
+RETRY_DELAY_SECONDS = 1.0
 REQUEST_TIMEOUT_MILLISECONDS = 30_000
 
 SYSTEM_PROMPT = """\
@@ -96,9 +100,26 @@ class GuestVerifier(Protocol):
 
 
 class GeminiGuestVerifier:
-    def __init__(self, client: genai.Client, model: str) -> None:
-        self.client = client
+    def __init__(self, model: str, project: str | None, location: str) -> None:
         self.model = model
+        self.project = project
+        self.location = location
+        self._client: genai.Client | None = None
+
+    def _connect(self) -> genai.Client:
+        # Created on the first check, inside its error handling: missing credentials must fail
+        # that check, not every request that merely depends on the verifier.
+        if self._client is None:
+            credentials, project = google.auth.default()
+            # Locally ADC are user credentials without a project: bill their quota project.
+            self._client = genai.Client(
+                enterprise=True,
+                credentials=credentials,
+                project=self.project or project or credentials.quota_project_id,
+                location=self.location,
+                http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MILLISECONDS),
+            )
+        return self._client
 
     async def verify(self, guest: GuestData) -> GuestCheck:
         contents = f"<guest>{json.dumps(asdict(guest), ensure_ascii=False)}</guest>"
@@ -110,14 +131,22 @@ class GeminiGuestVerifier:
         )
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
-                response = await self.client.aio.models.generate_content(
+                response = await self._connect().aio.models.generate_content(
                     model=self.model, contents=contents, config=config
                 )
                 return GuestCheck.model_validate_json(response.text or "")
             except ValidationError:
                 logger.warning("Gemini returned an unusable answer (attempt %d)", attempt)
-            # Expired credentials and timeouts are not the guest's fault either.
-            except (errors.APIError, GoogleAuthError, httpx.HTTPError) as error:
+            except (errors.APIError, httpx.TimeoutException) as error:
+                transient = not isinstance(error, errors.APIError) or (
+                    error.code in TRANSIENT_STATUS_CODES
+                )
+                logger.warning("Gemini call failed (attempt %d): %s", attempt, error)
+                if not transient or attempt == MAX_ATTEMPTS:
+                    raise VerifierUnavailableError from error
+                await asyncio.sleep(RETRY_DELAY_SECONDS * attempt)
+            # Missing or expired credentials and network errors are not the guest's fault either.
+            except (GoogleAuthError, httpx.HTTPError) as error:
                 logger.warning("Gemini call failed: %s", error)
                 raise VerifierUnavailableError from error
         raise VerifierUnavailableError
@@ -126,17 +155,9 @@ class GeminiGuestVerifier:
 @lru_cache
 def get_verifier() -> GuestVerifier:
     settings = get_settings()
-    credentials, project = google.auth.default()
-    # Locally ADC are user credentials without a project; their quota project is the one to bill.
-    project = settings.google_cloud_project or project or credentials.quota_project_id
-    client = genai.Client(
-        enterprise=True,
-        credentials=credentials,
-        project=project,
-        location=settings.gemini_location,
-        http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MILLISECONDS),
+    return GeminiGuestVerifier(
+        settings.gemini_model, settings.google_cloud_project, settings.gemini_location
     )
-    return GeminiGuestVerifier(client, settings.gemini_model)
 
 
 Verifier = Annotated[GuestVerifier, Depends(get_verifier)]

@@ -18,6 +18,7 @@ from app.schemas.guests import (
     GuestWrite,
     ManualVerification,
     ManualVerificationResult,
+    VerificationQueue,
 )
 from app.schemas.pagination import Page
 from app.services.declension import guest_declension
@@ -47,6 +48,27 @@ async def _own_guest(
 def _verify_manually(guest: Guest) -> None:
     guest.verification_status = VerificationStatus.VERIFIED_MANUAL
     guest.verified_at = datetime.now(UTC)
+
+
+# A browser checks guests with AI one request at a time (with a progress bar), so it needs their ids.
+AI_QUEUE_LIMIT = 1000
+AI_QUEUE_STATUSES = (VerificationStatus.PENDING, VerificationStatus.FAILED)
+
+
+@router.get("/verification/queue")
+async def verification_queue(session: Session, user: CurrentUser) -> VerificationQueue:
+    """Active guests never checked or whose check failed, oldest first."""
+    statement = (
+        select(Guest.id)
+        .where(
+            Guest.owner_uid == user.uid,
+            Guest.deleted_at.is_(None),
+            Guest.verification_status.in_(AI_QUEUE_STATUSES),
+        )
+        .order_by(Guest.id)
+        .limit(AI_QUEUE_LIMIT)
+    )
+    return VerificationQueue(guest_ids=list(await session.scalars(statement)))
 
 
 @router.post("/verification/manual")

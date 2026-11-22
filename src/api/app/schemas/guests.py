@@ -92,3 +92,7 @@ AcceptedField = Literal[
 class AiVerificationAccept(BaseModel):
     # The fields whose suggestion the user takes; the rest keep their current values.
     accept: list[AcceptedField] = Field(default_factory=list, max_length=7)
+
+
+class VerificationQueue(BaseModel):
+    guest_ids: list[int]

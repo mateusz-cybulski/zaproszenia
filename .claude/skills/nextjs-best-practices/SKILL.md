@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (forms through one shared Conform hook, and calls from buttons and dialogs through one shared action hook and confirm dialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.16.0"
+  version: "1.17.0"
   next: "16"
 ---
 
@@ -108,6 +108,7 @@ const archive = useAction(() => archiveOrderAction(order.id));
 - Shared buttons stay presentational: they take `pending` and an `onX` callback, and the component that owns the action holds the hook. Two actions in one row are two hooks; show `first.error ?? second.error`.
 - Client hooks live in their own `shared/lib` topic (one folder per hook), never in an index that `"use server"` files import: a Server Action module must not pull a `"use client"` module through a shared barrel.
 - A raw `startTransition` is fine only where no action result comes back: router navigation (search as you type), or client SDK flows such as sign-in.
+- **A run over many records from the browser** (check, send or export each, with a progress bar) does not call a Server Action per record: Server Actions from one page run one after another and cannot be cancelled. Expose one record's step as a Route Handler, call it with `fetch` from a few parallel workers sharing one `AbortController` ("Stop" aborts them at once), count the results in state, and refresh the list once at the end (`router.refresh()`), not per record. Read `signal.aborted` through a function inside the loop: TypeScript keeps the value of its first check.
 
 ### Loading states
 
