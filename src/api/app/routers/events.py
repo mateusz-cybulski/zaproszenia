@@ -144,19 +144,6 @@ async def restore_event(event_id: int, session: Session, user: CurrentUser) -> E
     return EventRead.model_validate(event)
 
 
-@router.put("/{event_id}/templates")
-async def set_event_templates(
-    event: OwnEvent, payload: EventTemplates, session: Session, user: CurrentUser
-) -> EventRead:
-    """Only the templates, from the event's template section."""
-    await _check_templates(session, payload, user.uid)
-    event.invitation_template_id = payload.invitation_template_id
-    event.envelope_template_id = payload.envelope_template_id
-    await session.commit()
-    await session.refresh(event)
-    return EventRead.model_validate(event)
-
-
 @router.get("/{event_id}/preview.png", response_class=Response, responses=PNG_RESPONSE)
 async def preview_event_page(
     event: OwnEvent,

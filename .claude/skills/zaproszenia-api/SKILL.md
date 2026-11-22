@@ -3,7 +3,7 @@ name: zaproszenia-api
 description: "Use when adding or changing code in this project's API (src/api, FastAPI): the project's own helpers and where they live (Pagination, Page and paginate; OwnEvent, find_own_event and find_visible_template; the system templates sync; PageSide and the preview pixel budget; StoredFileMissingError; the Morfeusz wrapper and declension). Project-specific; the general rules are in api-structure, fastapi-expert, python-tooling, gcp-backend and polish-nlp."
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # API conventions of this project
@@ -25,5 +25,5 @@ What the shared skills describe as patterns, by the names this API uses. Synced 
 ## 2. Domain
 
 - Nested resources: `/events/{event_id}/guests` (`app/routers/event_guests.py`), documents at `POST /events/{id}/documents/{invitation|envelope}` with 409 codes `no_guests`, `no_template`, `needs_confirmation`.
-- `PUT /events/{id}` saves the details and both template ids in one request (the frontend's event dialog); `PUT /events/{id}/templates` sets the templates alone.
+- `PUT /events/{id}` saves the details and both template ids in one request (the frontend's event dialog); there is no endpoint for the templates alone.
 - User-facing error messages are in Polish.
