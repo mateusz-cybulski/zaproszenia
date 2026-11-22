@@ -3,7 +3,7 @@ name: git-workflow-and-versioning
 description: "Use when committing, branching, splitting uncommitted work into separate commits, writing a commit message or a pull request description (with a \"Check on production\" checklist), pushing, merging, resolving conflicts, rewriting history, or cutting a release in this repo. Covers this repo's rules: commits and pushes only when the user asks, English git texts in plain sentences (no feat:/fix: prefixes), feat/ fix/ refactor/ branches (one topic per branch; an unrelated request mid-branch gets a new branch from main) merged with a merge commit one pull request at a time (the target branch's runs pass before the next merge), one logical change per commit, checks before committing, and force pushes only with the user's consent. For splitting a branch into several dependent pull requests see stacked-prs."
 license: MIT
 metadata:
-  version: "1.3.1"
+  version: "1.4.0"
   source: "Adapted from addyosmani/agent-skills git-workflow-and-versioning (MIT)"
 ---
 
@@ -76,17 +76,21 @@ What the change does for the user, and why.
 What was checked before the pull request: checks, tests, browser steps.
 
 ## Check on production
-- [ ] Open an existing order: the total shows the gross amount, as on its invoice.
-- [ ] Close the customer dialog after typing a name: it asks before discarding.
+- [ ] Sign in with Google on the production domain: the account page opens (new OAuth redirect URI).
+- [ ] Upload an invoice PDF: it appears in the list (new bucket permission).
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-**Check on production** is a checklist for the user after the deploy:
+**Check on production** lists only what the local environment cannot reproduce. Everything the change does that runs locally (its flows, both services together, an old and a new service side by side) is checked before the pull request and goes under Testing, not here. What belongs here:
 
-- One checkbox per step anyone can click through, with the expected result. Never "check that it works".
-- Cover what the local checks could not: the changed flows on real data, migrations, environment variables, domains, permissions, third-party services, and the things a deploy can break around the change.
-- Nothing to check on production (skills only, docs only): write `Nothing to check: no deployed code changes.` instead of leaving the section out.
+- configuration that exists only in production: environment variables, secrets, IAM roles and bucket permissions, Terraform resources;
+- domains, certificates, OAuth redirect URIs, CORS origins;
+- third-party services on real accounts (sign-in providers, storage, AI APIs, email);
+- a migration or a backfill over real data, with its old and unusual rows;
+- load the local stack does not have: real data volumes, instance memory and request time limits.
+
+One checkbox per item, as a step with the expected result; never "check that it works". When none applies, write `Nothing to check: no change depends on the production environment.` instead of leaving the section out. That the deploy itself succeeded is shown by the runs on the target branch.
 
 ## 3. Branches
 
@@ -194,5 +198,5 @@ The app deploys from `main` and has no versioned consumers, so it has no release
 - A commit that mixes a refactor with a feature, or code with skill updates.
 - A commit that does not pass the checks on its own.
 - Merging the next pull request before the previous merge's runs on the target branch (checks, deploy) have passed.
-- A pull request description without the "Check on production" checklist.
+- A pull request description without the "Check on production" section, or one that repeats what was checked locally.
 - Building an unrelated request on the open branch, or a pull request whose commits cover several topics.

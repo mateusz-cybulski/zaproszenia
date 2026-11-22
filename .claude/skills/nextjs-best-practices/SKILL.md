@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (forms through one shared Conform hook, and calls from buttons and dialogs through one shared action hook and confirm dialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.15.1"
+  version: "1.16.0"
   next: "16"
 ---
 
@@ -63,6 +63,7 @@ return { form, fields };
 - A Server Action is a public endpoint. Validate input on the server (e.g. with a schema) and check authorization inside every action.
 - An id argument is typed with the entity's branded id (`id: CustomerId`) so our own callers cannot pass the wrong one, **and** checked in the first line (`if (!isCustomerId(id)) return { error: … }`), because a caller outside our code can send anything. The check is the boundary: keep it even though the type already says `CustomerId`.
 - After a mutation, invalidate with the APIs from section 2 or `redirect()`. Do not rely on client-side refetching.
+- **A new field from another service is optional at first.** The frontend and the API deploy independently, so the new frontend may meet the old API: parse the field with a default (`item_count: z.int().nonnegative().default(0)`, `.optional()` where no default makes sense) and make it required in a later change, after the API has shipped it. Check the parse with the old response before the pull request (`api-structure`, Changing a response).
 - A Route Handler that takes a body bounds it **before** reading it: reject a `Content-Length` over the limit with 413, then read through a counting reader that stops at the limit. `await request.text()` / `request.json()` first and checking the length afterwards has already buffered whatever the caller sent.
 
 ### Forms with fields (Conform)
