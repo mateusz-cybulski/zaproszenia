@@ -12,7 +12,6 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/shared/ui/
 
 import { EVENT_GUESTS_COPY } from "../config/messages";
 import { AddGuestsPicker } from "./add-guests-picker";
-import { EventDocuments } from "./event-documents";
 import { EventGuestRow } from "./event-guest-row";
 
 type EventGuestsSectionProps = { event: Event; eventGuests: Page<EventGuest> };
@@ -22,7 +21,7 @@ export function EventGuestsSection({ event, eventGuests }: EventGuestsSectionPro
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-start gap-3">
+      <div className="flex items-center gap-3">
         <p className="flex-1 text-sm text-muted-foreground">
           {EVENT_GUESTS_COPY.count(eventGuests.total)}
         </p>
@@ -31,7 +30,6 @@ export function EventGuestsSection({ event, eventGuests }: EventGuestsSectionPro
             <UserPlus /> {EVENT_GUESTS_COPY.add}
           </Button>
         )}
-        <EventDocuments event={event} />
       </div>
       {adding && <AddGuestsPicker eventId={event.id} onDone={() => setAdding(false)} />}
       {eventGuests.items.length === 0 ? (

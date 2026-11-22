@@ -60,9 +60,13 @@ export const DELETE_COPY = {
 
 export const EVENT_DOCUMENTS_COPY = {
   label: "Do druku",
-  invitation: "Zaproszenia (PDF)",
-  envelope: "Koperty (PDF)",
+  invitation: "Zaproszenia",
+  envelope: "Koperty",
   generating: "Generowanie…",
+  tooltip: (kind: "invitation" | "envelope") =>
+    kind === "invitation"
+      ? "Zaproszenia dla wszystkich gości (PDF)"
+      : "Koperty dla wszystkich gości (PDF)",
   fileName: (kind: "invitation" | "envelope", eventName: string) =>
     `${kind === "invitation" ? "Zaproszenia" : "Koperty"} – ${eventName.replace(/[\\/:*?"<>|]/g, "-")}.pdf`,
   noGuests: "Najpierw dodaj gości do wydarzenia.",
@@ -76,4 +80,9 @@ export const EVENT_DOCUMENTS_COPY = {
     "Brakuje danych nadawcy (nazwy i adresu w Ustawieniach), więc nie będzie ich na zaproszeniach i kopertach.",
   confirm: "Generuj mimo to",
   cancel: "Wróć",
+  unsavedTitle: "Masz niezapisane zmiany",
+  unsavedDescription:
+    "Plik powstaje z zapisanych danych wydarzenia i wybranych szablonów. Zapisać zmiany przed generowaniem?",
+  saveAndGenerate: "Zapisz i generuj",
+  generateWithoutSaving: "Generuj bez zapisywania",
 } as const;

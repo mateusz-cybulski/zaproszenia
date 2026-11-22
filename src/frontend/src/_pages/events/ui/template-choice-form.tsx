@@ -2,23 +2,21 @@
 
 import type { Event } from "@/entities/event";
 import type { Template } from "@/entities/template";
-import { useServerForm } from "@/shared/lib/server-form";
 import { Button } from "@/shared/ui/button";
 import { FormStatus } from "@/shared/ui/form-status";
 
-import { setEventTemplatesAction } from "../api/set-event-templates-action";
 import { EVENT_SECTION_COPY } from "../config/messages";
-import { templateChoiceDefaults, templateChoiceSchema } from "../model/template-choice-form";
+import type { TemplateChoiceFormState } from "../model/use-template-choice-form";
 import { TemplateChoice } from "./template-choice";
 
-type TemplateChoiceFormProps = { event: Event; templates: Template[] };
+type TemplateChoiceFormProps = {
+  event: Event;
+  templates: Template[];
+  templateForm: TemplateChoiceFormState;
+};
 
-export function TemplateChoiceForm({ event, templates }: TemplateChoiceFormProps) {
-  const { fields, formProps, pending, lastResult } = useServerForm({
-    schema: templateChoiceSchema,
-    action: setEventTemplatesAction.bind(null, event.id),
-    defaultValue: templateChoiceDefaults(event),
-  });
+export function TemplateChoiceForm({ event, templates, templateForm }: TemplateChoiceFormProps) {
+  const { fields, formProps, pending, lastResult } = templateForm;
 
   return (
     <form {...formProps} className="grid gap-6">
