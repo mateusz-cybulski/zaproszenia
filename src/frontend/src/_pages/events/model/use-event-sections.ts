@@ -6,8 +6,7 @@ import type { EventSection } from "./event-section";
 
 export function useEventSections(initialSection: EventSection) {
   const [section, setSection] = useState(initialSection);
-  // A section stays mounted once opened, so switching back keeps what the user typed. The details
-  // form is always mounted: the name and the save button in the header belong to it.
+  // Guests and the template previews load once their section is first opened, then stay.
   const [opened, setOpened] = useState<ReadonlySet<EventSection>>(
     new Set(["details", initialSection]),
   );

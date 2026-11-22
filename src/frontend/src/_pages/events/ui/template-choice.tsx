@@ -16,10 +16,18 @@ type TemplateChoiceProps = {
   label: string;
   templates: Template[];
   meta: FieldMetadata<string | undefined>;
+  showPreview: boolean;
 };
 
 // The preview follows the select before saving, so a template can be tried on this event.
-export function TemplateChoice({ eventId, kind, label, templates, meta }: TemplateChoiceProps) {
+export function TemplateChoice({
+  eventId,
+  kind,
+  label,
+  templates,
+  meta,
+  showPreview,
+}: TemplateChoiceProps) {
   const [selectedId, setSelectedId] = useState(meta.initialValue ?? "");
   const selected = templates.find((template) => String(template.id) === selectedId);
   const error = meta.errors?.[0];
@@ -49,7 +57,7 @@ export function TemplateChoice({ eventId, kind, label, templates, meta }: Templa
           </p>
         )}
       </div>
-      <TemplatePreview eventId={eventId} template={selected} />
+      {showPreview && <TemplatePreview eventId={eventId} template={selected} />}
     </div>
   );
 }

@@ -4,20 +4,24 @@ import type { Event } from "@/entities/event";
 import type { Template } from "@/entities/template";
 
 import { EVENT_SECTION_COPY } from "../config/messages";
-import type { TemplateChoiceFormState } from "../model/use-template-choice-form";
+import type { EventFormState } from "../model/use-event-form";
 import { TemplateChoice } from "./template-choice";
 
-type TemplateChoiceFormProps = {
+type TemplateChoiceFieldsProps = {
   event: Event;
   templates: Template[];
-  templateForm: TemplateChoiceFormState;
+  fields: EventFormState["fields"];
+  showPreviews: boolean;
 };
 
-export function TemplateChoiceForm({ event, templates, templateForm }: TemplateChoiceFormProps) {
-  const { fields, formProps } = templateForm;
-
+export function TemplateChoiceFields({
+  event,
+  templates,
+  fields,
+  showPreviews,
+}: TemplateChoiceFieldsProps) {
   return (
-    <form {...formProps} className="grid gap-6">
+    <>
       <p className="text-sm text-muted-foreground">{EVENT_SECTION_COPY.templatesDescription}</p>
       <div className="grid grid-cols-2 items-start gap-6">
         <TemplateChoice
@@ -26,6 +30,7 @@ export function TemplateChoiceForm({ event, templates, templateForm }: TemplateC
           label="Szablon zaproszenia"
           templates={templates}
           meta={fields.invitationTemplateId}
+          showPreview={showPreviews}
         />
         <TemplateChoice
           eventId={event.id}
@@ -33,8 +38,9 @@ export function TemplateChoiceForm({ event, templates, templateForm }: TemplateC
           label="Szablon koperty"
           templates={templates}
           meta={fields.envelopeTemplateId}
+          showPreview={showPreviews}
         />
       </div>
-    </form>
+    </>
   );
 }

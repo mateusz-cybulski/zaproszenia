@@ -8,7 +8,7 @@ import { FormStatus } from "@/shared/ui/form-status";
 
 import { EVENT_DIALOG_COPY } from "../config/messages";
 import { useEventForm } from "../model/use-event-form";
-import { EventForm } from "./event-form";
+import { EventDetailsFields } from "./event-details-fields";
 import { EventNameField } from "./event-name-field";
 
 const COPY = EVENT_DIALOG_COPY.add;
@@ -43,7 +43,9 @@ export function NewEventDialogContent({
           <EventNameField eventForm={eventForm} title={COPY.title} />
         </DialogTitleBar>
         <DialogBody>
-          <EventForm eventForm={eventForm} />
+          <form {...eventForm.formProps} className="grid gap-6">
+            <EventDetailsFields fields={eventForm.fields} />
+          </form>
         </DialogBody>
       </DialogContent>
       <DiscardChangesDialog
