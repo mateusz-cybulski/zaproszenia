@@ -31,7 +31,7 @@ export function EventDialog(props: EventDialogProps) {
     <Dialog open onOpenChange={(open) => !open && dismiss()}>
       <DialogContent
         onCloseAutoFocus={returnFocus}
-        className={props.event ? "max-w-6xl" : "max-w-2xl"}
+        className={props.event ? "max-w-4xl" : "max-w-2xl"}
         aria-describedby={undefined}
       >
         {props.event ? (

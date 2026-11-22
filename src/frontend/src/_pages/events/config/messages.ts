@@ -60,13 +60,10 @@ export const DELETE_COPY = {
 
 export const EVENT_DOCUMENTS_COPY = {
   label: "Do druku",
-  invitation: "Zaproszenia",
-  envelope: "Koperty",
+  invitation: "Zaproszenia (PDF)",
+  envelope: "Koperty (PDF)",
   generating: "Generowanie…",
-  tooltip: (kind: "invitation" | "envelope") =>
-    kind === "invitation"
-      ? "Zaproszenia dla wszystkich gości (PDF)"
-      : "Koperty dla wszystkich gości (PDF)",
+  menuTooltip: "Zaproszenia albo koperty dla wszystkich gości (PDF)",
   fileName: (kind: "invitation" | "envelope", eventName: string) =>
     `${kind === "invitation" ? "Zaproszenia" : "Koperty"} – ${eventName.replace(/[\\/:*?"<>|]/g, "-")}.pdf`,
   noGuests: "Najpierw dodaj gości do wydarzenia.",

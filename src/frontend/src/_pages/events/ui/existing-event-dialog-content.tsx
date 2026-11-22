@@ -16,7 +16,7 @@ import { useEventForm } from "../model/use-event-form";
 import { useEventSections } from "../model/use-event-sections";
 import { type EventDialogForm, useSaveThenGenerate } from "../model/use-save-then-generate";
 import { useTemplateChoiceForm } from "../model/use-template-choice-form";
-import { EventDocumentButtons } from "./event-document-buttons";
+import { EventDocumentMenu } from "./event-document-menu";
 import { EventDocumentConfirmDialog } from "./event-document-confirm-dialog";
 import { EventNameField } from "./event-name-field";
 import { EventSectionSwitcher } from "./event-section-switcher";
@@ -98,7 +98,7 @@ export function ExistingEventDialogContent({
               {documents.error}
             </p>
             <FormStatus result={eventForm.lastResult} />
-            <EventDocumentButtons
+            <EventDocumentMenu
               pending={documents.pending}
               busy={saveThenGenerate.waiting}
               onGenerate={generate}
