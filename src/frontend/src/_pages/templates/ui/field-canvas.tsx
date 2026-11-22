@@ -1,10 +1,10 @@
 "use client";
 
-import { LoaderCircle } from "lucide-react";
 import { type PointerEvent, useRef } from "react";
 
 import type { Placeholder, TemplateField, TemplatePage } from "@/entities/template";
 import { cn } from "@/shared/lib/css";
+import { Spinner } from "@/shared/ui/spinner";
 
 import { EDITOR_COPY } from "../config/field-presets";
 import {
@@ -113,12 +113,7 @@ export function FieldCanvas({
           draggable={false}
         />
       )}
-      {loading && (
-        <LoaderCircle
-          className="absolute top-2 right-2 size-4 animate-spin text-muted-foreground"
-          aria-hidden
-        />
-      )}
+      {loading && <Spinner decorative className="absolute top-2 right-2 text-muted-foreground" />}
       {fields.map((field) => {
         const selected = field.id === selectedId;
         return (

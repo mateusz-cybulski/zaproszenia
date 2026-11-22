@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Button } from "@/shared/ui/button";
@@ -46,11 +46,12 @@ export function PurgeButton({ name, pending, disabled, onPurge }: PurgeButtonPro
         variant="destructive"
         size="sm"
         onClick={onPurge}
-        aria-disabled={pending}
+        pending={pending}
+        icon={<Trash />}
         aria-label={`Potwierdź usunięcie na stałe: ${name}`}
         autoFocus
       >
-        {pending ? <LoaderCircle className="animate-spin" /> : <Trash />} Potwierdź
+        Potwierdź
       </Button>
     </>
   );

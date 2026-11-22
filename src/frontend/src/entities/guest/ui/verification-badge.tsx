@@ -1,7 +1,6 @@
-import { LoaderCircle } from "lucide-react";
-
 import { cn } from "@/shared/lib/css";
 import { Badge } from "@/shared/ui/badge";
+import { Spinner } from "@/shared/ui/spinner";
 
 import {
   VERIFICATION_STATUS_LABELS,
@@ -19,7 +18,7 @@ export function VerificationBadge({ status, busy = false, className }: Verificat
   const { className: statusClassName, icon: Icon } = VERIFICATION_STATUS_STYLES[status];
   return (
     <Badge variant="outline" className={cn(statusClassName, className)}>
-      {busy ? <LoaderCircle className="animate-spin" /> : <Icon />}
+      {busy ? <Spinner decorative /> : <Icon />}
       {busy ? "Weryfikuję…" : VERIFICATION_STATUS_LABELS[status]}
     </Badge>
   );

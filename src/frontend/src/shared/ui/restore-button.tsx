@@ -1,4 +1,4 @@
-import { ArchiveRestore, LoaderCircle } from "lucide-react";
+import { ArchiveRestore } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 
@@ -16,10 +16,11 @@ export function RestoreButton({ name, pending, disabled, onRestore }: RestoreBut
       size="sm"
       onClick={onRestore}
       disabled={disabled}
-      aria-disabled={pending}
+      pending={pending}
+      icon={<ArchiveRestore />}
       aria-label={`Przywróć: ${name}`}
     >
-      {pending ? <LoaderCircle className="animate-spin" /> : <ArchiveRestore />} Przywróć
+      Przywróć
     </Button>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import {
   type EventGuest,
@@ -69,10 +69,9 @@ export function EventGuestRow({ eventId, eventGuest }: EventGuestRowProps) {
           size="icon-sm"
           aria-label={EVENT_GUESTS_COPY.remove(name)}
           onClick={() => remove.run()}
-          aria-disabled={remove.pending}
-        >
-          {remove.pending ? <LoaderCircle className="animate-spin" /> : <X />}
-        </Button>
+          pending={remove.pending}
+          icon={<X />}
+        />
       </TableCell>
     </TableRow>
   );

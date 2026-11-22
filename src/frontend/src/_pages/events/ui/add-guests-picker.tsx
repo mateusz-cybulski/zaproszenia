@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 
 import type { EventId } from "@/entities/event";
@@ -102,9 +102,8 @@ export function AddGuestsPicker({ eventId, onDone }: AddGuestsPickerProps) {
                 variant="ghost"
                 size="sm"
                 onClick={candidates.loadMore}
-                disabled={candidates.loading}
+                pending={candidates.loading}
               >
-                {candidates.loading && <LoaderCircle className="animate-spin" />}
                 {EVENT_GUESTS_COPY.showMore(guests.length, candidates.total)}
               </Button>
             </li>
