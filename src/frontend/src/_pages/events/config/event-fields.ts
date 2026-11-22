@@ -13,6 +13,7 @@ export const NAME_FIELD = {
 export const STARTS_AT_FIELD: FormFieldConfig<EventField> = {
   name: "startsAtLocal",
   label: "Data i godzina",
+  required: true,
   inputType: "datetime-local",
   hint: "Czas lokalny wydarzenia (Polska).",
 };

@@ -4,7 +4,9 @@ import * as React from "react";
 import { cn } from "@/shared/lib/css";
 import { Label as LabelPrimitive } from "radix-ui";
 
-function Label({ className, ...props }: React.ComponentProps<typeof LabelPrimitive.Root>) {
+type LabelProps = React.ComponentProps<typeof LabelPrimitive.Root> & { required?: boolean };
+
+function Label({ className, required, children, ...props }: LabelProps) {
   return (
     <LabelPrimitive.Root
       data-slot="label"
@@ -13,7 +15,10 @@ function Label({ className, ...props }: React.ComponentProps<typeof LabelPrimiti
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      {required && <span className="font-normal text-muted-foreground">(Wymagane)</span>}
+    </LabelPrimitive.Root>
   );
 }
 

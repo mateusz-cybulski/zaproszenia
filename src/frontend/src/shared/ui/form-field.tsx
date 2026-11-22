@@ -7,6 +7,7 @@ import { Textarea } from "@/shared/ui/textarea";
 export type FormFieldConfig<Name extends string = string> = {
   name: Name;
   label: string;
+  required?: true;
   hint?: string;
   // Default "off": most forms here hold other people's data, where autofill offers the user's own.
   autoComplete?: string;
@@ -41,13 +42,16 @@ export function FormField({ field, meta }: FormFieldProps) {
     id: meta.id,
     name: meta.name,
     defaultValue: meta.defaultValue ?? "",
+    required: field.required,
     "aria-invalid": error ? true : undefined,
     "aria-describedby": describedBy,
   };
 
   return (
     <div className="grid content-start gap-2">
-      <Label htmlFor={meta.id}>{field.label}</Label>
+      <Label htmlFor={meta.id} required={field.required}>
+        {field.label}
+      </Label>
       {"inputType" in field ? (
         <DateTimeInput
           key={meta.key}
