@@ -1,9 +1,9 @@
 ---
 name: zaproszenia-ui
-description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), loading skeletons, the unsaved-changes guard, one save per dialog, the date and time picker, and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
+description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), loading skeletons, the unsaved-changes guard, one save per dialog, the date and time picker, the shared helpers by their names here (useServerForm, FormField, useAction, ConfirmActionDialog, Pagination), and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
 license: MIT
 metadata:
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # UI conventions of this project
@@ -65,3 +65,20 @@ Writing follows `better-accessibility`, checking uses the AccessLint skills (`ac
 - **Leaving a form**: every form dialog closes through `useDiscardGuard(dirty, dismiss)` and renders `DiscardChangesDialog` (`@/shared/lib/dialogs`, `@/shared/ui/discard-changes-dialog`); a page form calls `useUnsavedChangesWarning(form.dirty)`. When the form state lives in the dialog's content (the event dialog), the content renders the `Dialog` itself.
 - **One "Zapisz" per dialog**: the event dialog's details and template choice are one form (`EventSections` wraps both sections; `EventDetailsFields` and `TemplateChoiceFields` render fields only), saved by `updateEventAction` in one `PUT /events/{id}`; the template selects stay mounted, their previews load when the section opens. A section never has its own save button.
 - **Dates and times are picked, never typed**: a field with `inputType: "datetime-local"` renders `DateTimeInput` (the kit's `DateTimePicker`: a calendar and hour/minute lists, the whole field opens it).
+
+## 4. Shared helpers by their names here
+
+`nextjs-best-practices` describes these as patterns; this is what they are called in this frontend.
+
+| Pattern | Here |
+|---|---|
+| One shared form hook | `useServerForm({ schema, action, defaultValue, onSuccess })` from `@/shared/lib/server-form` |
+| Field and status components | `FormField` (`@/shared/ui/form-field`, config with `required`, `hint`, `inputType: "datetime-local"`, `options`), `FormStatus` (`@/shared/ui/form-status`) |
+| Action result and action hook | `ActionResult` (`@/shared/lib/actions`), `useAction(action, { onSuccess })` (`@/shared/lib/action-call`) |
+| Confirm dialog | `ConfirmActionDialog` (`@/shared/ui/confirm-action-dialog`); soft or permanent delete: `DeleteChoiceDialog` |
+| Paged lists | `parsePage()` (`@/shared/lib/pagination`), `pageSchema(itemSchema)` and `Page<Item>` (`@/shared/api`), `Pagination` (`@/shared/ui/pagination`, "51–100 z 137"), `withQuery(path, params)` (`@/shared/routes`); dialog page parameters `deleted_page`, `guests_page` |
+| Branded ids | `recordIdSchema` / `recordIdParamSchema` (`@/shared/lib/record-id`), e.g. `GuestId`, `isGuestId`, `parseGuestId` |
+| A button that waits | `Button` with `pending` and `icon` |
+
+UI copy is Polish. The labels the shared rules name in English are, here: "Zapisz", "Zapisz i …" / "… bez zapisywania" / "Wróć" (before generating), "Wróć do edycji" / "Wyjdź bez zapisywania" (leaving a form), "Ładowanie" (spinner).
+
