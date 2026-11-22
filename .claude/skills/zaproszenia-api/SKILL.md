@@ -1,9 +1,9 @@
 ---
 name: zaproszenia-api
-description: "Use when adding or changing code in this project's API (src/api, FastAPI): the project's own helpers and where they live (Pagination, Page and paginate; OwnEvent, find_own_event and find_visible_template; the system templates sync; PageSide and the preview pixel budget; StoredFileMissingError; the Morfeusz wrapper and declension). Project-specific; the general rules are in api-structure, fastapi-expert, python-tooling, gcp-backend and polish-nlp."
+description: "Use when adding or changing code in this project's API (src/api, FastAPI): the project's own helpers and where they live (Pagination, Page and paginate; OwnEvent, find_own_event and find_visible_template; the system templates sync; PageSide and the preview pixel budget; StoredFileMissingError; the Morfeusz wrapper and declension; the Gemini verifier and AI verification of guests). Project-specific; the general rules are in api-structure, fastapi-expert, python-tooling, gcp-backend and polish-nlp."
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # API conventions of this project
@@ -20,6 +20,8 @@ What the shared skills describe as patterns, by the names this API uses. Synced 
 | Upload limits by processing cost (`api-structure`) | `PageSide.MIN_MM` / `PageSide.MAX_MM` (20–1000 mm) checked on upload in `app/services/pdf.py`; `PREVIEW_MAX_PIXELS` (4 M) bounds `render_png` |
 | One template shared by many copies (`api-structure`) | `render_all()` in `app/services/pdf.py`: all guests' pages from one `PdfReader`, then `compress_identical_objects` |
 | A stored file may be missing (`api-structure`) | `StoredFileMissingError` from `app/storage.py`, turned into a 409 by a handler in `app/main.py` |
+| Gemini (`gcp-backend`) | `app/verifier.py`: `GuestVerifier` protocol, `GeminiGuestVerifier` (`GEMINI_MODEL`, default `gemini-3.8-flash`, location `global`), `get_verifier` / `Verifier` dependency overridden in tests (`tests/test_ai_verification.py`); `VerifierUnavailableError` for any failed call |
+| AI verification of a guest | `app/services/verification.py`: `ask_ai` outside a transaction, `store_ai_result` (`verified_ai` without remarks, else `needs_review`; `failed` when the model is unavailable), `accept_ai_result` (accepted suggestions, then Morfeusz declension again) |
 | Polish morphology (`polish-nlp`) | `app/morphology.py` (typed wrapper, one instance per thread) and `app/services/declension.py` (names, positions, institutions) |
 
 ## 2. Domain
