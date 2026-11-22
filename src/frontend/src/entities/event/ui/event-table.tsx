@@ -4,10 +4,10 @@ import { formatLongDateTime } from "@/shared/lib/dates";
 import { Badge } from "@/shared/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
-import { type Event, formatVenue } from "../model/event";
+import { type Event, type EventListItem, formatVenue } from "../model/event";
 
 type EventTableProps = {
-  events: Event[];
+  events: EventListItem[];
   // The request time, so a finished event is marked the same way on the server and in the browser.
   now: number;
   emptyMessage: string;
@@ -26,6 +26,7 @@ export function EventTable({ events, now, emptyMessage, renderActions }: EventTa
           <TableHead>Wydarzenie</TableHead>
           <TableHead>Termin</TableHead>
           <TableHead>Miejsce</TableHead>
+          <TableHead className="text-right">Goście</TableHead>
           {renderActions && (
             <TableHead className="text-right">
               <span className="sr-only">Akcje</span>
@@ -48,6 +49,9 @@ export function EventTable({ events, now, emptyMessage, renderActions }: EventTa
               {formatLongDateTime(event.startsAt, event.timeZone)}
             </TableCell>
             <TableCell className="text-muted-foreground">{formatVenue(event) || "—"}</TableCell>
+            <TableCell className="text-right text-muted-foreground tabular-nums">
+              {event.guestCount}
+            </TableCell>
             {renderActions && <TableCell className="text-right">{renderActions(event)}</TableCell>}
           </TableRow>
         ))}

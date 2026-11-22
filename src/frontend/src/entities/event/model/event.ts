@@ -10,6 +10,9 @@ export const DEFAULT_TIME_ZONE = "Europe/Warsaw";
 export type Event = z.output<typeof eventDtoSchema>;
 
 // What the event form sets; templates and guests are chosen separately.
+// A row of the events list: the event and how many guests are on its list.
+export type EventListItem = Event & { guestCount: number };
+
 export type EventInput = Address & {
   name: string;
   // Wall-clock time as typed, e.g. "2026-10-15T18:00"; the API reads it in the event's zone.

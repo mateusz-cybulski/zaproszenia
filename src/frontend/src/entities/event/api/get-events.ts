@@ -4,14 +4,14 @@ import { type Page, pageSchema } from "@/shared/api";
 import { apiFetch, parseResponse } from "@/shared/api/index.server";
 import { withQuery } from "@/shared/routes";
 
-import type { Event } from "../model/event";
-import { eventDtoSchema } from "./event-dto";
+import type { EventListItem } from "../model/event";
+import { eventListItemDtoSchema } from "./event-dto";
 
 type EventQuery = { page?: number; deleted?: boolean };
 
-const eventPageSchema = pageSchema(eventDtoSchema);
+const eventPageSchema = pageSchema(eventListItemDtoSchema);
 
-export async function getEvents({ page, deleted }: EventQuery = {}): Promise<Page<Event>> {
+export async function getEvents({ page, deleted }: EventQuery = {}): Promise<Page<EventListItem>> {
   const path = withQuery("/events", { page, deleted: deleted ? "true" : undefined });
   const response = await apiFetch(path);
   if (!response.ok) {
