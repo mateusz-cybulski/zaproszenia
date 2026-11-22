@@ -38,7 +38,9 @@ export function UploadTemplateForm({ onUploaded, onCancel }: UploadTemplateFormP
   return (
     <form onSubmit={submit} className="grid gap-4">
       <div className="grid gap-2">
-        <Label htmlFor="template-file" required>Plik PDF</Label>
+        <Label htmlFor="template-file" required>
+          Plik PDF
+        </Label>
         <Input
           id="template-file"
           name="file"
