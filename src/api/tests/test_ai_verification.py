@@ -1,15 +1,25 @@
 from collections.abc import Iterator
 from typing import Any
 
+import google.auth
 import pytest
+from google.auth.exceptions import DefaultCredentialsError
+from google.genai import errors
 from httpx import AsyncClient
 from sqlalchemy import update
 
+from app import verifier as verifier_module
 from app.main import app
 from app.models import Guest
 from app.schemas.guests import FieldCheck
 from app.services.verification import AI_FIELDS
-from app.verifier import GuestCheck, GuestData, VerifierUnavailableError, get_verifier
+from app.verifier import (
+    GeminiGuestVerifier,
+    GuestCheck,
+    GuestData,
+    VerifierUnavailableError,
+    get_verifier,
+)
 from tests.conftest import OTHER_SESSION_COOKIE
 
 GUEST = {
@@ -166,3 +176,67 @@ async def test_ai_verification_is_private_to_the_owner(
 
     assert (checked.status_code, accepted.status_code) == (404, 404)
     assert verifier.asked == []
+
+
+async def test_queue_lists_unchecked_and_failed_guests_only(
+    client: AsyncClient, verifier: FakeVerifier
+) -> None:
+    unchecked, failed, verified, deleted = [await _guest(client) for _ in range(4)]
+    verifier.unavailable = True
+    await client.post(f"/guests/{failed}/verification/ai")
+    verifier.unavailable = False
+    await client.post(f"/guests/{verified}/verification/ai")
+    await client.delete(f"/guests/{deleted}")
+
+    queue = (await client.get("/guests/verification/queue")).json()
+
+    assert queue == {"guest_ids": [unchecked, failed]}
+
+
+async def test_missing_credentials_make_the_model_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def no_credentials() -> None:
+        raise DefaultCredentialsError("no ADC")  # type: ignore[no-untyped-call]
+
+    monkeypatch.setattr(google.auth, "default", no_credentials)
+    verifier = GeminiGuestVerifier("gemini", None, "global")
+
+    with pytest.raises(VerifierUnavailableError):
+        await verifier.verify(GuestData(None, None, "Muzeum", None, None, None, None, "PL"))
+
+
+class FlakyModels:
+    """Answers like Gemini: first a timeout on Google's side, then the check."""
+
+    def __init__(self, failures: list[int]) -> None:
+        self.failures = failures
+        self.calls = 0
+
+    async def generate_content(self, **_: Any) -> Any:
+        self.calls += 1
+        if self.failures:
+            code = self.failures.pop(0)
+            raise errors.APIError(code, {"error": {"code": code, "message": "x", "status": "x"}})
+        return type("Response", (), {"text": _check().model_dump_json()})()
+
+
+def _verifier_with(models: FlakyModels) -> GeminiGuestVerifier:
+    verifier = GeminiGuestVerifier("gemini", None, "global")
+    verifier._client = type("Client", (), {"aio": type("Aio", (), {"models": models})()})()
+    return verifier
+
+
+async def test_transient_gemini_errors_are_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(verifier_module, "RETRY_DELAY_SECONDS", 0)
+    flaky = FlakyModels([504, 429])
+    data = GuestData(None, None, "Muzeum", None, None, None, None, "PL")
+
+    check = await _verifier_with(flaky).verify(data)
+    rejected = FlakyModels([400])
+
+    assert check.summary == "Dane są poprawne."
+    assert flaky.calls == 3
+    with pytest.raises(VerifierUnavailableError):
+        await _verifier_with(rejected).verify(data)
+    assert rejected.calls == 1
