@@ -76,6 +76,7 @@ function AiReviewForm({
 
   return (
     <DialogBody className="grid gap-4">
+      <AddressCheckNotice guest={guest} />
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">{COPY.noSuggestions}</p>
       ) : (
@@ -150,5 +151,25 @@ function AiReviewItem({
       </dl>
       {row.explanation && <p className="text-xs text-muted-foreground">{row.explanation}</p>}
     </li>
+  );
+}
+
+// Only a problem is worth a notice; the suggestions it leads to are among the fields above.
+function AddressCheckNotice({ guest }: { guest: Guest }) {
+  const check = guest.verificationResult?.addressCheck;
+  if (!check || check.status === "ok" || check.status === "skipped") {
+    return null;
+  }
+  return (
+    <div
+      data-status={check.status}
+      className="grid gap-1 rounded-lg border border-warning/40 bg-warning/5 p-3 text-sm data-[status=error]:border-destructive/40 data-[status=error]:bg-destructive/5"
+    >
+      <span className="font-medium">{COPY.addressTitle}</span>
+      <p>{check.explanation}</p>
+      {check.matchedLabel && (
+        <p className="text-xs text-muted-foreground">{COPY.addressFound(check.matchedLabel)}</p>
+      )}
+    </div>
   );
 }

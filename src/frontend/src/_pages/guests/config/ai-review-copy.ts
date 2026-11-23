@@ -9,6 +9,8 @@ export const AI_REVIEW_COPY = {
   confirm: "Zatwierdź",
   pending: "Zapisywanie…",
   cancel: "Anuluj",
+  addressTitle: "Sprawdzenie adresu",
+  addressFound: (label: string) => `Znaleziono: ${label}`,
   noSuggestions: "AI nie proponuje zmian. Zatwierdź, aby oznaczyć gościa jako zweryfikowanego.",
 } as const;
 
