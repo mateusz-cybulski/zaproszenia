@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { Guest } from "@/entities/guest";
 import { TEXT_LIMIT } from "@/shared/config";
-import { addressSchemaShape, optionalText } from "@/shared/lib/forms";
+import { addressSchemaShape, optionalText, requiredText } from "@/shared/lib/forms";
 
 export const RECIPIENT_REQUIRED =
   "Podaj imię i nazwisko albo instytucję (np. redakcję zapraszaną jako całość).";
@@ -14,6 +14,10 @@ export const guestFormSchema = z
     institution: optionalText(TEXT_LIMIT.short),
     salutation: optionalText(TEXT_LIMIT.short),
     ...addressSchemaShape,
+    // An envelope cannot be printed without them.
+    street: requiredText(TEXT_LIMIT.short, "Podaj ulicę i numer."),
+    postalCode: requiredText(TEXT_LIMIT.postalCode, "Podaj kod pocztowy."),
+    city: requiredText(TEXT_LIMIT.city, "Podaj miejscowość."),
   })
   .refine((guest) => guest.fullName !== null || guest.institution !== null, {
     message: RECIPIENT_REQUIRED,

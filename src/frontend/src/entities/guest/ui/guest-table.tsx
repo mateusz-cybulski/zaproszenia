@@ -1,10 +1,12 @@
+import { MapPinOff } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 
 import { formatAddress } from "@/shared/lib/address";
+import { Badge } from "@/shared/ui/badge";
 
-import { type Guest, recipientName } from "../model/guest";
+import { type Guest, hasPostalAddress, recipientName } from "../model/guest";
 import { VerificationBadge } from "./verification-badge";
 
 type GuestTableProps = {
@@ -58,7 +60,21 @@ export function GuestTable({
                 )}
               </TableCell>
               <TableCell className="text-muted-foreground">{affiliation || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{address || "—"}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {hasPostalAddress(guest) ? (
+                  address
+                ) : (
+                  <span className="grid justify-items-start gap-1">
+                    {address && <span>{address}</span>}
+                    <Badge
+                      variant="outline"
+                      className="border-warning/30 bg-warning/10 text-warning"
+                    >
+                      <MapPinOff aria-hidden /> Brak adresu
+                    </Badge>
+                  </span>
+                )}
+              </TableCell>
               <TableCell>
                 {renderVerification ? (
                   renderVerification(guest)
