@@ -35,6 +35,14 @@ class FieldCheck(BaseModel):
     explanation: str
 
 
+class AddressCheck(BaseModel):
+    status: Literal["ok", "warning", "error", "skipped"]
+    explanation: str
+    suggested_postal_code: str | None = None
+    suggested_city: str | None = None
+    matched_label: str | None = None
+
+
 class VerificationResult(BaseModel):
     checked_at: datetime
     model: str | None = None
@@ -43,6 +51,7 @@ class VerificationResult(BaseModel):
     salutation_explanation: str | None = None
     declension: Declension | None = None
     rule_issues: list[str] = Field(default_factory=list)
+    address_check: AddressCheck | None = None
     summary: str | None = None
     error: str | None = None
 

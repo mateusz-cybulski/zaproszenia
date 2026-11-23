@@ -2,7 +2,7 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     google_cloud_project: str | None = None
     gemini_model: str = "gemini-3.8-flash"
     gemini_location: str = "global"
+    # From Secret Manager on Cloud Run; locally optional, without it addresses are not geocoded.
+    geocoding_api_key: SecretStr | None = None
 
     @field_validator("dev_auth_user")
     @classmethod

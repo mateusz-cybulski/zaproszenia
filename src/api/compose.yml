@@ -15,6 +15,10 @@ services:
         && python -m app.system_templates
         && python -m app.seed
         && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # Optional local secrets (GEOCODING_API_KEY); .dockerignore keeps .env out of the image.
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql+psycopg://api:api@api-db:5432/api
       DEV_AUTH_USER: dev@localhost

@@ -1,6 +1,7 @@
 {
   "secrets": {
-    "DATABASE_URL": "database-url"
+    "DATABASE_URL": "database-url",
+    "GEOCODING_API_KEY": "geocoding-api-key"
   },
   "roles": [
     "roles/firebaseauth.admin",
