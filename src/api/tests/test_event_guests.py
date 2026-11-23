@@ -2,7 +2,7 @@ from typing import Any
 
 from httpx import AsyncClient
 
-from tests.conftest import OTHER_SESSION_COOKIE
+from tests.conftest import ADDRESS, OTHER_SESSION_COOKIE
 
 
 async def _event(client: AsyncClient, name: str = "Gala") -> int:
@@ -12,7 +12,7 @@ async def _event(client: AsyncClient, name: str = "Gala") -> int:
 
 
 async def _guest(client: AsyncClient, **fields: Any) -> int:
-    response = await client.post("/guests", json=fields)
+    response = await client.post("/guests", json={**ADDRESS, **fields})
     guest_id: int = response.json()["id"]
     return guest_id
 

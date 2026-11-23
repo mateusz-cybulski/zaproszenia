@@ -39,6 +39,8 @@ def database() -> Iterator[None]:
 
 
 VALID_ID_TOKEN = "valid-id-token"  # noqa: S105
+# Every guest needs an address (an envelope cannot be printed without it).
+ADDRESS = {"street": "ul. Długa 1", "postal_code": "00-001", "city": "Warszawa"}
 SESSION_COOKIE = "session-cookie"
 UNVERIFIED_ID_TOKEN = "unverified-id-token"  # noqa: S105
 OTHER_SESSION_COOKIE = "other-session-cookie"

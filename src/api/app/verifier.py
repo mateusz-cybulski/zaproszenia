@@ -48,11 +48,14 @@ and correct capitalization.
 not match the city only when you are confident or when the <geocoding> result shows it: \
 that result comes from Google's address database, trust it over your own knowledge.
 
+You check only whether the values given are correct; which fields are required is the \
+form's job. An empty field is "ok" with no suggestion and no remark, and is never filled \
+in: never invent data you were not given.
+
 Statuses: "ok" means nothing to change (suggestion must be null). "warning" means a likely \
-problem or a recommended improvement. "error" means the value is definitely wrong or \
-required data is missing. A suggestion is always the complete corrected value of that one \
-field, or null. Never invent data you were not given: if a field is empty, report it \
-without a suggestion. If you cannot check something, treat it as "ok" rather than guessing.
+problem or a recommended improvement. "error" means the value is definitely wrong. A \
+suggestion is always the complete corrected value of that one field, or null. If you \
+cannot check something, treat it as "ok" rather than guessing.
 
 Also write the salutation that opens the invitation letter, following Polish etiquette: \
 vocative, using the highest relevant title or function, e.g. "Szanowny Panie Profesorze", \

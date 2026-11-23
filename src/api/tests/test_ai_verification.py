@@ -276,3 +276,18 @@ async def test_an_address_warning_needs_review_and_reaches_the_model(
     assert guest["verification_status"] == "needs_review"
     assert guest["verification_result"]["address_check"]["suggested_postal_code"] == "00-950"
     assert verifier.addresses[0] == addresses.result
+
+
+async def test_remarks_about_empty_fields_are_dropped(
+    client: AsyncClient, verifier: FakeVerifier
+) -> None:
+    response = await client.post("/guests", json={**GUEST, "position": None})
+    guest_id = response.json()["id"]
+    verifier.check = _check(
+        position=FieldCheck(status="error", suggestion="Dyrektor", explanation="Brak stanowiska.")
+    )
+
+    guest = (await client.post(f"/guests/{guest_id}/verification/ai")).json()
+
+    assert guest["verification_status"] == "verified_ai"
+    assert guest["verification_result"]["fields"]["position"]["suggestion"] is None

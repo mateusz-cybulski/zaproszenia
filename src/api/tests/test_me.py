@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from pypdf import PdfWriter
 
 from app.storage import LocalStorage
-from tests.conftest import OTHER_SESSION_COOKIE, USER, FakeIdentity
+from tests.conftest import ADDRESS, OTHER_SESSION_COOKIE, USER, FakeIdentity
 
 SENDER = {
     "sender_name": "Fundacja Przykładowa",
@@ -66,8 +66,10 @@ async def test_delete_me_removes_all_data_files_and_account(
     client: AsyncClient, storage: LocalStorage, identity: FakeIdentity
 ) -> None:
     await client.put("/me", json=SENDER)
-    guest = (await client.post("/guests", json={"full_name": "Jan Kowalski"})).json()
-    deleted_guest = (await client.post("/guests", json={"full_name": "Anna Nowak"})).json()
+    guest = (await client.post("/guests", json={**ADDRESS, "full_name": "Jan Kowalski"})).json()
+    deleted_guest = (
+        await client.post("/guests", json={**ADDRESS, "full_name": "Anna Nowak"})
+    ).json()
     await client.delete(f"/guests/{deleted_guest['id']}")
     template = await client.post(
         "/templates",
@@ -80,7 +82,7 @@ async def test_delete_me_removes_all_data_files_and_account(
     assert event.status_code == 201
 
     client.headers["Authorization"] = f"Bearer {OTHER_SESSION_COOKIE}"
-    other_guest = (await client.post("/guests", json={"full_name": "Obcy Gość"})).json()
+    other_guest = (await client.post("/guests", json={**ADDRESS, "full_name": "Obcy Gość"})).json()
     client.headers["Authorization"] = "Bearer session-cookie"
 
     assert (await client.delete("/me")).status_code == 204
@@ -102,7 +104,7 @@ async def test_delete_me_removes_all_data_files_and_account(
 async def test_delete_me_reports_an_account_it_could_not_remove(
     client: AsyncClient, identity: FakeIdentity
 ) -> None:
-    await client.post("/guests", json={"full_name": "Jan Kowalski"})
+    await client.post("/guests", json={**ADDRESS, "full_name": "Jan Kowalski"})
     identity.unavailable = True
 
     response = await client.delete("/me")

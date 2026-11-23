@@ -7,6 +7,7 @@ from app.verifier import GuestCheck, GuestData, GuestVerifier, VerifierUnavailab
 
 AI_FIELDS = ("full_name", "position", "institution", "street", "postal_code", "city")
 AI_UNAVAILABLE = "Nie udało się zapytać AI. Spróbuj ponownie za chwilę."
+EMPTY_FIELD = FieldCheck(status="ok", explanation="Pole jest puste.")
 
 
 def guest_data(guest: Guest) -> GuestData:
@@ -54,7 +55,11 @@ def store_ai_result(
         guest.verification_result = result.model_dump(mode="json")
         guest.verified_at = None
         return
-    fields = {field: getattr(check, field) for field in AI_FIELDS}
+    # Required fields are the form's job: a remark about an empty field is dropped.
+    fields = {
+        field: getattr(check, field) if getattr(guest, field) else EMPTY_FIELD
+        for field in AI_FIELDS
+    }
     result = VerificationResult(
         checked_at=checked_at,
         model=model,
