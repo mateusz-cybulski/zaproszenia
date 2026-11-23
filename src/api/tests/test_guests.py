@@ -5,7 +5,7 @@ from sqlalchemy import update
 
 from app.main import app
 from app.models import Guest, VerificationStatus
-from tests.conftest import OTHER_SESSION_COOKIE
+from tests.conftest import ADDRESS, OTHER_SESSION_COOKIE
 
 JAN = {
     "full_name": "Jan Kowalski",
@@ -33,7 +33,7 @@ async def _mark_verified(guest_id: int) -> None:
 
 
 async def test_create_and_read_guest(client: AsyncClient) -> None:
-    created = await client.post("/guests", json={**JAN, "full_name": "  Jan Kowalski "})
+    created = await client.post("/guests", json={**ADDRESS, **JAN, "full_name": "  Jan Kowalski "})
 
     assert created.status_code == 201
     guest = created.json()
@@ -54,7 +54,7 @@ async def test_create_and_read_guest(client: AsyncClient) -> None:
 
 async def test_institution_alone_is_a_recipient(client: AsyncClient) -> None:
     response = await client.post(
-        "/guests", json={"full_name": "  ", "institution": "Redakcja Gazety"}
+        "/guests", json={**ADDRESS, "full_name": "  ", "institution": "Redakcja Gazety"}
     )
 
     assert response.status_code == 201
@@ -63,38 +63,47 @@ async def test_institution_alone_is_a_recipient(client: AsyncClient) -> None:
 
 
 async def test_rejects_guest_without_person_or_institution(client: AsyncClient) -> None:
-    response = await client.post("/guests", json={"position": "Dyrektor", "full_name": ""})
+    response = await client.post(
+        "/guests", json={**ADDRESS, "position": "Dyrektor", "full_name": ""}
+    )
 
     assert response.status_code == 422
     assert "Podaj imię i nazwisko albo instytucję" in response.text
 
 
-async def test_address_is_optional_and_country_defaults_to_poland(client: AsyncClient) -> None:
-    response = await client.post("/guests", json={"full_name": "Jan", "city": " "})
+async def test_address_is_required_and_country_defaults_to_poland(client: AsyncClient) -> None:
+    created = await client.post("/guests", json={**ADDRESS, "full_name": "Jan"})
+    blank_city = await client.post("/guests", json={**ADDRESS, "full_name": "Jan", "city": " "})
+    no_street = await client.post(
+        "/guests", json={"full_name": "Jan", "postal_code": "00-001", "city": "Warszawa"}
+    )
 
-    assert response.status_code == 201
-    guest = response.json()
-    assert (guest["street"], guest["postal_code"], guest["city"]) == (None, None, None)
-    assert guest["country"] == "PL"
+    assert created.status_code == 201
+    assert created.json()["country"] == "PL"
+    assert blank_city.status_code == 422
+    assert blank_city.json()["detail"][0]["loc"] == ["body", "city"]
+    assert no_street.status_code == 422
 
 
 async def test_country_is_an_upper_case_iso_code(client: AsyncClient) -> None:
-    accepted = await client.post("/guests", json={"full_name": "Jan", "country": "de"})
-    rejected = await client.post("/guests", json={"full_name": "Jan", "country": "Polska"})
+    accepted = await client.post("/guests", json={**ADDRESS, "full_name": "Jan", "country": "de"})
+    rejected = await client.post(
+        "/guests", json={**ADDRESS, "full_name": "Jan", "country": "Polska"}
+    )
 
     assert accepted.json()["country"] == "DE"
     assert rejected.status_code == 422
 
 
 async def test_rejects_too_long_fields(client: AsyncClient) -> None:
-    response = await client.post("/guests", json={"full_name": "x" * 301})
+    response = await client.post("/guests", json={**ADDRESS, "full_name": "x" * 301})
 
     assert response.status_code == 422
 
 
 async def test_list_guests_in_creation_order(client: AsyncClient) -> None:
     for name in ["Anna", "Piotr"]:
-        await client.post("/guests", json={"full_name": name})
+        await client.post("/guests", json={**ADDRESS, "full_name": name})
 
     response = await client.get("/guests")
 
@@ -150,18 +159,20 @@ async def test_salutation_change_keeps_declension(client: AsyncClient) -> None:
 
 
 async def test_replace_missing_guest_returns_404(client: AsyncClient) -> None:
-    response = await client.put("/guests/999", json={"full_name": "Jan"})
+    response = await client.put("/guests/999", json={**ADDRESS, "full_name": "Jan"})
 
     assert response.status_code == 404
 
 
 async def test_guests_are_private_to_their_owner(client: AsyncClient) -> None:
-    created = (await client.post("/guests", json={"full_name": "Jan"})).json()
+    created = (await client.post("/guests", json={**ADDRESS, "full_name": "Jan"})).json()
     other = {"Authorization": f"Bearer {OTHER_SESSION_COOKIE}"}
 
     assert (await client.get("/guests", headers=other)).json()["items"] == []
     assert (await client.get(f"/guests/{created['id']}", headers=other)).status_code == 404
-    replaced = await client.put(f"/guests/{created['id']}", json={"full_name": "X"}, headers=other)
+    replaced = await client.put(
+        f"/guests/{created['id']}", json={**ADDRESS, "full_name": "X"}, headers=other
+    )
     assert replaced.status_code == 404
     assert (await client.get(f"/guests/{created['id']}")).json() == created
 
@@ -192,9 +203,13 @@ async def test_replace_bumps_updated_at(client: AsyncClient) -> None:
 
 
 async def test_search_matches_name_or_institution_ignoring_case(client: AsyncClient) -> None:
-    await client.post("/guests", json={"full_name": "Anna Kowalska", "institution": "Muzeum"})
-    await client.post("/guests", json={"full_name": "Jan Nowak", "institution": "Teatr Kowalskich"})
-    await client.post("/guests", json={"full_name": "Piotr Lis", "institution": "Urząd"})
+    await client.post(
+        "/guests", json={**ADDRESS, "full_name": "Anna Kowalska", "institution": "Muzeum"}
+    )
+    await client.post(
+        "/guests", json={**ADDRESS, "full_name": "Jan Nowak", "institution": "Teatr Kowalskich"}
+    )
+    await client.post("/guests", json={**ADDRESS, "full_name": "Piotr Lis", "institution": "Urząd"})
 
     response = await client.get("/guests", params={"q": " kowal "})
 
@@ -205,8 +220,8 @@ async def test_search_matches_name_or_institution_ignoring_case(client: AsyncCli
 
 
 async def test_search_treats_like_wildcards_as_text(client: AsyncClient) -> None:
-    await client.post("/guests", json={"full_name": "Anna"})
-    await client.post("/guests", json={"full_name": "100% Radio"})
+    await client.post("/guests", json={**ADDRESS, "full_name": "Anna"})
+    await client.post("/guests", json={**ADDRESS, "full_name": "100% Radio"})
 
     response = await client.get("/guests", params={"q": "%"})
 
@@ -224,7 +239,10 @@ async def test_verify_one_guest_manually(client: AsyncClient) -> None:
 
 
 async def test_verify_all_unverified_guests_manually(client: AsyncClient) -> None:
-    ids = [(await client.post("/guests", json={"full_name": name})).json()["id"] for name in "ABC"]
+    ids = [
+        (await client.post("/guests", json={**ADDRESS, "full_name": name})).json()["id"]
+        for name in "ABC"
+    ]
     await _mark_verified(ids[0])
 
     response = await client.post("/guests/verification/manual", json={})
@@ -237,7 +255,10 @@ async def test_verify_all_unverified_guests_manually(client: AsyncClient) -> Non
 
 
 async def test_verify_selected_guests_manually(client: AsyncClient) -> None:
-    ids = [(await client.post("/guests", json={"full_name": name})).json()["id"] for name in "AB"]
+    ids = [
+        (await client.post("/guests", json={**ADDRESS, "full_name": name})).json()["id"]
+        for name in "AB"
+    ]
 
     response = await client.post("/guests/verification/manual", json={"guest_ids": [ids[1]]})
 
@@ -249,7 +270,7 @@ async def test_verify_selected_guests_manually(client: AsyncClient) -> None:
 
 
 async def test_manual_verification_leaves_other_owners_alone(client: AsyncClient) -> None:
-    created = (await client.post("/guests", json={"full_name": "Jan"})).json()
+    created = (await client.post("/guests", json={**ADDRESS, "full_name": "Jan"})).json()
     other = {"Authorization": f"Bearer {OTHER_SESSION_COOKIE}"}
 
     single = await client.post(f"/guests/{created['id']}/verification/manual", headers=other)
@@ -262,7 +283,7 @@ async def test_manual_verification_leaves_other_owners_alone(client: AsyncClient
 
 async def test_soft_deleted_guest_leaves_the_list_and_can_be_restored(client: AsyncClient) -> None:
     jan = (await client.post("/guests", json=JAN)).json()
-    anna = (await client.post("/guests", json={**JAN, "full_name": "Anna Nowak"})).json()
+    anna = (await client.post("/guests", json={**ADDRESS, **JAN, "full_name": "Anna Nowak"})).json()
 
     assert (await client.delete(f"/guests/{jan['id']}")).status_code == 204
 
@@ -284,7 +305,7 @@ async def test_soft_deleted_guest_leaves_the_list_and_can_be_restored(client: As
 
 async def test_permanent_delete_removes_active_and_deleted_guests(client: AsyncClient) -> None:
     jan = (await client.post("/guests", json=JAN)).json()
-    anna = (await client.post("/guests", json={**JAN, "full_name": "Anna Nowak"})).json()
+    anna = (await client.post("/guests", json={**ADDRESS, **JAN, "full_name": "Anna Nowak"})).json()
     await client.delete(f"/guests/{anna['id']}")
 
     for guest in (jan, anna):
@@ -298,7 +319,7 @@ async def test_permanent_delete_removes_active_and_deleted_guests(client: AsyncC
 
 async def test_deleted_list_is_newest_first(client: AsyncClient) -> None:
     ids = [
-        (await client.post("/guests", json={**JAN, "full_name": name})).json()["id"]
+        (await client.post("/guests", json={**ADDRESS, **JAN, "full_name": name})).json()["id"]
         for name in ("A", "B")
     ]
     for guest_id in ids:

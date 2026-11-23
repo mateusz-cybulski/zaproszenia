@@ -31,6 +31,8 @@ class TextField:
     OptionalLong = Annotated[
         str | None, Field(max_length=TextLimit.LONG), AfterValidator(_blank_to_none)
     ]
+    City = Annotated[str, Field(min_length=1, max_length=TextLimit.CITY)]
+    PostalCode = Annotated[str, Field(min_length=1, max_length=TextLimit.POSTAL_CODE)]
     OptionalCity = Annotated[
         str | None, Field(max_length=TextLimit.CITY), AfterValidator(_blank_to_none)
     ]

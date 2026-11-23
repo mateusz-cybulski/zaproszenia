@@ -7,7 +7,7 @@ from sqlalchemy import update
 
 from app.main import app
 from app.models import Guest
-from tests.conftest import OTHER_SESSION_COOKIE
+from tests.conftest import ADDRESS, OTHER_SESSION_COOKIE
 
 SENDER = {
     "sender_name": "Fundacja Przykładowa",
@@ -30,7 +30,8 @@ async def _guests_on_list(client: AsyncClient, event_id: int, *names: str) -> li
     ids = []
     for name in names:
         response = await client.post(
-            "/guests", json={"full_name": name, "salutation": f"Szanowni {name}", "city": "Kraków"}
+            "/guests",
+            json={**ADDRESS, "full_name": name, "salutation": f"Szanowni {name}", "city": "Kraków"},
         )
         ids.append(response.json()["id"])
     await client.post(f"/events/{event_id}/guests", json={"guest_ids": ids})

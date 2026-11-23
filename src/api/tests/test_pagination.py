@@ -2,13 +2,13 @@ from typing import Any
 
 from httpx import AsyncClient
 
-from tests.conftest import OTHER_SESSION_COOKIE
+from tests.conftest import ADDRESS, OTHER_SESSION_COOKIE
 
 
 async def _guests(client: AsyncClient, *names: str) -> list[int]:
     ids = []
     for name in names:
-        response = await client.post("/guests", json={"full_name": name})
+        response = await client.post("/guests", json={**ADDRESS, "full_name": name})
         ids.append(response.json()["id"])
     return ids
 

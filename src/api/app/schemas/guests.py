@@ -57,6 +57,10 @@ class VerificationResult(BaseModel):
 
 
 class GuestWrite(AddressWrite):
+    # An envelope cannot be printed without them; the sender and events keep them optional.
+    street: TextField.Short
+    postal_code: TextField.PostalCode
+    city: TextField.City
     full_name: TextField.OptionalShort = None
     position: TextField.OptionalShort = None
     institution: TextField.OptionalShort = None
