@@ -40,3 +40,8 @@ export type GuestInput = Address & {
 export function recipientName(guest: Pick<Guest, "fullName" | "institution">): string {
   return guest.fullName ?? guest.institution ?? "";
 }
+
+// Guests saved before the address became required may lack it; an envelope needs all three.
+export function hasPostalAddress(guest: Pick<Guest, "street" | "postalCode" | "city">): boolean {
+  return Boolean(guest.street && guest.postalCode && guest.city);
+}

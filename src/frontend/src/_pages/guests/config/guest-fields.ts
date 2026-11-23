@@ -1,4 +1,4 @@
-import { TEXT_LIMIT } from "@/shared/config";
+import { ADDRESS_FIELDS, TEXT_LIMIT } from "@/shared/config";
 import type { FormFieldConfig } from "@/shared/ui/form-field";
 
 import type { GuestField } from "../model/guest-form";
@@ -21,3 +21,7 @@ export const RECIPIENT_FIELDS: FormFieldConfig<GuestField>[] = [
     hint: "Np. „Szanowny Panie Dyrektorze”.",
   },
 ];
+
+export const GUEST_ADDRESS_FIELDS: FormFieldConfig<GuestField>[] = ADDRESS_FIELDS.map((field) =>
+  field.name === "country" ? field : { ...field, required: true },
+);
