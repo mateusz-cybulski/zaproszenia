@@ -3,7 +3,7 @@ name: gcp-backend
 description: "Use when Python backend code in this repo talks to Google Cloud: verifying users with Identity Platform / Firebase Auth (firebase-admin, ID tokens, custom claims, tenants), issuing or checking your own JWTs with PyJWT, queuing background work with Cloud Tasks and handling those requests, storing files in Cloud Storage (uploads, downloads, signed URLs), or calling Gemini through Vertex AI with the google-genai SDK. Covers credentials (ADC), IAM roles via service.json, async usage in FastAPI, local dev and testing."
 license: MIT
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # GCP from a Python backend
@@ -227,6 +227,7 @@ async def extract_invoice(text: str) -> InvoiceFields:
 - **A failed model call is not the user's data's fault.** Catch `google.genai.errors.APIError`, `google.auth.exceptions.GoogleAuthError` (expired or missing credentials raise it while refreshing the token, outside `APIError`) and `httpx.HTTPError` (timeouts), turn them into one "AI unavailable" error of your own, and store or show that instead of a 500. Import `httpx` only as a direct runtime dependency.
 - **No database transaction stays open during a model call** (seconds): read what the prompt needs, end the transaction, ask the model, then load the record again in a new transaction and store the result only if the data the prompt used has not changed meanwhile (409 otherwise).
 - Locally ADC are user credentials: `google.auth.default()` may return no project, so fall back to `credentials.quota_project_id`; on Cloud Run use `GOOGLE_CLOUD_PROJECT`. Expired user credentials need `gcloud auth application-default login` again (interactive, the user runs it).
+- **A model checks whether given values are correct, never whether required ones are present.** Required fields are the form's and the API schema's job (required inputs, 422). Tell the model that an empty field is fine and must not be filled in, and drop its remarks about empty fields on the server, so the rule does not depend on the model following it.
 - Prompt inputs from users are untrusted: do not let model output trigger actions without validation.
 - IAM: `roles/aiplatform.user` in `service.json`. Vertex AI is already enabled for every project.
 - Tests: fake the function that calls the model; a small number of opt-in integration tests may call the real API.
