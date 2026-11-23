@@ -9,9 +9,10 @@ from httpx import AsyncClient
 from sqlalchemy import update
 
 from app import verifier as verifier_module
+from app.geocoder import get_address_checker
 from app.main import app
 from app.models import Guest
-from app.schemas.guests import FieldCheck
+from app.schemas.guests import AddressCheck, FieldCheck
 from app.services.verification import AI_FIELDS
 from app.verifier import (
     GeminiGuestVerifier,
@@ -49,10 +50,12 @@ class FakeVerifier:
         self.check: GuestCheck = _check()
         self.unavailable = False
         self.asked: list[GuestData] = []
+        self.addresses: list[AddressCheck | None] = []
         self.before_answer: Any = None
 
-    async def verify(self, guest: GuestData) -> GuestCheck:
+    async def verify(self, guest: GuestData, address: AddressCheck | None) -> GuestCheck:
         self.asked.append(guest)
+        self.addresses.append(address)
         if self.before_answer is not None:
             await self.before_answer()
         if self.unavailable:
@@ -60,8 +63,24 @@ class FakeVerifier:
         return self.check
 
 
+class FakeAddressChecker:
+    def __init__(self) -> None:
+        self.result = AddressCheck(status="ok", explanation="Adres został odnaleziony.")
+
+    async def check(self, guest: GuestData) -> AddressCheck:
+        return self.result
+
+
 @pytest.fixture
-def verifier() -> Iterator[FakeVerifier]:
+def addresses() -> Iterator[FakeAddressChecker]:
+    fake = FakeAddressChecker()
+    app.dependency_overrides[get_address_checker] = lambda: fake
+    yield fake
+    app.dependency_overrides.pop(get_address_checker, None)
+
+
+@pytest.fixture
+def verifier(addresses: FakeAddressChecker) -> Iterator[FakeVerifier]:
     fake = FakeVerifier()
     app.dependency_overrides[get_verifier] = lambda: fake
     yield fake
@@ -203,7 +222,7 @@ async def test_missing_credentials_make_the_model_unavailable(
     verifier = GeminiGuestVerifier("gemini", None, "global")
 
     with pytest.raises(VerifierUnavailableError):
-        await verifier.verify(GuestData(None, None, "Muzeum", None, None, None, None, "PL"))
+        await verifier.verify(GuestData(None, None, "Muzeum", None, None, None, None, "PL"), None)
 
 
 class FlakyModels:
@@ -232,11 +251,28 @@ async def test_transient_gemini_errors_are_retried(monkeypatch: pytest.MonkeyPat
     flaky = FlakyModels([504, 429])
     data = GuestData(None, None, "Muzeum", None, None, None, None, "PL")
 
-    check = await _verifier_with(flaky).verify(data)
+    check = await _verifier_with(flaky).verify(data, None)
     rejected = FlakyModels([400])
 
     assert check.summary == "Dane są poprawne."
     assert flaky.calls == 3
     with pytest.raises(VerifierUnavailableError):
-        await _verifier_with(rejected).verify(data)
+        await _verifier_with(rejected).verify(data, None)
     assert rejected.calls == 1
+
+
+async def test_an_address_warning_needs_review_and_reaches_the_model(
+    client: AsyncClient, verifier: FakeVerifier, addresses: FakeAddressChecker
+) -> None:
+    guest_id = await _guest(client)
+    addresses.result = AddressCheck(
+        status="warning",
+        explanation="Sprawdzenie adresu: kod pocztowy dla tego adresu to 00-950.",
+        suggested_postal_code="00-950",
+    )
+
+    guest = (await client.post(f"/guests/{guest_id}/verification/ai")).json()
+
+    assert guest["verification_status"] == "needs_review"
+    assert guest["verification_result"]["address_check"]["suggested_postal_code"] == "00-950"
+    assert verifier.addresses[0] == addresses.result

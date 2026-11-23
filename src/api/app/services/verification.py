@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from app.models import Guest, VerificationStatus
-from app.schemas.guests import FieldCheck, GuestWrite, VerificationResult
+from app.schemas.guests import AddressCheck, FieldCheck, GuestWrite, VerificationResult
 from app.services.declension import guest_declension
 from app.verifier import GuestCheck, GuestData, GuestVerifier, VerifierUnavailableError
 
@@ -22,24 +22,34 @@ def guest_data(guest: Guest) -> GuestData:
     )
 
 
-def _needs_review(fields: dict[str, FieldCheck], salutation: str | None, guest: Guest) -> bool:
+def _needs_review(
+    fields: dict[str, FieldCheck], salutation: str | None, address: AddressCheck, guest: Guest
+) -> bool:
+    if address.status in ("warning", "error"):
+        return True
     if any(check.status != "ok" or check.suggestion for check in fields.values()):
         return True
     return bool(salutation) and salutation != guest.salutation
 
 
-async def ask_ai(data: GuestData, verifier: GuestVerifier) -> GuestCheck | None:
+async def ask_ai(
+    data: GuestData, address: AddressCheck, verifier: GuestVerifier
+) -> GuestCheck | None:
     """The model's check of one guest, or None when it could not be asked."""
     try:
-        return await verifier.verify(data)
+        return await verifier.verify(data, address)
     except VerifierUnavailableError:
         return None
 
 
-def store_ai_result(guest: Guest, check: GuestCheck | None, model: str) -> None:
+def store_ai_result(
+    guest: Guest, check: GuestCheck | None, address: AddressCheck, model: str
+) -> None:
     checked_at = datetime.now(UTC)
     if check is None:
-        result = VerificationResult(checked_at=checked_at, model=model, error=AI_UNAVAILABLE)
+        result = VerificationResult(
+            checked_at=checked_at, model=model, error=AI_UNAVAILABLE, address_check=address
+        )
         guest.verification_status = VerificationStatus.FAILED
         guest.verification_result = result.model_dump(mode="json")
         guest.verified_at = None
@@ -52,9 +62,10 @@ def store_ai_result(guest: Guest, check: GuestCheck | None, model: str) -> None:
         salutation=check.salutation,
         salutation_explanation=check.salutation_explanation,
         summary=check.summary,
+        address_check=address,
     )
     guest.verification_result = result.model_dump(mode="json")
-    if _needs_review(fields, check.salutation, guest):
+    if _needs_review(fields, check.salutation, address, guest):
         guest.verification_status = VerificationStatus.NEEDS_REVIEW
         guest.verified_at = None
     else:

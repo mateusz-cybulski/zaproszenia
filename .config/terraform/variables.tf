@@ -74,6 +74,7 @@ variable "GCP_SERVICES_TO_ENABLE" {
     "aiplatform.googleapis.com",
     "identitytoolkit.googleapis.com",
     "apikeys.googleapis.com",
+    "geocoding-backend.googleapis.com",
     "storage.googleapis.com",
   ]
 }

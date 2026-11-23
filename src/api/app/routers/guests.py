@@ -9,6 +9,7 @@ from sqlalchemy import select
 from app.auth import CurrentUser
 from app.db import Session
 from app.dependencies import Pagination, find_own_event
+from app.geocoder import Checker
 from app.models import VERIFIED_STATUSES, EventGuest, Guest, VerificationStatus
 from app.schemas.guests import (
     DECLINED_FIELDS,
@@ -100,18 +101,19 @@ async def verify_manually(guest_id: int, session: Session, user: CurrentUser) ->
 
 @router.post("/{guest_id}/verification/ai")
 async def verify_with_ai_endpoint(
-    guest_id: int, session: Session, user: CurrentUser, verifier: Verifier
+    guest_id: int, session: Session, user: CurrentUser, verifier: Verifier, checker: Checker
 ) -> GuestRead:
     """Checks one guest with AI; the result (or why it failed) is stored on the guest."""
     async with session.begin():
         data = guest_data(await _own_guest(session, guest_id, user.uid))
     # No transaction stays open while the model answers (seconds).
-    check = await ask_ai(data, verifier)
+    address = await checker.check(data)
+    check = await ask_ai(data, address, verifier)
     async with session.begin():
         guest = await _own_guest(session, guest_id, user.uid)
         if guest_data(guest) != data:
             raise HTTPException(status.HTTP_409_CONFLICT, GUEST_CHANGED_DURING_CHECK)
-        store_ai_result(guest, check, verifier.model)
+        store_ai_result(guest, check, address, verifier.model)
     await session.refresh(guest)
     return GuestRead.model_validate(guest)
 

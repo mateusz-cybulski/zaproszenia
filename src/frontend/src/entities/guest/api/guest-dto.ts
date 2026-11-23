@@ -11,6 +11,18 @@ const fieldCheckSchema = z.object({
   explanation: z.string(),
 });
 
+const addressCheckSchema = z
+  .object({
+    status: z.enum(["ok", "warning", "error", "skipped"]),
+    explanation: z.string(),
+    matched_label: z.string().nullable().default(null),
+  })
+  .transform((check) => ({
+    status: check.status,
+    explanation: check.explanation,
+    matchedLabel: check.matched_label,
+  }));
+
 // What the last AI check said; only the parts the review shows.
 const verificationResultSchema = z
   .object({
@@ -20,6 +32,7 @@ const verificationResultSchema = z
     salutation_explanation: z.string().nullable().default(null),
     summary: z.string().nullable().default(null),
     error: z.string().nullable().default(null),
+    address_check: addressCheckSchema.nullable().default(null),
   })
   .transform((result) => ({
     checkedAt: result.checked_at,
@@ -28,6 +41,7 @@ const verificationResultSchema = z
     salutationExplanation: result.salutation_explanation,
     summary: result.summary,
     error: result.error,
+    addressCheck: result.address_check,
   }));
 
 export const guestDtoSchema = z
