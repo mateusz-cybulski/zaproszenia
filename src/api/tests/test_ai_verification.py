@@ -12,9 +12,10 @@ from app import verifier as verifier_module
 from app.geocoder import get_address_checker
 from app.main import app
 from app.models import Guest
-from app.schemas.guests import AddressCheck, FieldCheck
+from app.schemas.guests import AddressCheck, FieldCheck, VerificationFailure
 from app.services.verification import AI_FIELDS
 from app.verifier import (
+    MAX_ATTEMPTS,
     GeminiGuestVerifier,
     GuestCheck,
     GuestData,
@@ -59,7 +60,7 @@ class FakeVerifier:
         if self.before_answer is not None:
             await self.before_answer()
         if self.unavailable:
-            raise VerifierUnavailableError
+            raise VerifierUnavailableError(VerificationFailure.RATE_LIMITED)
         return self.check
 
 
@@ -143,6 +144,7 @@ async def test_an_unavailable_model_fails_the_check_without_touching_the_data(
 
     assert guest["verification_status"] == "failed"
     assert guest["verification_result"]["error"].startswith("Nie udało się zapytać AI")
+    assert guest["verification_result"]["failure"] == "rate_limited"
     assert guest["position"] == "dyrektor"
 
 
@@ -221,8 +223,9 @@ async def test_missing_credentials_make_the_model_unavailable(
     monkeypatch.setattr(google.auth, "default", no_credentials)
     verifier = GeminiGuestVerifier("gemini", None, "global")
 
-    with pytest.raises(VerifierUnavailableError):
+    with pytest.raises(VerifierUnavailableError) as raised:
         await verifier.verify(GuestData(None, None, "Muzeum", None, None, None, None, "PL"), None)
+    assert raised.value.failure == VerificationFailure.CREDENTIALS
 
 
 class FlakyModels:
@@ -256,9 +259,26 @@ async def test_transient_gemini_errors_are_retried(monkeypatch: pytest.MonkeyPat
 
     assert check.summary == "Dane są poprawne."
     assert flaky.calls == 3
-    with pytest.raises(VerifierUnavailableError):
+    with pytest.raises(VerifierUnavailableError) as raised:
         await _verifier_with(rejected).verify(data, None)
     assert rejected.calls == 1
+    assert raised.value.failure == VerificationFailure.SERVICE
+
+
+async def test_a_failure_names_its_reason(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(verifier_module, "RETRY_DELAY_SECONDS", 0)
+    data = GuestData(None, None, "Muzeum", None, None, None, None, "PL")
+    reasons = {}
+    for code in (429, 504, 403):
+        with pytest.raises(VerifierUnavailableError) as raised:
+            await _verifier_with(FlakyModels([code] * MAX_ATTEMPTS)).verify(data, None)
+        reasons[code] = raised.value.failure
+
+    assert reasons == {
+        429: VerificationFailure.RATE_LIMITED,
+        504: VerificationFailure.TIMEOUT,
+        403: VerificationFailure.CREDENTIALS,
+    }
 
 
 async def test_an_address_warning_needs_review_and_reaches_the_model(
