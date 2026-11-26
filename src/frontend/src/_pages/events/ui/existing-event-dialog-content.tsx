@@ -45,15 +45,13 @@ export function ExistingEventDialogContent({
   returnFocus,
 }: ExistingEventDialogContentProps) {
   const documents = useEventDocument(event);
-  // "Zapisz i generuj" generates once the save succeeds; any other save closes the dialog.
+  // A save keeps the dialog open ("Zapisano." in the header); "Zapisz i generuj" also generates.
   const generateAfterSave = useRef<EventDocumentKind | null>(null);
   const eventForm = useEventForm(event, () => {
     const kind = generateAfterSave.current;
     generateAfterSave.current = null;
     if (kind) {
       void documents.generate(kind);
-    } else {
-      dismiss();
     }
   });
   const dirty = eventForm.form.dirty;
@@ -104,7 +102,7 @@ export function ExistingEventDialogContent({
               <p role="alert" className="max-w-48 text-xs text-destructive empty:hidden">
                 {documents.error}
               </p>
-              <FormStatus result={eventForm.lastResult} />
+              <FormStatus result={eventForm.lastResult} successMessage={COPY.saved} />
               <EventDocumentMenu pending={documents.pending} busy={saving} onGenerate={generate} />
               <Button type="submit" form={eventForm.form.id} aria-disabled={saving}>
                 {saving ? COPY.pending : COPY.submit}
