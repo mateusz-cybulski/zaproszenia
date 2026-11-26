@@ -18,3 +18,4 @@ export type {
   VerificationResult,
   VerificationStatus,
 } from "./model/guest";
+export type { GuestImportResult, ImportedGuest } from "./model/guest-import";
