@@ -1,3 +1,4 @@
+export { DialogOpenerTracker } from "./dialog-opener-tracker";
 export type { Dismissal } from "./dismissal";
 export { useDiscardGuard } from "./use-discard-guard";
 export { useDismiss } from "./use-dismiss";

@@ -116,7 +116,7 @@ Either way:
 
 - On open, focus the first focusable element. For destructive confirmations, focus the least destructive action instead.
 - On close, return focus to the trigger, or to the nearest logical container if the trigger is gone.
-- A dialog opened by a link (a dialog that is a route) has no trigger element for the library to return to, and focus falls to `<body>`. Remember `document.activeElement` when the dialog mounts and focus it on close if it is still in the page; in Radix that is `onCloseAutoFocus` with `event.preventDefault()`. Do not add a second focus-trap library for it.
+- A dialog opened by a link (a dialog that is a route) has no trigger element for the library to return to, and focus falls to `<body>`. Do not read `document.activeElement` or capture state when the dialog mounts: a route's loading skeleton (often a dialog itself) takes focus first, the framework may render the dialog before it opens, and the dialog's code loads after the click. Instead, one listener mounted in the root layout records the last `focusin` target outside any `[role=dialog]`/`[role=alertdialog]`; on close, focus that element if it is still connected (in Radix: `onCloseAutoFocus` with `event.preventDefault()`). Do not add a second focus-trap library for it.
 
 ## Keyboard patterns (ARIA APG)
 
