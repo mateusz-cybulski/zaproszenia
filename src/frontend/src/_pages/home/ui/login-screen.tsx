@@ -33,6 +33,14 @@ export function LoginScreen({ notice }: { notice: keyof typeof NOTICES | null })
               Zarejestruj się
             </Link>
           </p>
+          <p className="text-center text-sm">
+            <Link
+              href={routes.instructionPolish()}
+              className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Instrukcja obsługi
+            </Link>
+          </p>
         </>
       ) : (
         <p role="alert" className="text-sm text-destructive">
