@@ -14,6 +14,18 @@ export const VERIFICATION_STATUSES = [
 
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
+// Why the model could not check a guest (the API's codes); the guest's data is never the reason.
+export const VERIFICATION_FAILURES = [
+  "credentials",
+  "rate_limited",
+  "timeout",
+  "service",
+  "connection",
+  "invalid_answer",
+] as const;
+
+export type VerificationFailure = (typeof VERIFICATION_FAILURES)[number];
+
 export type Guest = z.output<typeof guestDtoSchema>;
 export type VerificationResult = NonNullable<Guest["verificationResult"]>;
 export type FieldCheck = VerificationResult["fields"][string];

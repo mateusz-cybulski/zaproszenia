@@ -6,6 +6,7 @@ import { requireViewer } from "@/entities/viewer/index.server";
 import type { Dismissal } from "@/shared/lib/dialogs";
 
 import { GuestDialog } from "./guest-dialog";
+import { VerificationFailureNotice } from "./verification-failure-notice";
 import { VerificationMenu } from "./verification-menu";
 
 type GuestEditDialogProps = { id: string; dismissal: Dismissal };
@@ -22,6 +23,7 @@ export async function GuestEditDialog({ id, dismissal }: GuestEditDialogProps) {
       guest={guest}
       dismissal={dismissal}
       headerActions={<VerificationMenu guest={guest} />}
+      notice={<VerificationFailureNotice guest={guest} />}
     />
   );
 }

@@ -1,6 +1,7 @@
 export { GuestTable } from "./ui/guest-table";
 export { VerificationBadge } from "./ui/verification-badge";
 export { VERIFICATION_STATUS_LABELS } from "./config/verification-status";
+export { verificationFailureReason } from "./config/verification-failure";
 export {
   AI_CHECKED_FIELDS,
   hasPostalAddress,
@@ -15,6 +16,7 @@ export type {
   FieldCheck,
   Guest,
   GuestInput,
+  VerificationFailure,
   VerificationResult,
   VerificationStatus,
 } from "./model/guest";

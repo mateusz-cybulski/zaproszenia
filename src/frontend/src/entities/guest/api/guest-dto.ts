@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { apiTimestamp } from "@/shared/api";
 
-import { type GuestInput, VERIFICATION_STATUSES } from "../model/guest";
+import { type GuestInput, VERIFICATION_FAILURES, VERIFICATION_STATUSES } from "../model/guest";
 import { guestIdSchema } from "../model/guest-id";
 
 const fieldCheckSchema = z.object({
@@ -32,6 +32,8 @@ const verificationResultSchema = z
     salutation_explanation: z.string().nullable().default(null),
     summary: z.string().nullable().default(null),
     error: z.string().nullable().default(null),
+    // Unknown codes (a newer API) fall back to the error text.
+    failure: z.enum(VERIFICATION_FAILURES).nullable().catch(null).default(null),
     address_check: addressCheckSchema.nullable().default(null),
   })
   .transform((result) => ({
@@ -41,6 +43,7 @@ const verificationResultSchema = z
     salutationExplanation: result.salutation_explanation,
     summary: result.summary,
     error: result.error,
+    failure: result.failure,
     addressCheck: result.address_check,
   }));
 
