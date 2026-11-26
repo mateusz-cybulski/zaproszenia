@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { cn } from "@/shared/lib/css";
+import { DialogOpenerTracker } from "@/shared/lib/dialogs";
 import { themeScript } from "@/shared/lib/theme";
 
 import "../styles/globals.css";
@@ -25,7 +26,10 @@ export function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        <DialogOpenerTracker />
+        {children}
+      </body>
     </html>
   );
 }
