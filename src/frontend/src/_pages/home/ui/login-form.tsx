@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
 import type { FirebaseClientConfig } from "@/shared/config";
+import { routes } from "@/shared/routes";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -29,9 +32,17 @@ export function LoginForm({ config }: { config: FirebaseClientConfig }) {
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="login-password" required>
-          Hasło
-        </Label>
+        <div className="flex items-baseline justify-between gap-2">
+          <Label htmlFor="login-password" required>
+            Hasło
+          </Label>
+          <Link
+            href={routes.resetPassword()}
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Nie pamiętasz hasła?
+          </Link>
+        </div>
         <Input
           id="login-password"
           name="password"

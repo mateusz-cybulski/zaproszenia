@@ -23,5 +23,5 @@ function publicUrl(request: NextRequest, path: string): URL {
 }
 
 export const config = {
-  matcher: ["/((?!register$|_next/static|_next/image|favicon.ico|robots.txt).+)"],
+  matcher: ["/((?!register$|reset-password$|_next/static|_next/image|favicon.ico|robots.txt).+)"],
 };
