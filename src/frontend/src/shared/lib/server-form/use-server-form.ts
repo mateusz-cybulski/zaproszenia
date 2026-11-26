@@ -28,15 +28,24 @@ export function useServerForm<
   Schema extends z.ZodType<Record<string, unknown>, Record<string, unknown>>,
 >({ schema, action, defaultValue, onSuccess }: UseServerFormOptions<Schema>) {
   const [lastResult, formAction, pending] = useActionState(action, undefined);
+  // After a save the saved values are the new starting point: otherwise Conform keeps comparing
+  // with the values the form opened with, and a form that stays open looks unsaved (form.dirty).
+  const savedValue =
+    lastResult?.status === "success" && lastResult.initialValue
+      ? (lastResult.initialValue as DefaultValue<z.input<Schema>>)
+      : undefined;
   const [form, fields] = useForm<z.input<Schema>, z.output<Schema>>({
     lastResult,
-    defaultValue,
+    defaultValue: savedValue ?? defaultValue,
     shouldValidate: "onSubmit",
     shouldRevalidate: "onInput",
     onValidate: ({ formData }) => parseWithZod(formData, { schema }),
   });
   // Only a plain submission.reply() carries status "success"; reply({ resetForm }) does not.
-  const succeed = useEffectEvent(() => onSuccess?.());
+  const succeed = useEffectEvent(() => {
+    form.reset();
+    onSuccess?.();
+  });
 
   useEffect(() => {
     if (lastResult?.status === "success") {
