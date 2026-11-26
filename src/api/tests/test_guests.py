@@ -348,3 +348,24 @@ async def test_deleting_is_private_to_the_owner(client: AsyncClient) -> None:
     permanent = await client.delete(f"/guests/{jan['id']}", params={"permanent": "true"})
     assert permanent.status_code == 404
     assert (await client.post(f"/guests/{jan['id']}/restore")).status_code == 404
+
+
+async def test_delete_many_moves_only_own_active_guests_to_the_deleted_list(
+    client: AsyncClient,
+) -> None:
+    ids = [
+        (await client.post("/guests", json={**JAN, "full_name": name})).json()["id"]
+        for name in ("Anna", "Ewa", "Piotr")
+    ]
+    await client.delete(f"/guests/{ids[2]}")
+    other = {"Authorization": f"Bearer {OTHER_SESSION_COOKIE}"}
+    foreign = (await client.post("/guests", json=JAN, headers=other)).json()["id"]
+
+    response = await client.post("/guests/delete", json={"guest_ids": [*ids, foreign, 999]})
+
+    assert response.json() == {"deleted": 2}
+    assert (await client.get("/guests")).json()["items"] == []
+    deleted = (await client.get("/guests", params={"deleted": "true"})).json()["items"]
+    assert {guest["id"] for guest in deleted} == set(ids)
+    assert (await client.get(f"/guests/{foreign}", headers=other)).status_code == 200
+    assert (await client.post("/guests/delete", json={"guest_ids": []})).status_code == 422

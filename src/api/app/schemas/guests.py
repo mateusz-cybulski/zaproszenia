@@ -134,3 +134,12 @@ class GuestImportResult(BaseModel):
     mapped_columns: dict[str, str]
     unmapped_columns: list[str]
     preview: list[GuestWrite]
+
+
+class GuestSelection(BaseModel):
+    guest_ids: list[int] = Field(min_length=1, max_length=1000)
+
+
+class GuestsDeleted(BaseModel):
+    # Only the user's active guests among the ids; the rest are ignored.
+    deleted: int

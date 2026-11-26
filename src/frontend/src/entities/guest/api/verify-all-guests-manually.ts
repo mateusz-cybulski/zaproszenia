@@ -4,12 +4,15 @@ import { z } from "zod";
 
 import { apiFetchOrNull, parseResponse } from "@/shared/api/index.server";
 
+import type { GuestId } from "../model/guest-id";
+
 const verifiedCountSchema = z.object({ verified: z.int() });
 
-export async function verifyAllGuestsManually(): Promise<number | null> {
+// Without ids every guest not yet verified; with ids only those of them.
+export async function verifyAllGuestsManually(ids?: GuestId[]): Promise<number | null> {
   const response = await apiFetchOrNull("/guests/verification/manual", {
     method: "POST",
-    body: "{}",
+    body: JSON.stringify(ids ? { guest_ids: ids } : {}),
   });
   if (!response?.ok) {
     return null;

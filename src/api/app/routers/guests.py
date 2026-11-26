@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.auth import CurrentUser
 from app.db import Session
@@ -19,6 +19,8 @@ from app.schemas.guests import (
     AiVerificationAccept,
     GuestImportResult,
     GuestRead,
+    GuestsDeleted,
+    GuestSelection,
     GuestWrite,
     ManualVerification,
     ManualVerificationResult,
@@ -103,6 +105,26 @@ async def verification_queue(session: Session, user: CurrentUser) -> Verificatio
         .limit(AI_QUEUE_LIMIT)
     )
     return VerificationQueue(guest_ids=list(await session.scalars(statement)))
+
+
+@router.post("/delete")
+async def delete_many(
+    payload: GuestSelection, session: Session, user: CurrentUser
+) -> GuestsDeleted:
+    """Moves the selected guests to the deleted list (restorable), in one statement."""
+    async with session.begin():
+        result = await session.execute(
+            update(Guest)
+            .where(
+                Guest.owner_uid == user.uid,
+                Guest.deleted_at.is_(None),
+                Guest.id.in_(payload.guest_ids),
+            )
+            .values(deleted_at=datetime.now(UTC))
+            .returning(Guest.id)
+        )
+        deleted = len(result.all())
+    return GuestsDeleted(deleted=deleted)
 
 
 @router.post("/verification/manual")
