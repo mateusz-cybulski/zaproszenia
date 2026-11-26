@@ -5,6 +5,8 @@ export { createGuest } from "./api/create-guest";
 export { deleteGuest } from "./api/delete-guest";
 export { getGuest } from "./api/get-guest";
 export { getGuests } from "./api/get-guests";
+export { importGuests } from "./api/import-guests";
+export type { GuestImportOutcome } from "./api/import-guests";
 export { getVerificationQueue } from "./api/get-verification-queue";
 export { restoreGuest } from "./api/restore-guest";
 export { updateGuest } from "./api/update-guest";

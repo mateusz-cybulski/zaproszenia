@@ -109,3 +109,28 @@ class AiVerificationAccept(BaseModel):
 
 class VerificationQueue(BaseModel):
     guest_ids: list[int]
+
+
+class GuestImportRowError(BaseModel):
+    row: int
+    errors: list[str]
+
+
+class GuestImportDuplicate(BaseModel):
+    row: int
+    full_name: str | None
+    institution: str | None
+
+
+class GuestImportResult(BaseModel):
+    dry_run: bool
+    # Rows with data (blank rows are skipped); ready = valid and not duplicates; created = saved.
+    total_rows: int
+    ready: int
+    created: int
+    duplicates: list[GuestImportDuplicate]
+    errors: list[GuestImportRowError]
+    # File header -> guest field, and the headers no field matched.
+    mapped_columns: dict[str, str]
+    unmapped_columns: list[str]
+    preview: list[GuestWrite]

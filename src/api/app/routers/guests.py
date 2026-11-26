@@ -1,7 +1,9 @@
+import asyncio
 from datetime import UTC, datetime
+from itertools import islice
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from sqlalchemy import select
@@ -15,6 +17,7 @@ from app.schemas.guests import (
     DECLINED_FIELDS,
     VERIFIED_FIELDS,
     AiVerificationAccept,
+    GuestImportResult,
     GuestRead,
     GuestWrite,
     ManualVerification,
@@ -23,8 +26,10 @@ from app.schemas.guests import (
 )
 from app.schemas.pagination import Page
 from app.services.declension import guest_declension
+from app.services.guest_import import import_guests
 from app.services.guests import SEARCH_MAX_LENGTH, guest_search
 from app.services.pagination import paginate
+from app.services.spreadsheet import SpreadsheetError, read_rows
 from app.services.verification import accept_ai_result, ask_ai, guest_data, store_ai_result
 from app.verifier import Verifier
 
@@ -54,6 +59,34 @@ def _verify_manually(guest: Guest) -> None:
 # A browser checks guests with AI one request at a time (with a progress bar), so it needs their ids.
 AI_QUEUE_LIMIT = 1000
 AI_QUEUE_STATUSES = (VerificationStatus.PENDING, VerificationStatus.FAILED)
+
+
+IMPORT_MAX_BYTES = 2 * 1024 * 1024
+IMPORT_MAX_ROWS = 2000
+
+
+@router.post("/import")
+async def import_guests_endpoint(
+    session: Session,
+    user: CurrentUser,
+    file: Annotated[UploadFile, File(description="CSV or XLSX with a header row")],
+    dry_run: bool = True,
+) -> GuestImportResult:
+    """Checks a spreadsheet of guests (dry_run, the default) or saves its valid, new rows."""
+    content = await file.read(IMPORT_MAX_BYTES + 1)
+    if len(content) > IMPORT_MAX_BYTES:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "Plik jest za duży (najwyżej 2 MB).")
+    try:
+        # At most the limit plus the header and one row: an XLSX is a zip, and its rows are not
+        # read beyond what the limit lets through.
+        rows = await asyncio.to_thread(
+            lambda: list(islice(read_rows(file.filename or "", content), IMPORT_MAX_ROWS + 2))
+        )
+        return await import_guests(
+            session, user.uid, rows, dry_run=dry_run, max_rows=IMPORT_MAX_ROWS
+        )
+    except SpreadsheetError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from None
 
 
 @router.get("/verification/queue")

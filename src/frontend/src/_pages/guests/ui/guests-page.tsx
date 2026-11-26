@@ -15,6 +15,7 @@ import { GUESTS_PAGE } from "../config/page-copy";
 import { GuestRowActions } from "./guest-row-actions";
 import { GuestSearch } from "./guest-search";
 import { VerificationMenu } from "./verification-menu";
+import { ImportGuestsDialog } from "./import-guests-dialog";
 import { VerifyAllDialog } from "./verify-all-dialog";
 
 export const metadata: Metadata = { title: "Goście · Zaproszenia" };
@@ -39,6 +40,7 @@ export async function GuestsPage({ searchParams }: GuestsPageProps) {
               <ArchiveRestore /> Przywróć
             </Link>
           </Button>
+          <ImportGuestsDialog />
           <VerifyAllDialog />
           <Button asChild>
             <Link href={routes.guestAdd()} scroll={false}>
