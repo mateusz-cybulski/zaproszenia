@@ -1,6 +1,6 @@
 "use client";
 
-import type { Event, EventGuest } from "@/entities/event";
+import type { Event, EventGuest, EventReadiness } from "@/entities/event";
 import type { Template } from "@/entities/template";
 import type { Page } from "@/shared/api";
 import { type Dismissal, useDismiss, useReturnFocus } from "@/shared/lib/dialogs";
@@ -18,6 +18,7 @@ type EventDialogProps = {
       event: Event;
       templates: Template[];
       eventGuests: Page<EventGuest>;
+      readiness: EventReadiness | null;
       initialSection: EventSection;
     }
 );
@@ -31,6 +32,7 @@ export function EventDialog(props: EventDialogProps) {
       event={props.event}
       templates={props.templates}
       eventGuests={props.eventGuests}
+      readiness={props.readiness}
       initialSection={props.initialSection}
       dismiss={dismiss}
       returnFocus={returnFocus}

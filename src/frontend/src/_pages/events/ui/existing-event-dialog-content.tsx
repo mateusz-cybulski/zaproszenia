@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import type { Event, EventDocumentKind, EventGuest } from "@/entities/event";
+import type { Event, EventDocumentKind, EventGuest, EventReadiness } from "@/entities/event";
 import type { Template } from "@/entities/template";
 import type { Page } from "@/shared/api";
 import { type ReturnFocus, useDiscardGuard } from "@/shared/lib/dialogs";
@@ -29,6 +29,7 @@ type ExistingEventDialogContentProps = {
   event: Event;
   templates: Template[];
   eventGuests: Page<EventGuest>;
+  readiness: EventReadiness | null;
   initialSection: EventSection;
   dismiss: () => void;
   returnFocus: ReturnFocus;
@@ -38,6 +39,7 @@ export function ExistingEventDialogContent({
   event,
   templates,
   eventGuests,
+  readiness,
   initialSection,
   dismiss,
   returnFocus,
@@ -116,6 +118,7 @@ export function ExistingEventDialogContent({
           event={event}
           templates={templates}
           eventGuests={eventGuests}
+          readiness={readiness}
           sections={sections}
           eventForm={eventForm}
         />

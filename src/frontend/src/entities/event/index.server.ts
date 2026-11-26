@@ -8,6 +8,7 @@ export { fetchEventPreview } from "./api/fetch-event-preview";
 export { generateEventDocument } from "./api/generate-event-document";
 export { getEvent } from "./api/get-event";
 export { getEventGuests } from "./api/get-event-guests";
+export { getEventReadiness } from "./api/get-event-readiness";
 export { getEvents } from "./api/get-events";
 export { removeEventGuest } from "./api/remove-event-guest";
 export { restoreEvent } from "./api/restore-event";

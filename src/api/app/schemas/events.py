@@ -56,3 +56,14 @@ class EventRead(AddressRead):
 
 class EventListItem(EventRead):
     guest_count: int
+
+
+class EventReadiness(BaseModel):
+    """What the event's documents still lack; the dialog warns about each."""
+
+    guests: int
+    unverified: int
+    without_address: int
+    invitation_template: bool
+    envelope_template: bool
+    sender_complete: bool

@@ -10,10 +10,11 @@ from app.auth import CurrentUser
 from app.db import Session
 from app.dependencies import OwnEvent, Pagination, find_own_event, find_visible_template
 from app.models import Event, Profile, Template, TemplateKind
-from app.schemas.events import EventListItem, EventRead, EventTemplates, EventWrite
+from app.schemas.events import EventListItem, EventRead, EventReadiness, EventTemplates, EventWrite
 from app.schemas.pagination import Page
 from app.schemas.templates import MAX_PAGES
 from app.services.event_guests import active_guest_counts
+from app.services.event_readiness import event_readiness
 from app.services.pagination import paginate
 from app.services.pdf import render, render_png
 from app.services.placeholders import event_preview_values
@@ -103,6 +104,14 @@ async def list_events(
         page=pagination.page,
         page_size=pagination.page_size,
     )
+
+
+@router.get("/{event_id}/readiness")
+async def get_event_readiness(
+    event: OwnEvent, session: Session, user: CurrentUser
+) -> EventReadiness:
+    """What the event lacks before printing: guests, verification, addresses, templates, sender."""
+    return await event_readiness(session, event, user.uid)
 
 
 @router.get("/{event_id}")
