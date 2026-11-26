@@ -16,6 +16,10 @@ export async function HomePage({
   if (await getViewer()) {
     redirect(routes.events());
   }
-  const { verified } = await searchParams;
-  return <LoginScreen verified={verified === "1"} />;
+  const { verified, "password-changed": passwordChanged } = await searchParams;
+  return (
+    <LoginScreen
+      notice={verified === "1" ? "verified" : passwordChanged === "1" ? "password-changed" : null}
+    />
+  );
 }

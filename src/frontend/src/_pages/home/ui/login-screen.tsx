@@ -6,14 +6,19 @@ import { AuthCard } from "@/shared/ui/auth-card";
 
 import { LoginForm } from "./login-form";
 
-export function LoginScreen({ verified }: { verified: boolean }) {
+const NOTICES = {
+  verified: "Adres e-mail potwierdzony. Możesz się zalogować.",
+  "password-changed": "Hasło zmienione. Zaloguj się nowym hasłem.",
+} as const;
+
+export function LoginScreen({ notice }: { notice: keyof typeof NOTICES | null }) {
   const config = firebaseClientConfig();
 
   return (
     <AuthCard title="Zaproszenia" description="Zaloguj się, aby zarządzać listą gości.">
-      {verified && (
+      {notice && (
         <p role="status" className="rounded-lg bg-muted p-3 text-sm">
-          Adres e-mail potwierdzony. Możesz się zalogować.
+          {NOTICES[notice]}
         </p>
       )}
       {config ? (

@@ -1,7 +1,9 @@
 export const routes = {
   home: () => "/",
   homeVerified: () => "/?verified=1",
+  homePasswordChanged: () => "/?password-changed=1",
   register: () => "/register",
+  resetPassword: () => "/reset-password",
   events: () => "/events",
   eventAdd: () => "/events/add",
   eventsDeleted: () => "/events/deleted",
