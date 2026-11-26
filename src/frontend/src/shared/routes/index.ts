@@ -22,6 +22,8 @@ export const routes = {
   savedTemplatePreviewImage: (id: number, updatedAt: string) =>
     `/api/templates/${id}/preview.png?${new URLSearchParams({ version: updatedAt })}`,
   settings: () => "/settings",
+  instruction: () => "/instruction",
+  instructionPolish: () => "/instruction/pl",
 } as const;
 export { withQuery } from "./with-query";
 export type { SearchParams } from "./search-params";
