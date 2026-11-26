@@ -3,7 +3,7 @@ name: tailwind-best-practices
 description: "Use when writing, changing or reviewing styles in a component that uses Tailwind CSS (tailwindcss in package.json): class names in JSX/TSX, the Tailwind entry CSS (@import \"tailwindcss\", @theme, @custom-variant, @utility, @source), design tokens, variants and the cn() helper, dark mode, responsive and container queries, focus and motion accessibility, class sorting and linting, and adding UI kit components with the shadcn/ui CLI. Tailwind CSS v4 (CSS-first configuration). Pair with feature-sliced-design for where the files live."
 license: MIT
 metadata:
-  version: "1.7.1"
+  version: "1.8.0"
   tailwind: "4"
 ---
 
@@ -140,7 +140,7 @@ A component with `components.json` in its root takes its UI kit from shadcn/ui (
 - **Reserve the space of media whose size is known** (a page preview, a thumbnail): a box with `aspect-ratio` from the data (inline `style`, since class names cannot be built at runtime) and a skeleton until `onLoad`. An `<img>` without a size is 0 px until it loads and then pushes everything below it. A cached image can load before React attaches `onLoad`: check `complete && naturalWidth` once mounted.
 - **Layouts survive 200% zoom** (`better-accessibility`; a 1440 px screen becomes a 720 px viewport). In Tailwind:
   - a header or toolbar with a title and actions wraps (`flex flex-wrap gap-x-4 gap-y-3`) and gives the title a minimum width (`min-w-60 flex-1`), instead of `truncate` squeezing the title to nothing under the actions;
-  - a grid or flex item that holds wide content (a table, a long line) may shrink: grid tracks `minmax(0,1fr)` (`grid-cols-[minmax(0,1fr)]`), flex items `min-w-0`, so the wide content scrolls in its own `overflow-x-auto` container instead of the whole page. A plain `grid` track is `auto` and grows to its widest child;
+  - a grid or flex item that holds wide content (a table, a long line) may shrink: grid tracks `minmax(0,1fr)` (`grid-cols-[minmax(0,1fr)]`), flex items `min-w-0`, so the wide content scrolls in its own `overflow-x-auto` container instead of the whole page. A plain `grid` track is `auto` and grows to its widest child; Table cells that hold free text (names, addresses) wrap (`whitespace-normal`; kit tables default to `whitespace-nowrap`): without it one long row widens the table and pushes a dialog's buttons out of view.
   - columns that must not overlap keep their content (`minmax(max-content,1fr)`) and the flexible part shrinks (`minmax(0,18rem)`), e.g. a header with a name between switches and actions.
 
 ## 5. States, dark mode, accessibility
