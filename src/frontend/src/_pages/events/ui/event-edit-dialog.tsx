@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { parseEventId } from "@/entities/event";
-import { getEvent, getEventGuests } from "@/entities/event/index.server";
+import { getEvent, getEventGuests, getEventReadiness } from "@/entities/event/index.server";
 import { getTemplates } from "@/entities/template/index.server";
 import { requireViewer } from "@/entities/viewer/index.server";
 import type { Dismissal } from "@/shared/lib/dialogs";
@@ -32,15 +32,17 @@ export async function EventEditDialog({
     notFound();
   }
   // Only for an event that exists: its guest list would answer 404 otherwise.
-  const [templates, eventGuests] = await Promise.all([
+  const [templates, eventGuests, readiness] = await Promise.all([
     getTemplates(),
     getEventGuests(event.id, { page: guestsPage }),
+    getEventReadiness(event.id),
   ]);
   return (
     <EventDialog
       event={event}
       templates={templates}
       eventGuests={eventGuests}
+      readiness={readiness}
       initialSection={section}
       dismissal={dismissal}
     />

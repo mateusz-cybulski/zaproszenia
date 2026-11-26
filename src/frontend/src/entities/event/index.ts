@@ -8,3 +8,4 @@ export type { EventDocumentKind, EventDocumentProblem } from "./model/event-docu
 export { INVITATION_STATUS_LABELS } from "./config/invitation-status";
 export { INVITATION_STATUSES } from "./model/event-guest";
 export type { EventGuest, InvitationStatus } from "./model/event-guest";
+export type { EventReadiness } from "./model/event-readiness";
