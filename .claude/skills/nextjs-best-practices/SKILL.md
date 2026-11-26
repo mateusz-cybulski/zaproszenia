@@ -3,7 +3,7 @@ name: nextjs-best-practices
 description: "Use when writing, changing or reviewing Next.js code in this repo: pages, layouts, components, route handlers, server actions (forms through one shared Conform hook, and calls from buttons and dialogs through one shared action hook and confirm dialog), proxy.ts, next.config, data fetching and caching, images, metadata, env vars. Next.js 16 App Router rules for components built from a Next template (e.g. src/frontend), deployed as a standalone container on Cloud Run, which must pass the component's ESLint and tsc lefthook checks."
 license: MIT
 metadata:
-  version: "1.17.0"
+  version: "1.18.0"
   next: "16"
 ---
 
@@ -81,7 +81,7 @@ return submission.reply();
 ```
 
 - **Validate on submit, re-validate on input** (`shouldValidate: "onSubmit"`, `shouldRevalidate: "onInput"`). Not on blur: pressing a dialog's close button blurs the field, the error grows the vertically centred dialog and moves the button before the click lands, so the dialog needs a second click.
-- **Reply to success with a plain `submission.reply()`.** `reply({ resetForm: true })` returns only `{ initialValue: null }`, without `status: "success"`, so `onSuccess` (closing the dialog) never runs. A form that closes on success needs no reset; one that stays on screen resets on the client in `onSuccess` (`form.reset()` or a new `key`).
+- **Reply to success with a plain `submission.reply()`.** `reply({ resetForm: true })` returns only `{ initialValue: null }`, without `status: "success"`, so `onSuccess` (closing the dialog) never runs. A form that stays on screen after a save must take the saved values as its new starting point: Conform updates the fields' values but keeps comparing with the values the form opened with, so `form.dirty` stays true and leaving asks about unsaved changes. In the shared form hook, pass `lastResult.initialValue` (the saved payload) as `defaultValue` after a success and call `form.reset()` in the success callback; `form.reset()` alone goes back to the opening values.
 - **A form that stays on screen keeps what was saved.** React 19 resets a `<form action>` after the action, back to the values it rendered with, so a settings form would show empty or stale fields after a successful save. The form hook returns `formProps` that submit from `onSubmit` (Conform validates, then the action runs in `startTransition`), which React does not reset; `action` stays for a browser without JavaScript. Spread `formProps` on the form, never `action={formAction}` alone.
 - Fields render through one shared field component that takes Conform's field metadata (label, hint, error, `aria-describedby`); one shared status component announces the form error or success message.
 - **An action that reads the saved data (generate, export, send) asks about unsaved changes first.** Check `form.dirty` (the dialog owns the form's state for this) and offer "Save and …", "… without saving" and "Back". "Save and continue" remembers the action in a ref, submits the form (`requestSubmit()` on the element with `form.id`) and runs the action in `onSuccess`; a failed save (`lastResult.status === "error"` or `form.allErrors`) clears it, so a later plain save does not trigger it.
