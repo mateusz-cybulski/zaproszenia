@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings=0 . && steiger ./src && prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "screenshots:instruction": "scripts/instruction-screenshots/run.sh"
   },
   "dependencies": {
     "@conform-to/react": "^1.21.3",
@@ -39,6 +40,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.5",
     "eslint-plugin-better-tailwindcss": "^4.11.0",
+    "playwright-core": "^1.65.1",
     "prettier": "^3.10.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "steiger": "^0.10.0",
