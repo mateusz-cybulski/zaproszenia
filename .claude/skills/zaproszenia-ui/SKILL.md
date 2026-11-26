@@ -1,6 +1,6 @@
 ---
 name: zaproszenia-ui
-description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), loading skeletons, the unsaved-changes guard, one save per dialog, the date and time picker, the shared helpers by their names here (useServerForm, FormField, useAction, ConfirmActionDialog, Pagination), and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
+description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), loading skeletons, the unsaved-changes guard, one save per dialog, the date and time picker, list rows that open their record (TableRowLink) and selecting many guests with a bulk-action toolbar, the shared helpers by their names here (useServerForm, FormField, useAction, ConfirmActionDialog, Pagination, TableRowLink), and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
 license: MIT
 metadata:
   version: "1.7.0"
@@ -66,7 +66,12 @@ Writing follows `better-accessibility`, checking uses the AccessLint skills (`ac
 - **One "Zapisz" per dialog**: the event dialog's details and template choice are one form (`EventSections` wraps both sections; `EventDetailsFields` and `TemplateChoiceFields` render fields only), saved by `updateEventAction` in one `PUT /events/{id}`; the template selects stay mounted, their previews load when the section opens. A section never has its own save button. "Zapisz" in the event dialog keeps the dialog open and says "Zapisano." in the header (`FormStatus` with a success message); the form's baseline moves to the saved values in `useServerForm`, so closing after a save does not ask about unsaved changes.
 - **Dates and times are picked, never typed**: a field with `inputType: "datetime-local"` renders `DateTimeInput` (the kit's `DateTimePicker`: a calendar and hour/minute lists, the whole field opens it).
 
-## 4. Shared helpers by their names here
+## 4. Lists
+
+- **A row opens its record through one real link.** The name in the first text column is `TableRowLink` (`@/shared/ui/table-row-link`), whose click area covers the row; the row gets `ROW_WITH_LINK` (focus on the link outlines the whole row) and every cell with its own controls (checkbox, menu, delete) gets `ABOVE_ROW_LINK`. Never `onClick` or `role="link"` on a `<tr>`, and no separate "Otwórz" button. `GuestTable` and `EventTable` take `hrefFor`.
+- **Selecting many rows**: the guest list keeps the selection in `GuestSelectionProvider` above the table, so it survives paging and searching. The header checkbox ("select the page") shows only its own choice, never a state computed from single rows; it starts unticked on each page (`key` from the page's ids). Bulk actions sit in an always visible toolbar (`role="toolbar"`) above the table, so the layout does not jump and dialogs return focus to their trigger; with nothing selected its buttons are `aria-disabled`, except verification, which then covers every guest not yet verified. Selections are checked again in the Server Action (`isGuestSelection`, at most 1000 ids, as the API).
+
+## 5. Shared helpers by their names here
 
 `nextjs-best-practices` describes these as patterns; this is what they are called in this frontend.
 
@@ -75,6 +80,7 @@ Writing follows `better-accessibility`, checking uses the AccessLint skills (`ac
 | One shared form hook | `useServerForm({ schema, action, defaultValue, onSuccess })` from `@/shared/lib/server-form` |
 | Field and status components | `FormField` (`@/shared/ui/form-field`, config with `required`, `hint`, `inputType: "datetime-local"`, `options`), `FormStatus` (`@/shared/ui/form-status`) |
 | Action result and action hook | `ActionResult` (`@/shared/lib/actions`), `useAction(action, { onSuccess })` (`@/shared/lib/action-call`) |
+| Row that opens its record | `TableRowLink`, `ROW_WITH_LINK`, `ABOVE_ROW_LINK` (`@/shared/ui/table-row-link`) |
 | Confirm dialog | `ConfirmActionDialog` (`@/shared/ui/confirm-action-dialog`); soft or permanent delete: `DeleteChoiceDialog` |
 | Paged lists | `parsePage()` (`@/shared/lib/pagination`), `pageSchema(itemSchema)` and `Page<Item>` (`@/shared/api`), `Pagination` (`@/shared/ui/pagination`, "51–100 z 137"), `withQuery(path, params)` (`@/shared/routes`); dialog page parameters `deleted_page`, `guests_page` |
 | Branded ids | `recordIdSchema` / `recordIdParamSchema` (`@/shared/lib/record-id`), e.g. `GuestId`, `isGuestId`, `parseGuestId` |
