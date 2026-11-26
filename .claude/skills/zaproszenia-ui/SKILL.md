@@ -1,9 +1,9 @@
 ---
 name: zaproszenia-ui
-description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), loading skeletons, the unsaved-changes guard, one save per dialog, the date and time picker, list rows that open their record (TableRowLink) and selecting many guests with a bulk-action toolbar, the shared helpers by their names here (useServerForm, FormField, useAction, ConfirmActionDialog, Pagination, TableRowLink), and the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
+description: "Use when building or changing a dialog or a page layout in this project's frontend (src/frontend): every dialog's pinned header and scrolling DialogBody, DialogTitleBar with the edited name (DialogNameField) for guests, events and templates, focus return from dialogs opened by a link (useReturnFocus), loading skeletons, the unsaved-changes guard, one save per dialog, the date and time picker, list rows that open their record (TableRowLink) and selecting many guests with a bulk-action toolbar, the shared helpers by their names here (useServerForm, FormField, useAction, ConfirmActionDialog, Pagination, TableRowLink), the project's accessibility scope: desktop only, checked at 200% zoom, no 320 px reflow, and keeping the user guide (/instruction, /instruction/pl) and its screenshots in step with the UI. Project-specific; the general rules are in nextjs-best-practices, tailwind-best-practices and better-accessibility."
 license: MIT
 metadata:
-  version: "1.7.0"
+  version: "1.8.0"
 ---
 
 # UI conventions of this project
@@ -88,3 +88,10 @@ Writing follows `better-accessibility`, checking uses the AccessLint skills (`ac
 
 UI copy is Polish. The labels the shared rules name in English are, here: "Zapisz", "Zapisz i …" / "… bez zapisywania" / "Wróć" (before generating), "Wróć do edycji" / "Wyjdź bez zapisywania" (leaving a form), "Ładowanie" (spinner).
 
+## 6. User guide
+
+The public guide at `/instruction` (English) and `/instruction/pl` (Polish) describes every screen, with screenshots (`_pages/instruction`).
+
+- **A change the user sees updates the guide in the same branch**: a new feature, a renamed label, a moved button or a new warning changes the text of both languages and retakes the screenshots that show it. A change that does not reach the screen (a refactor, an API detail) leaves the guide alone.
+- Both languages are data with the same section ids and screenshots: `config/content-english.ts` and `config/content-polish.ts`. Labels of the app are marked `**…**`. The app is Polish only, so the English text gives the Polish label in bold with its meaning in parentheses where it first appears.
+- Screenshots are retaken with `npm run screenshots:instruction` in `src/frontend` (`scripts/instruction-screenshots/README.md`): a separate Compose project with sample data, never the user's local database. Look through them before committing; they are committed with the UI change.
