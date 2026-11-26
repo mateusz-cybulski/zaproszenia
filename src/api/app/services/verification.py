@@ -1,7 +1,13 @@
 from datetime import UTC, datetime
 
 from app.models import Guest, VerificationStatus
-from app.schemas.guests import AddressCheck, FieldCheck, GuestWrite, VerificationResult
+from app.schemas.guests import (
+    AddressCheck,
+    FieldCheck,
+    GuestWrite,
+    VerificationFailure,
+    VerificationResult,
+)
 from app.services.declension import guest_declension
 from app.verifier import GuestCheck, GuestData, GuestVerifier, VerifierUnavailableError
 
@@ -35,21 +41,25 @@ def _needs_review(
 
 async def ask_ai(
     data: GuestData, address: AddressCheck, verifier: GuestVerifier
-) -> GuestCheck | None:
-    """The model's check of one guest, or None when it could not be asked."""
+) -> GuestCheck | VerificationFailure:
+    """The model's check of one guest, or why it could not be asked."""
     try:
         return await verifier.verify(data, address)
-    except VerifierUnavailableError:
-        return None
+    except VerifierUnavailableError as error:
+        return error.failure
 
 
 def store_ai_result(
-    guest: Guest, check: GuestCheck | None, address: AddressCheck, model: str
+    guest: Guest, check: GuestCheck | VerificationFailure, address: AddressCheck, model: str
 ) -> None:
     checked_at = datetime.now(UTC)
-    if check is None:
+    if isinstance(check, VerificationFailure):
         result = VerificationResult(
-            checked_at=checked_at, model=model, error=AI_UNAVAILABLE, address_check=address
+            checked_at=checked_at,
+            model=model,
+            error=AI_UNAVAILABLE,
+            failure=check,
+            address_check=address,
         )
         guest.verification_status = VerificationStatus.FAILED
         guest.verification_result = result.model_dump(mode="json")

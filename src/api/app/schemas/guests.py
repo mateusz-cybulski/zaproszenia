@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import StrEnum
 from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
@@ -43,6 +44,17 @@ class AddressCheck(BaseModel):
     matched_label: str | None = None
 
 
+class VerificationFailure(StrEnum):
+    """Why the model could not check a guest; the guest's data is never the reason."""
+
+    CREDENTIALS = "credentials"
+    RATE_LIMITED = "rate_limited"
+    TIMEOUT = "timeout"
+    SERVICE = "service"
+    CONNECTION = "connection"
+    INVALID_ANSWER = "invalid_answer"
+
+
 class VerificationResult(BaseModel):
     checked_at: datetime
     model: str | None = None
@@ -54,6 +66,8 @@ class VerificationResult(BaseModel):
     address_check: AddressCheck | None = None
     summary: str | None = None
     error: str | None = None
+    # Set with error; results stored before it have the error text only.
+    failure: VerificationFailure | None = None
 
 
 class GuestWrite(AddressWrite):

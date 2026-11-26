@@ -3,6 +3,7 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from functools import lru_cache
+from http import HTTPStatus
 from typing import Annotated, Protocol
 
 import google.auth
@@ -13,7 +14,7 @@ from google.auth.exceptions import GoogleAuthError
 from google.genai import errors, types
 from pydantic import BaseModel, ValidationError
 
-from app.schemas.guests import AddressCheck, FieldCheck
+from app.schemas.guests import AddressCheck, FieldCheck, VerificationFailure
 from app.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -96,6 +97,20 @@ class GuestCheck(BaseModel):
 class VerifierUnavailableError(Exception):
     """The model could not be asked or gave no usable answer; the guest's data is not at fault."""
 
+    def __init__(self, failure: VerificationFailure) -> None:
+        super().__init__(failure)
+        self.failure = failure
+
+
+def _api_failure(error: errors.APIError | httpx.TimeoutException) -> VerificationFailure:
+    if isinstance(error, httpx.TimeoutException) or error.code == HTTPStatus.GATEWAY_TIMEOUT:
+        return VerificationFailure.TIMEOUT
+    if error.code == HTTPStatus.TOO_MANY_REQUESTS:
+        return VerificationFailure.RATE_LIMITED
+    if error.code in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
+        return VerificationFailure.CREDENTIALS
+    return VerificationFailure.SERVICE
+
 
 class GuestVerifier(Protocol):
     model: str
@@ -149,13 +164,16 @@ class GeminiGuestVerifier:
                 )
                 logger.warning("Gemini call failed (attempt %d): %s", attempt, error)
                 if not transient or attempt == MAX_ATTEMPTS:
-                    raise VerifierUnavailableError from error
+                    raise VerifierUnavailableError(_api_failure(error)) from error
                 await asyncio.sleep(RETRY_DELAY_SECONDS * attempt)
             # Missing or expired credentials and network errors are not the guest's fault either.
-            except (GoogleAuthError, httpx.HTTPError) as error:
+            except GoogleAuthError as error:
                 logger.warning("Gemini call failed: %s", error)
-                raise VerifierUnavailableError from error
-        raise VerifierUnavailableError
+                raise VerifierUnavailableError(VerificationFailure.CREDENTIALS) from error
+            except httpx.HTTPError as error:
+                logger.warning("Gemini call failed: %s", error)
+                raise VerifierUnavailableError(VerificationFailure.CONNECTION) from error
+        raise VerifierUnavailableError(VerificationFailure.INVALID_ANSWER)
 
 
 @lru_cache

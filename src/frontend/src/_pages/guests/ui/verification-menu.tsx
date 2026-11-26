@@ -3,7 +3,12 @@
 import { ChevronDown, ListChecks, Sparkles, UserCheck } from "lucide-react";
 import { useState } from "react";
 
-import { type Guest, VerificationBadge, VERIFICATION_STATUS_LABELS } from "@/entities/guest";
+import {
+  type Guest,
+  VerificationBadge,
+  verificationFailureReason,
+  VERIFICATION_STATUS_LABELS,
+} from "@/entities/guest";
 import { useAction } from "@/shared/lib/action-call";
 import {
   DropdownMenu,
@@ -47,6 +52,11 @@ export function VerificationMenu({ guest }: { guest: Guest }) {
         <DropdownMenuContent align="start" className="w-64">
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
             {label}
+            {guest.verificationStatus === "failed" && (
+              <span className="mt-1 block text-destructive">
+                {verificationFailureReason(guest.verificationResult)}
+              </span>
+            )}
           </DropdownMenuLabel>
           {guest.verificationStatus === "needs_review" && (
             <DropdownMenuItem onSelect={() => setReviewing(true)}>

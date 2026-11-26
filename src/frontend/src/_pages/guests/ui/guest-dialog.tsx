@@ -20,9 +20,11 @@ type GuestDialogProps = {
   guest?: Guest;
   dismissal: Dismissal;
   headerActions?: ReactNode;
+  // Shown above the form, e.g. why the last AI check failed.
+  notice?: ReactNode;
 };
 
-export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProps) {
+export function GuestDialog({ guest, dismissal, headerActions, notice }: GuestDialogProps) {
   const dismiss = useDismiss(dismissal, routes.guests());
   const returnFocus = useReturnFocus();
   const copy = guest ? GUEST_DIALOG_COPY.edit : GUEST_DIALOG_COPY.add;
@@ -63,6 +65,7 @@ export function GuestDialog({ guest, dismissal, headerActions }: GuestDialogProp
           />
         </DialogTitleBar>
         <DialogBody>
+          {notice}
           <GuestForm guestForm={guestForm} />
         </DialogBody>
       </DialogContent>

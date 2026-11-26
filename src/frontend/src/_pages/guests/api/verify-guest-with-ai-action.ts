@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { isGuestId, type GuestId } from "@/entities/guest";
+import { isGuestId, type GuestId, verificationFailureReason } from "@/entities/guest";
 import { verifyGuestWithAi } from "@/entities/guest/index.server";
 import type { ActionResult } from "@/shared/lib/actions";
 import { routes } from "@/shared/routes";
@@ -19,7 +19,7 @@ export async function verifyGuestWithAiAction(id: GuestId): Promise<ActionResult
     return { error: AI_VERIFICATION_FAILED };
   }
   if (guest.verificationStatus === "failed") {
-    return { error: guest.verificationResult?.error ?? AI_VERIFICATION_FAILED };
+    return { error: verificationFailureReason(guest.verificationResult) };
   }
   return {};
 }
