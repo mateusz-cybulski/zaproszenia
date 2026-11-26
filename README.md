@@ -6,6 +6,8 @@ A web app that prepares printed invitations and envelopes for events. You keep a
 
 The app's interface is in Polish and made for desktop browsers. A user guide with screenshots is built into the app at `/instruction` (English) and `/instruction/pl` (Polish).
 
+The [case study](docs/case-study.pdf) tells why the app was built and explains its design decisions and trade-offs.
+
 ## What it does
 
 - **Guests**: a guest base with search, paging, bulk actions and an import from CSV or XLSX that previews what will be added, skipped as a duplicate or rejected, before saving.
