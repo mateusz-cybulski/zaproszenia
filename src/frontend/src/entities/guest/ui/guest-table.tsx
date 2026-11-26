@@ -2,8 +2,10 @@ import { MapPinOff } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
+import { ABOVE_ROW_LINK, ROW_WITH_LINK, TableRowLink } from "@/shared/ui/table-row-link";
 
 import { formatAddress } from "@/shared/lib/address";
+import { cn } from "@/shared/lib/css";
 import { Badge } from "@/shared/ui/badge";
 
 import { type Guest, hasPostalAddress, recipientName } from "../model/guest";
@@ -12,6 +14,8 @@ import { VerificationBadge } from "./verification-badge";
 type GuestTableProps = {
   guests: Guest[];
   emptyMessage: string;
+  // Opens the guest: the name is the link and its click area covers the whole row.
+  hrefFor?: (guest: Guest) => string;
   // A selection column: its header (e.g. "select the page") and the cell of each row.
   selectionHeader?: ReactNode;
   renderSelection?: (guest: Guest) => ReactNode;
@@ -22,6 +26,7 @@ type GuestTableProps = {
 export function GuestTable({
   guests,
   emptyMessage,
+  hrefFor,
   selectionHeader,
   renderSelection,
   renderVerification,
@@ -56,10 +61,12 @@ export function GuestTable({
             .join(", ");
           const address = formatAddress(guest);
           return (
-            <TableRow key={guest.id}>
-              {renderSelection && <TableCell>{renderSelection(guest)}</TableCell>}
+            <TableRow key={guest.id} className={cn(hrefFor && ROW_WITH_LINK)}>
+              {renderSelection && (
+                <TableCell className={ABOVE_ROW_LINK}>{renderSelection(guest)}</TableCell>
+              )}
               <TableCell className="font-medium">
-                {name}
+                {hrefFor ? <TableRowLink href={hrefFor(guest)}>{name}</TableRowLink> : name}
                 {guest.salutation && (
                   <span className="block text-xs font-normal text-muted-foreground">
                     {guest.salutation}
@@ -82,7 +89,7 @@ export function GuestTable({
                   </span>
                 )}
               </TableCell>
-              <TableCell>
+              <TableCell className={cn(renderVerification && ABOVE_ROW_LINK)}>
                 {renderVerification ? (
                   renderVerification(guest)
                 ) : (
@@ -90,7 +97,9 @@ export function GuestTable({
                 )}
               </TableCell>
               {renderActions && (
-                <TableCell className="text-right">{renderActions(guest)}</TableCell>
+                <TableCell className={cn("text-right", ABOVE_ROW_LINK)}>
+                  {renderActions(guest)}
+                </TableCell>
               )}
             </TableRow>
           );

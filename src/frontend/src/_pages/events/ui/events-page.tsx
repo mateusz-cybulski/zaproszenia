@@ -57,6 +57,7 @@ export async function EventsPage({ searchParams }: { searchParams: SearchParams 
           events={events.items}
           now={now}
           emptyMessage="Nie dodano jeszcze żadnych wydarzeń."
+          hrefFor={(event) => routes.event(event.id)}
           renderActions={(event) => <EventRowActions event={event} />}
         />
       </div>

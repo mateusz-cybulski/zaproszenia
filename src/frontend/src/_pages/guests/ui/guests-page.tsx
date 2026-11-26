@@ -64,6 +64,7 @@ export async function GuestsPage({ searchParams }: GuestsPageProps) {
           <GuestTable
             guests={guests.items}
             emptyMessage={search ? "Brak wyników." : "Nie dodano jeszcze żadnych gości."}
+            hrefFor={(guest) => routes.guestEdit(guest.id)}
             selectionHeader={
               // A new page or search starts unticked.
               <SelectPageCheckbox key={pageIds.join()} ids={pageIds} />

@@ -1,19 +1,10 @@
-import Link from "next/link";
-
-import { type Guest, recipientName } from "@/entities/guest";
-import { routes } from "@/shared/routes";
-import { Button } from "@/shared/ui/button";
+import type { Guest } from "@/entities/guest";
 
 import { DeleteGuestDialog } from "./delete-guest-dialog";
 
 export function GuestRowActions({ guest }: { guest: Guest }) {
   return (
-    <div className="flex items-center justify-end gap-1">
-      <Button asChild variant="outline" size="sm">
-        <Link href={routes.guestEdit(guest.id)} scroll={false}>
-          Otwórz<span className="sr-only"> {recipientName(guest)}</span>
-        </Link>
-      </Button>
+    <div className="flex items-center justify-end">
       <DeleteGuestDialog guest={guest} />
     </div>
   );
