@@ -26,7 +26,7 @@ Every dialog (`@/shared/ui/dialog`) has a header and a body, so the header and t
 
 - `DialogContent` does not scroll; the header stays at the top with a line under it; **only `DialogBody` scrolls**. Never put content straight into `DialogContent` or give it its own padding or `overflow`.
 - Something that must stay in view while a long body scrolls (the template editor's page preview) is `sticky top-0` inside `DialogBody`.
-- **Focus returns to what opened the dialog** (`better-accessibility`). A dialog that is a route (opened by a `Link`, closed with `useDismiss`) has no `DialogTrigger`, so it gets `onCloseAutoFocus={useReturnFocus()}` from `@/shared/lib/dialogs`.
+- **Focus returns to what opened the dialog** (`better-accessibility`). A dialog that is a route (opened by a `Link`, closed with `useDismiss`) has no `DialogTrigger`, so it gets `onCloseAutoFocus={useReturnFocus()}` from `@/shared/lib/dialogs`. The opener is the last focus outside any dialog, recorded by `DialogOpenerTracker` in the root layout (`@/_app/layout`); never capture it when the dialog mounts.
 
 ### Dialogs that edit something with a name
 
