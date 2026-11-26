@@ -15,7 +15,7 @@ export function LoginScreen({ notice }: { notice: keyof typeof NOTICES | null })
   const config = firebaseClientConfig();
 
   return (
-    <AuthCard title="Zaproszenia" description="Zaloguj się, aby zarządzać listą gości.">
+    <AuthCard title="Zaproszenia" description="Zaloguj się, aby wygenerować zaproszenia.">
       {notice && (
         <p role="status" className="rounded-lg bg-muted p-3 text-sm">
           {NOTICES[notice]}
