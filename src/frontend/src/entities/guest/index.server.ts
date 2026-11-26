@@ -3,6 +3,7 @@ import "server-only";
 export { acceptAiVerification } from "./api/accept-ai-verification";
 export { createGuest } from "./api/create-guest";
 export { deleteGuest } from "./api/delete-guest";
+export { deleteGuests } from "./api/delete-guests";
 export { getGuest } from "./api/get-guest";
 export { getGuests } from "./api/get-guests";
 export { importGuests } from "./api/import-guests";

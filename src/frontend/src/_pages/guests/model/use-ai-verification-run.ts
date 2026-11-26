@@ -24,7 +24,8 @@ export function useAiVerificationRun() {
   const [error, setError] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
 
-  async function start() {
+  // Without ids it checks every guest still waiting for a check.
+  async function start(ids?: GuestId[]) {
     const controller = new AbortController();
     abort.current = controller;
     // A function, not the property read inline: TypeScript keeps the value of the first check.
@@ -32,7 +33,7 @@ export function useAiVerificationRun() {
     setError(null);
     setCounts(NO_COUNTS);
     setState("loading");
-    const queue = await getVerificationQueueAction();
+    const queue = ids ? { guestIds: ids } : await getVerificationQueueAction();
     if (aborted()) {
       return;
     }

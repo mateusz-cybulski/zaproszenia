@@ -3,6 +3,8 @@
 import { ShieldCheck, Sparkles, UserCheck } from "lucide-react";
 import { useState } from "react";
 
+import type { GuestId } from "@/entities/guest";
+
 import { useAction } from "@/shared/lib/action-call";
 import { Button } from "@/shared/ui/button";
 import { ChoiceButton } from "@/shared/ui/choice-button";
@@ -18,10 +20,15 @@ import {
 
 import { verifyAllGuestsManuallyAction } from "../api/verify-all-guests-manually-action";
 import { AI_RUN_COPY } from "../config/ai-run-copy";
+import { SELECTION_COPY } from "../config/selection-copy";
 import { useAiVerificationRun } from "../model/use-ai-verification-run";
 import { AiRunProgress } from "./ai-run-progress";
 
-export function VerifyAllDialog() {
+type VerifyAllDialogProps = { ids: GuestId[]; disabled: boolean };
+
+// With nothing selected it verifies every guest not yet verified, otherwise the selected ones.
+export function VerifyAllDialog({ ids, disabled }: VerifyAllDialogProps) {
+  const selected = ids.length > 0;
   const [open, setOpen] = useState(false);
   const { run, pending, error, setError } = useAction(verifyAllGuestsManuallyAction, {
     onSuccess: () => changeOpen(false),
@@ -41,15 +48,17 @@ export function VerifyAllDialog() {
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <ShieldCheck /> Zweryfikuj wszystkich
+        <Button variant="outline" icon={<ShieldCheck />} aria-disabled={disabled}>
+          {selected ? SELECTION_COPY.verifySelected : SELECTION_COPY.verifyAll}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Jak zweryfikować dane?</DialogTitle>
           <DialogDescription>
-            Wszyscy goście, którzy nie są jeszcze zweryfikowani.
+            {selected
+              ? SELECTION_COPY.verifySelectedDescription(ids.length)
+              : SELECTION_COPY.verifyAllDescription}
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
@@ -61,7 +70,7 @@ export function VerifyAllDialog() {
                 icon={Sparkles}
                 title={AI_RUN_COPY.choiceTitle}
                 description={AI_RUN_COPY.choiceDescription}
-                onClick={() => void aiRun.start()}
+                onClick={() => void aiRun.start(selected ? ids : undefined)}
               />
               <ChoiceButton
                 icon={UserCheck}
@@ -69,7 +78,7 @@ export function VerifyAllDialog() {
                 description="Dane są poprawne: sprawdziłeś je sam i nie potrzebujesz AI."
                 pending={pending}
                 disabled={pending}
-                onClick={() => run()}
+                onClick={() => run(ids)}
               />
               {(error ?? aiRun.error) && (
                 <p role="alert" className="text-sm text-destructive">

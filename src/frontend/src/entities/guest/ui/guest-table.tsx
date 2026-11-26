@@ -12,6 +12,9 @@ import { VerificationBadge } from "./verification-badge";
 type GuestTableProps = {
   guests: Guest[];
   emptyMessage: string;
+  // A selection column: its header (e.g. "select the page") and the cell of each row.
+  selectionHeader?: ReactNode;
+  renderSelection?: (guest: Guest) => ReactNode;
   renderVerification?: (guest: Guest) => ReactNode;
   renderActions?: (guest: Guest) => ReactNode;
 };
@@ -19,6 +22,8 @@ type GuestTableProps = {
 export function GuestTable({
   guests,
   emptyMessage,
+  selectionHeader,
+  renderSelection,
   renderVerification,
   renderActions,
 }: GuestTableProps) {
@@ -30,6 +35,7 @@ export function GuestTable({
     <Table>
       <TableHeader>
         <TableRow>
+          {renderSelection && <TableHead className="w-10">{selectionHeader}</TableHead>}
           <TableHead>Adresat</TableHead>
           <TableHead>Stanowisko i instytucja</TableHead>
           <TableHead>Adres</TableHead>
@@ -51,6 +57,7 @@ export function GuestTable({
           const address = formatAddress(guest);
           return (
             <TableRow key={guest.id}>
+              {renderSelection && <TableCell>{renderSelection(guest)}</TableCell>}
               <TableCell className="font-medium">
                 {name}
                 {guest.salutation && (
